@@ -42,14 +42,18 @@ function AppContent() {
 				process.exit(0)
 			},
 		},
-		{
-			id: "global.toggle_console",
-			title: "Toggle Console",
-			keybind: "toggle_console",
-			context: "global",
-			category: "UI",
-			onSelect: () => renderer.console.toggle(),
-		},
+		...(typeof DEV === "undefined" || DEV
+			? [
+					{
+						id: "global.toggle_console",
+						title: "Toggle Console",
+						keybind: "toggle_console" as const,
+						context: "global" as const,
+						category: "UI",
+						onSelect: () => renderer.console.toggle(),
+					},
+				]
+			: []),
 		{
 			id: "global.toggle_focus",
 			title: "Toggle Focus",

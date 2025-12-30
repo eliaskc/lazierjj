@@ -1,5 +1,7 @@
+import type { ScrollBoxRenderable } from "@opentui/core"
 import { Show } from "solid-js"
 import type { Commit } from "../../commander/types"
+import { useCommand } from "../../context/command"
 import { useFocus } from "../../context/focus"
 import { useSync } from "../../context/sync"
 import { colors } from "../../theme"
@@ -35,8 +37,30 @@ function CommitHeader(props: { commit: Commit }) {
 export function MainArea() {
 	const { selectedCommit, diff, diffLoading, diffError } = useSync()
 	const focus = useFocus()
+	const command = useCommand()
+
+	let scrollRef: ScrollBoxRenderable | undefined
 
 	const isFocused = () => focus.is("diff")
+
+	command.register(() => [
+		{
+			id: "diff.page_up",
+			title: "Page up",
+			keybind: "nav_page_up",
+			context: "diff",
+			category: "Navigation",
+			onSelect: () => scrollRef?.scrollBy(-0.5, "viewport"),
+		},
+		{
+			id: "diff.page_down",
+			title: "Page down",
+			keybind: "nav_page_down",
+			context: "diff",
+			category: "Navigation",
+			onSelect: () => scrollRef?.scrollBy(0.5, "viewport"),
+		},
+	])
 
 	return (
 		<box
@@ -53,7 +77,7 @@ export function MainArea() {
 				<text>Error: {diffError()}</text>
 			</Show>
 			<Show when={!diffLoading() && !diffError()}>
-				<scrollbox focused={isFocused()} flexGrow={1}>
+				<scrollbox ref={scrollRef} focused={isFocused()} flexGrow={1}>
 					<Show when={selectedCommit()} keyed>
 						{(commit: Commit) => <CommitHeader commit={commit} />}
 					</Show>

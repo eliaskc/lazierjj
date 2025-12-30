@@ -13,6 +13,8 @@ export type KeybindConfigKey =
 	| "nav_up"
 	| "nav_first"
 	| "nav_last"
+	| "nav_page_up"
+	| "nav_page_down"
 	| "help"
 	| "refresh"
 
@@ -26,6 +28,8 @@ export const DEFAULT_KEYBINDS: KeybindConfig = {
 	nav_up: "k,up",
 	nav_first: "g",
 	nav_last: "G",
+	nav_page_up: "ctrl+u",
+	nav_page_down: "ctrl+d",
 	help: "?",
 	refresh: "R",
 }
