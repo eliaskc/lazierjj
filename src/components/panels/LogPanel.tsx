@@ -1,5 +1,6 @@
 import { For, Show } from "solid-js"
 import { useSync } from "../../context/sync"
+import { colors } from "../../theme"
 import { AnsiText } from "../AnsiText"
 
 export function LogPanel() {
@@ -12,7 +13,7 @@ export function LogPanel() {
 			flexGrow={1}
 			height="100%"
 			border
-			borderColor={isFocused() ? "#4ECDC4" : "#444444"}
+			borderColor={isFocused() ? colors.borderFocused : colors.borderDefault}
 			overflow="hidden"
 			gap={0}
 		>
@@ -29,8 +30,17 @@ export function LogPanel() {
 						return (
 							<For each={commit.lines}>
 								{(line) => (
-									<box backgroundColor={isSelected() ? "blue" : undefined} overflow="hidden">
-										<AnsiText content={line} bold={commit.isWorkingCopy} wrapMode="none" />
+									<box
+										backgroundColor={
+											isSelected() ? colors.selectionBg : undefined
+										}
+										overflow="hidden"
+									>
+										<AnsiText
+											content={line}
+											bold={commit.isWorkingCopy}
+											wrapMode="none"
+										/>
 									</box>
 								)}
 							</For>
