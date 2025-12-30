@@ -94,30 +94,38 @@ This document outlines the order of implementation to get a working prototype qu
 **Target: 2-3 hours | Core UX**
 
 ### 4.1 Layout Component
-- [ ] `src/components/Layout.tsx` - flexbox two-column layout
-- [ ] Left: Log panel (~35% width)
-- [ ] Right: Main area (~65% width)
-- [ ] Use hardcoded ratio for now
+- [x] `src/components/Layout.tsx` - flexbox two-column layout
+- [x] Left: Log panel (flexGrow=1)
+- [x] Right: Main area (flexGrow=2)
+- [x] Explicit `height="100%"` on all containers to fill terminal
 
 ### 4.2 Diff Commander
-- [ ] `src/commander/diff.ts` - runs `jj diff -r <change_id>`
-- [ ] Returns raw string (--color never since OpenTUI can't render ANSI)
+- [x] `src/commander/diff.ts` - runs `jj diff -r <change_id> --color never`
+- [x] Returns raw string
 
 ### 4.3 Main Area Component  
-- [ ] `src/components/panels/MainArea.tsx`
-- [ ] Scrollable box showing diff output
-- [ ] Plain text for now (colors deferred)
+- [x] `src/components/panels/MainArea.tsx`
+- [x] Shows diff output line by line
+- [x] Loading/error states
 
 ### 4.4 Selection → Diff Wiring
-- [ ] When selected commit changes, fetch and display its diff
-- [ ] Show loading state while fetching
+- [x] `createEffect` in sync.tsx triggers loadDiff on selection change
+- [x] diff/diffLoading/diffError signals in context
 
 ### 4.5 Focus Management
 - [ ] `Tab` to switch focus between Log and MainArea
 - [ ] Visual indicator of which panel is focused (border color?)
 - [ ] `j/k` scrolls focused panel
+- [ ] Use `<scrollbox>` for MainArea diff content (proper scrolling)
 
 **Milestone**: Two panels, select commit on left → see diff on right.
+
+**Notes**:
+- Using flex ratios (1:2) for panel widths
+- Must set explicit `height="100%"` on all flex containers to fill terminal viewport
+- OpenTUI doesn't support `color` prop on `<text>` - colors deferred
+- OpenTUI can't render ANSI codes - must strip them with regex
+- jjui uses charmbracelet/bubbles viewport which renders ANSI natively - we can't do that
 
 ---
 
@@ -204,10 +212,43 @@ bun run src/index.tsx
 
 ## Open Questions / Decisions Deferred
 
-1. **ANSI rendering**: ❌ OpenTUI does NOT render ANSI - using `--color never` for now
+1. **ANSI rendering**: ❌ OpenTUI does NOT render ANSI - using `--color never` for now (see Future Enhancement below)
 2. **Diff toggle (`v`)**: Defer until basic diff works
 3. **Mouse support**: Defer to post-prototype
 4. **Refresh (`R`)**: Add in Phase 5 or defer
 5. **Graph characters**: Not rendered yet - jjui does this by parsing gutter separately
 6. **Multi-line commits**: Deferred - showing single line per commit for now
+
+---
+
+## Future Enhancement: ANSI → OpenTUI Styled Rendering
+
+**Problem**: We want to honor the user's configured diff tool output (difftastic, delta, etc.) which outputs ANSI-colored text. OpenTUI cannot render raw ANSI escape codes.
+
+**Solution**: Use `ghostty-opentui` package - Ghostty's Zig-based terminal emulator for robust ANSI parsing.
+
+**Why ghostty-opentui over manual regex parsing?**
+- Full VT terminal emulation (handles complex escape sequences)
+- 16/256/RGB colors, bold, italic, underline, strikethrough, faint
+- Performance: Parsing at Zig level, not JS
+- Battle-tested in production (used by critique)
+
+**Why not use OpenTUI's `<diff>` component?**: It bypasses the user's diff tool choice. We want `jj diff` to use whatever the user has configured.
+
+**Implementation plan**:
+1. `bun add ghostty-opentui`
+2. Change diff commander to use `--color always`
+3. Create `src/components/AnsiText.tsx` using `ptyToJson()`
+4. Use in MainArea with `<scrollbox>`
+
+**Effort**: ~1-2 hours (simpler than manual parsing!)
+
+**Priority**: Post-MVP enhancement (Phase 6+). Plain text diff is acceptable for prototype.
+
+**Detailed research**: See `plans/opentui-research.md`
+
+**References**:
+- ghostty-opentui: https://github.com/remorses/ghostty-opentui
+- critique (production example): https://github.com/remorses/critique
+- OpenTUI examples: https://github.com/sst/opentui/tree/main/packages/solid/examples
 

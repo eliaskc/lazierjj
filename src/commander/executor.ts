@@ -20,9 +20,6 @@ export async function execute(
 		env: {
 			...process.env,
 			...options.env,
-			// Ensure color output isn't suppressed
-			NO_COLOR: undefined,
-			CLICOLOR_FORCE: "1",
 		},
 		stdout: "pipe",
 		stderr: "pipe",

@@ -432,7 +432,11 @@ side_panel_width = 0.35
 
 ### How It Works
 
-We shell out to `jj diff --color always` and display the ANSI output verbatim in a scrollable viewport. Side-by-side rendering is delegated to external tools (difftastic, delta) configured by the user.
+We shell out to `jj diff` and display the output in a scrollable viewport. Side-by-side rendering is delegated to external tools (difftastic, delta) configured by the user.
+
+**Current state (MVP)**: Using `--color never` and displaying plain text. OpenTUI cannot render raw ANSI escape codes.
+
+**Future enhancement**: Parse ANSI SGR codes from `jj diff --color always` output and convert to OpenTUI styled `<span>` elements. This preserves user's diff tool choice while enabling colored output. See `implementation-order.md` for detailed approach.
 
 ### Resolution Order
 

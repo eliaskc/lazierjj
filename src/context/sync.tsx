@@ -1,4 +1,11 @@
-import { type JSX, createContext, createSignal, useContext } from "solid-js"
+import {
+	type JSX,
+	createContext,
+	createEffect,
+	createSignal,
+	useContext,
+} from "solid-js"
+import { fetchDiff } from "../commander/diff"
 import { fetchLog } from "../commander/log"
 import type { Commit } from "../commander/types"
 
@@ -14,6 +21,9 @@ interface SyncContextValue {
 	loadLog: () => Promise<void>
 	loading: () => boolean
 	error: () => string | null
+	diff: () => string | null
+	diffLoading: () => boolean
+	diffError: () => string | null
 }
 
 const SyncContext = createContext<SyncContextValue>()
@@ -23,6 +33,9 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	const [selectedIndex, setSelectedIndex] = createSignal(0)
 	const [loading, setLoading] = createSignal(false)
 	const [error, setError] = createSignal<string | null>(null)
+	const [diff, setDiff] = createSignal<string | null>(null)
+	const [diffLoading, setDiffLoading] = createSignal(false)
+	const [diffError, setDiffError] = createSignal<string | null>(null)
 
 	const selectPrev = () => {
 		setSelectedIndex((i) => Math.max(0, i - 1))
@@ -41,6 +54,27 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	}
 
 	const selectedCommit = () => commits()[selectedIndex()]
+
+	const loadDiff = async (changeId: string) => {
+		setDiffLoading(true)
+		setDiffError(null)
+		try {
+			const result = await fetchDiff(changeId)
+			setDiff(result)
+		} catch (e) {
+			setDiffError(e instanceof Error ? e.message : "Failed to load diff")
+			setDiff(null)
+		} finally {
+			setDiffLoading(false)
+		}
+	}
+
+	createEffect(() => {
+		const commit = selectedCommit()
+		if (commit) {
+			loadDiff(commit.changeId)
+		}
+	})
 
 	const loadLog = async () => {
 		setLoading(true)
@@ -68,6 +102,9 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		loadLog,
 		loading,
 		error,
+		diff,
+		diffLoading,
+		diffError,
 	}
 
 	return (

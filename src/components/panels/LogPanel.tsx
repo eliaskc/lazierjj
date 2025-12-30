@@ -1,11 +1,21 @@
 import { For, Show } from "solid-js"
 import { useSync } from "../../context/sync"
 
+function formatCommitLine(
+	changeId: string,
+	isWorkingCopy: boolean,
+	immutable: boolean,
+): string {
+	const marker = isWorkingCopy ? "@" : immutable ? "◆" : "○"
+	const shortId = changeId.slice(0, 8)
+	return `${marker} ${shortId}`
+}
+
 export function LogPanel() {
 	const { commits, selectedIndex, loading, error } = useSync()
 
 	return (
-		<box flexDirection="column" flexGrow={1}>
+		<box flexDirection="column" flexGrow={1} height="100%">
 			<Show when={loading()}>
 				<text>Loading...</text>
 			</Show>
@@ -16,10 +26,15 @@ export function LogPanel() {
 				<For each={commits()}>
 					{(commit, index) => (
 						<box
-							flexDirection="column"
 							backgroundColor={index() === selectedIndex() ? "blue" : undefined}
 						>
-							<For each={commit.lines}>{(line) => <text>{line}</text>}</For>
+							<text>
+								{formatCommitLine(
+									commit.changeId,
+									commit.isWorkingCopy,
+									commit.immutable,
+								)}
+							</text>
 						</box>
 					)}
 				</For>
