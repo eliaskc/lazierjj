@@ -1,0 +1,71 @@
+import { execute } from "./executor"
+
+export interface Bookmark {
+	name: string
+	changeId: string
+	commitId: string
+	description: string
+	isLocal: boolean
+	remote?: string
+}
+
+export interface FetchBookmarksOptions {
+	cwd?: string
+	allRemotes?: boolean
+}
+
+export async function fetchBookmarks(
+	options: FetchBookmarksOptions = {},
+): Promise<Bookmark[]> {
+	const args = ["bookmark", "list"]
+
+	if (options.allRemotes) {
+		args.push("--all-remotes")
+	}
+
+	const result = await execute(args, { cwd: options.cwd })
+
+	if (!result.success) {
+		throw new Error(`jj bookmark list failed: ${result.stderr}`)
+	}
+
+	return parseBookmarkOutput(result.stdout)
+}
+
+export function parseBookmarkOutput(output: string): Bookmark[] {
+	const bookmarks: Bookmark[] = []
+	const lines = output.split("\n")
+
+	for (const line of lines) {
+		if (!line.trim()) continue
+
+		const isRemote = line.startsWith("  @")
+
+		if (isRemote) {
+			const match = line.match(/^\s+@(\S+):\s+(\S+)\s+(\S+)\s*(.*)$/)
+			if (match) {
+				bookmarks.push({
+					name: match[1] ?? "",
+					changeId: match[2] ?? "",
+					commitId: match[3] ?? "",
+					description: match[4]?.trim() ?? "",
+					isLocal: false,
+					remote: match[1],
+				})
+			}
+		} else {
+			const match = line.match(/^(\S+):\s+(\S+)\s+(\S+)\s*(.*)$/)
+			if (match) {
+				bookmarks.push({
+					name: match[1] ?? "",
+					changeId: match[2] ?? "",
+					commitId: match[3] ?? "",
+					description: match[4]?.trim() ?? "",
+					isLocal: true,
+				})
+			}
+		}
+	}
+
+	return bookmarks
+}

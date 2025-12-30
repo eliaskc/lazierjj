@@ -70,6 +70,11 @@ export function MainArea() {
 			border
 			borderColor={isFocused() ? colors.borderFocused : colors.border}
 		>
+			<box backgroundColor={colors.backgroundSecondary}>
+				<text fg={isFocused() ? colors.primary : colors.textMuted}>
+					[3] Diff
+				</text>
+			</box>
 			<Show when={diffLoading()}>
 				<text>Loading diff...</text>
 			</Show>

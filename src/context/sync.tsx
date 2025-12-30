@@ -9,6 +9,7 @@ import {
 	onMount,
 	useContext,
 } from "solid-js"
+import { type Bookmark, fetchBookmarks } from "../commander/bookmarks"
 import { fetchDiff } from "../commander/diff"
 import { fetchFiles } from "../commander/files"
 import { fetchLog } from "../commander/log"
@@ -59,6 +60,19 @@ interface SyncContextValue {
 	selectNextFile: () => void
 	selectFirstFile: () => void
 	selectLastFile: () => void
+
+	bookmarks: () => Bookmark[]
+	selectedBookmarkIndex: () => number
+	setSelectedBookmarkIndex: (index: number) => void
+	bookmarksLoading: () => boolean
+	bookmarksError: () => string | null
+	selectedBookmark: () => Bookmark | undefined
+	loadBookmarks: () => Promise<void>
+	selectPrevBookmark: () => void
+	selectNextBookmark: () => void
+	selectFirstBookmark: () => void
+	selectLastBookmark: () => void
+	jumpToBookmarkCommit: () => number | null
 }
 
 const SyncContext = createContext<SyncContextValue>()
@@ -84,6 +98,11 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	)
 	const [filesLoading, setFilesLoading] = createSignal(false)
 	const [filesError, setFilesError] = createSignal<string | null>(null)
+
+	const [bookmarks, setBookmarks] = createSignal<Bookmark[]>([])
+	const [selectedBookmarkIndex, setSelectedBookmarkIndex] = createSignal(0)
+	const [bookmarksLoading, setBookmarksLoading] = createSignal(false)
+	const [bookmarksError, setBookmarksError] = createSignal<string | null>(null)
 
 	const flatFiles = createMemo(() => {
 		const tree = fileTree()
@@ -141,6 +160,55 @@ export function SyncProvider(props: { children: JSX.Element }) {
 
 	const selectLastFile = () => {
 		setSelectedFileIndex(Math.max(0, flatFiles().length - 1))
+	}
+
+	const localBookmarks = () => bookmarks().filter((b) => b.isLocal)
+	const selectedBookmark = () => localBookmarks()[selectedBookmarkIndex()]
+
+	const selectPrevBookmark = () => {
+		setSelectedBookmarkIndex((i) => Math.max(0, i - 1))
+	}
+
+	const selectNextBookmark = () => {
+		setSelectedBookmarkIndex((i) =>
+			Math.min(localBookmarks().length - 1, i + 1),
+		)
+	}
+
+	const selectFirstBookmark = () => {
+		setSelectedBookmarkIndex(0)
+	}
+
+	const selectLastBookmark = () => {
+		setSelectedBookmarkIndex(Math.max(0, localBookmarks().length - 1))
+	}
+
+	const loadBookmarks = async () => {
+		setBookmarksLoading(true)
+		setBookmarksError(null)
+		try {
+			const result = await fetchBookmarks({ allRemotes: true })
+			setBookmarks(result)
+			setSelectedBookmarkIndex(0)
+		} catch (e) {
+			setBookmarksError(
+				e instanceof Error ? e.message : "Failed to load bookmarks",
+			)
+		} finally {
+			setBookmarksLoading(false)
+		}
+	}
+
+	const jumpToBookmarkCommit = (): number | null => {
+		const bookmark = selectedBookmark()
+		if (!bookmark) return null
+
+		const index = commits().findIndex((c) => c.changeId === bookmark.changeId)
+		if (index !== -1) {
+			setSelectedIndex(index)
+			return index
+		}
+		return null
 	}
 
 	let diffDebounceTimer: ReturnType<typeof setTimeout> | null = null
@@ -292,6 +360,19 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		selectNextFile,
 		selectFirstFile,
 		selectLastFile,
+
+		bookmarks,
+		selectedBookmarkIndex,
+		setSelectedBookmarkIndex,
+		bookmarksLoading,
+		bookmarksError,
+		selectedBookmark,
+		loadBookmarks,
+		selectPrevBookmark,
+		selectNextBookmark,
+		selectFirstBookmark,
+		selectLastBookmark,
+		jumpToBookmarkCommit,
 	}
 
 	return (

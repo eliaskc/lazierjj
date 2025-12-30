@@ -16,11 +16,13 @@ export function LogPanel() {
 		selectFirst,
 		selectLast,
 		enterFilesView,
+		viewMode,
 	} = useSync()
 	const focus = useFocus()
 	const command = useCommand()
 
 	const isFocused = () => focus.is("log")
+	const title = () => (viewMode() === "files" ? "[1] Files" : "[1] Log")
 
 	command.register(() => [
 		{
@@ -75,6 +77,11 @@ export function LogPanel() {
 			overflow="hidden"
 			gap={0}
 		>
+			<box backgroundColor={colors.backgroundSecondary}>
+				<text fg={isFocused() ? colors.primary : colors.textMuted}>
+					{title()}
+				</text>
+			</box>
 			<Show when={loading()}>
 				<text>Loading...</text>
 			</Show>

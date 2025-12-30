@@ -2,6 +2,7 @@ import { useRenderer } from "@opentui/solid"
 import { Show, onMount } from "solid-js"
 import { Layout } from "./components/Layout"
 import { HelpModal } from "./components/modals/HelpModal"
+import { BookmarksPanel } from "./components/panels/BookmarksPanel"
 import { FileTreePanel } from "./components/panels/FileTreePanel"
 import { LogPanel } from "./components/panels/LogPanel"
 import { MainArea } from "./components/panels/MainArea"
@@ -11,7 +12,7 @@ import { FocusProvider, useFocus } from "./context/focus"
 import { KeybindProvider } from "./context/keybind"
 import { SyncProvider, useSync } from "./context/sync"
 
-function LeftPanel() {
+function TopPanel() {
 	const { viewMode } = useSync()
 
 	return (
@@ -23,13 +24,14 @@ function LeftPanel() {
 
 function AppContent() {
 	const renderer = useRenderer()
-	const { loadLog } = useSync()
+	const { loadLog, loadBookmarks } = useSync()
 	const focus = useFocus()
 	const command = useCommand()
 	const dialog = useDialog()
 
 	onMount(() => {
 		loadLog()
+		loadBookmarks()
 
 		renderer.console.keyBindings = [
 			{ name: "y", ctrl: true, action: "copy-selection" },
@@ -66,12 +68,44 @@ function AppContent() {
 				]
 			: []),
 		{
-			id: "global.toggle_focus",
-			title: "Toggle Focus",
-			keybind: "toggle_focus",
+			id: "global.focus_next",
+			title: "Focus Next Panel",
+			keybind: "focus_next",
 			context: "global",
 			category: "UI",
-			onSelect: () => focus.toggle(),
+			onSelect: () => focus.cycleNext(),
+		},
+		{
+			id: "global.focus_prev",
+			title: "Focus Previous Panel",
+			keybind: "focus_prev",
+			context: "global",
+			category: "UI",
+			onSelect: () => focus.cyclePrev(),
+		},
+		{
+			id: "global.focus_panel_1",
+			title: "Focus Log Panel",
+			keybind: "focus_panel_1",
+			context: "global",
+			category: "UI",
+			onSelect: () => focus.set("log"),
+		},
+		{
+			id: "global.focus_panel_2",
+			title: "Focus Bookmarks Panel",
+			keybind: "focus_panel_2",
+			context: "global",
+			category: "UI",
+			onSelect: () => focus.set("bookmarks"),
+		},
+		{
+			id: "global.focus_panel_3",
+			title: "Focus Diff Panel",
+			keybind: "focus_panel_3",
+			context: "global",
+			category: "UI",
+			onSelect: () => focus.set("diff"),
 		},
 		{
 			id: "global.help",
@@ -87,13 +121,20 @@ function AppContent() {
 			keybind: "refresh",
 			context: "global",
 			category: "UI",
-			onSelect: () => loadLog(),
+			onSelect: () => {
+				loadLog()
+				loadBookmarks()
+			},
 		},
 	])
 
 	return (
 		<DialogContainer>
-			<Layout left={<LeftPanel />} right={<MainArea />} />
+			<Layout
+				top={<TopPanel />}
+				bottom={<BookmarksPanel />}
+				right={<MainArea />}
+			/>
 		</DialogContainer>
 	)
 }
