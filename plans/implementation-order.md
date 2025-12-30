@@ -100,17 +100,23 @@ This document outlines the order of implementation to get a working prototype qu
 - [x] Explicit `height="100%"` on all containers to fill terminal
 
 ### 4.2 Diff Commander
-- [x] `src/commander/diff.ts` - runs `jj diff -r <change_id> --color never`
-- [x] Returns raw string
+- [x] `src/commander/diff.ts` - runs `jj diff -r <change_id> --color always`
+- [x] Returns raw ANSI string
+- [x] `--ignore-working-copy` flag for performance
 
 ### 4.3 Main Area Component  
 - [x] `src/components/panels/MainArea.tsx`
-- [x] Shows diff output line by line
+- [x] Shows diff output with ANSI colors via AnsiText component
 - [x] Loading/error states
+- [x] Commit header with metadata (Change, Commit, Author, Date)
+- [x] Header included in scrollable content
+- [x] Auto-hide scrollbar (shows only when needed)
 
 ### 4.4 Selection → Diff Wiring
 - [x] `createEffect` in sync.tsx triggers loadDiff on selection change
 - [x] diff/diffLoading/diffError signals in context
+- [x] 100ms debounce on diff loading to prevent UI hangs during fast navigation
+- [x] Stale request handling (ignore outdated diff results)
 
 ### 4.5 Focus Management
 - [x] `Tab` to switch focus between Log and MainArea
@@ -118,7 +124,11 @@ This document outlines the order of implementation to get a working prototype qu
 - [x] `j/k` scrolls focused panel (log selection when log focused, scrollbox handles diff when diff focused)
 - [x] Use `<scrollbox>` for MainArea diff content (proper scrolling)
 
-**Milestone**: Two panels, select commit on left → see diff on right.
+### 4.6 Additional Features
+- [x] `Ctrl+Y` copy selection keybinding
+- [x] Bold working copy indicator in log panel
+
+**Milestone**: ✅ Two panels, select commit on left → see styled diff on right with metadata header.
 
 **Notes**:
 - Using flex ratios (1:2) for panel widths
@@ -126,6 +136,7 @@ This document outlines the order of implementation to get a working prototype qu
 - ANSI rendering solved with `ghostty-opentui` - parses ANSI to styled spans
 - Focus indicated by border color (cyan when focused, gray when not)
 - `focusedPanel` signal in sync context tracks which panel has focus
+- Scrollbar auto-hides when content fits viewport (default OpenTUI behavior)
 
 ---
 
@@ -221,34 +232,76 @@ bun run src/index.tsx
 
 ---
 
-## Future Enhancement: ANSI → OpenTUI Styled Rendering
+## Phase 6: ANSI Rendering + Commit Metadata ✅
+**Completed ahead of schedule!**
 
-**Problem**: We want to honor the user's configured diff tool output (difftastic, delta, etc.) which outputs ANSI-colored text. OpenTUI cannot render raw ANSI escape codes.
+### 6.1 ANSI → OpenTUI Styled Rendering
+- [x] `bun add ghostty-opentui` 
+- [x] `src/components/AnsiText.tsx` - renders ANSI strings as styled spans
+- [x] Uses `ptyToJson()` from ghostty-opentui to parse ANSI escape codes
+- [x] Supports 256-color palette + RGB colors, bold, underline, etc.
+- [x] Configurable `wrapMode` prop (word wrap for diffs, none for log)
 
-**Solution**: Use `ghostty-opentui` package - Ghostty's Zig-based terminal emulator for robust ANSI parsing.
+### 6.2 Commit Metadata Parsing
+- [x] Extended jj template to extract: author, email, timestamp, empty status
+- [x] `src/commander/log.ts` - parse 9-field prefix with metadata
+- [x] Timestamp formatted with timezone (`%Y-%m-%d %H:%M:%S %:z`)
+- [x] Description uses jj's native ANSI styling via `label()` template functions
+- [x] `empty` boolean field to detect empty commits
+- [x] Tests updated for new template format (8 passing)
 
-**Why ghostty-opentui over manual regex parsing?**
-- Full VT terminal emulation (handles complex escape sequences)
-- 16/256/RGB colors, bold, italic, underline, strikethrough, faint
-- Performance: Parsing at Zig level, not JS
-- Battle-tested in production (used by critique)
+### 6.3 Lazygit-Style Commit Header
+- [x] `CommitHeader` component in MainArea.tsx
+- [x] Shows: Change ID, Commit ID, Author <email>, Date with timezone
+- [x] Colored labels (orange for field names, blue for IDs, orange for author, green for date)
+- [x] 4-space indented description line
+- [x] Styled `(empty)` prefix for empty commits (cyan)
+- [x] Styled `(no description set)` fallback (default terminal color)
+- [x] Header placed inside scrollbox for unified scrolling with diff
 
-**Why not use OpenTUI's `<diff>` component?**: It bypasses the user's diff tool choice. We want `jj diff` to use whatever the user has configured.
+### 6.4 Performance Optimizations
+- [x] 100ms debounce on diff loading (prevents UI hangs during fast j/k navigation)
+- [x] Stale request handling (currentDiffChangeId tracking)
+- [x] `--ignore-working-copy` flag on diff command for faster execution
 
-**Implementation plan**:
-1. `bun add ghostty-opentui`
-2. Change diff commander to use `--color always`
-3. Create `src/components/AnsiText.tsx` using `ptyToJson()`
-4. Use in MainArea with `<scrollbox>`
-
-**Effort**: ~1-2 hours (simpler than manual parsing!)
-
-**Priority**: Post-MVP enhancement (Phase 6+). Plain text diff is acceptable for prototype.
-
-**Detailed research**: See `plans/opentui-research.md`
+**Milestone**: ✅ Production-quality diff viewer with full ANSI color support and rich metadata display.
 
 **References**:
 - ghostty-opentui: https://github.com/remorses/ghostty-opentui
 - critique (production example): https://github.com/remorses/critique
-- OpenTUI examples: https://github.com/sst/opentui/tree/main/packages/solid/examples
+- Detailed research: `plans/opentui-research.md`
+
+---
+
+## Current State Summary (2025-12-30)
+
+### ✅ What Works
+- Full jj log display with ANSI colors, graph symbols, and metadata
+- Two-panel layout (log left, diff right)
+- Navigation: j/k (move selection), g/G (top/bottom), Tab (switch panels)
+- Diff viewer with full ANSI color support (difftastic, delta, etc. all work!)
+- Commit header with author, date, timezone, empty status
+- Debounced diff loading (smooth navigation even with large diffs)
+- Bold working copy indicator
+- Auto-hiding scrollbar (shows only when needed)
+- Copy selection with Ctrl+Y
+- Proper text wrapping (word wrap in diff, no wrap in log)
+
+### 🎯 Read-Only Mode Complete!
+We have a polished, production-quality read-only jj TUI viewer. All Phase 1-4 goals met, plus Phase 6 ANSI rendering completed ahead of schedule.
+
+### 🚧 What's Next (Phase 5)
+- Status bar with context-sensitive keybinding hints
+- Ctrl+d/Ctrl+u page navigation in main area
+- Better error handling (not in jj repo, command failures)
+- Manual refresh with `R` key
+
+### 📦 Post-Prototype Priorities
+1. **Core Operations** (Phase 7): new, edit, describe, squash, abandon
+2. **Modals** (Phase 8): describe modal, confirmation dialogs
+3. **Bookmarks Panel** (Phase 9): bookmark list, bookmark operations
+4. **Command Mode** (Phase 10): `:` command input and execution
+
+### 🐛 Known Issues
+None! Everything works smoothly.
 
