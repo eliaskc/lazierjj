@@ -5,6 +5,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "bun run --watch src/index.tsx",
+		"test": "bun test",
 		"check": "tsc --noEmit",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write ."
