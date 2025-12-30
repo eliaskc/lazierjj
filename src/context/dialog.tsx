@@ -1,5 +1,5 @@
-import { useKeyboard, useRenderer } from "@opentui/solid"
 import { RGBA } from "@opentui/core"
+import { useKeyboard, useRenderer } from "@opentui/solid"
 import {
 	type JSX,
 	type ParentProps,
@@ -11,7 +11,7 @@ import {
 import { createSimpleContext } from "./helper"
 
 interface DialogState {
-	element: JSX.Element
+	render: () => JSX.Element
 	onClose?: () => void
 }
 
@@ -37,8 +37,8 @@ export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
 			return {
 				isOpen: () => stack().length > 0,
 				current: () => stack().at(-1),
-				open: (element: JSX.Element, onClose?: () => void) => {
-					setStack((s) => [...s, { element, onClose }])
+				open: (render: () => JSX.Element, onClose?: () => void) => {
+					setStack((s) => [...s, { render, onClose }])
 				},
 				close,
 				clear: () => {
@@ -92,7 +92,7 @@ export function DialogContainer(props: ParentProps) {
 			{props.children}
 			<Show when={dialog.isOpen()}>
 				<DialogBackdrop onClose={dialog.close}>
-					{dialog.current()?.element}
+					{dialog.current()?.render()}
 				</DialogBackdrop>
 			</Show>
 		</>

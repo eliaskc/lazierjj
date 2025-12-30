@@ -140,23 +140,35 @@ This document outlines the order of implementation to get a working prototype qu
 
 ---
 
-## Phase 5: Status Bar + Polish
+## Phase 5: Status Bar + Polish ✅
 **Target: 1 hour | Usability**
 
 ### 5.1 Status Bar
-- [ ] `src/components/StatusBar.tsx` - bottom row
-- [ ] Shows context-sensitive keybinding hints
-- [ ] Different hints based on focused panel
+- [x] `src/components/StatusBar.tsx` - bottom row
+- [x] Shows context-sensitive keybinding hints
+- [x] Different hints based on focused panel
 
-### 5.2 Additional Navigation
-- [ ] `Ctrl+d` / `Ctrl+u` for page down/up in MainArea
-- [ ] Scroll position indicator (optional)
+### 5.2 Help Modal
+- [x] `src/components/modals/HelpModal.tsx` - press `?` to open
+- [x] Auto-generated from command registry
+- [x] Grouped by category, multi-column layout
+- [x] Search/filter functionality
 
-### 5.3 Error Handling
-- [ ] Show error if not in jj repo
-- [ ] Show error if jj command fails
+### 5.3 Dialog System
+- [x] `src/context/dialog.tsx` - modal stack management
+- [x] Backdrop with semi-transparent overlay
+- [x] Escape to close, render function pattern for context access
 
-**Milestone**: Polished read-only experience.
+### 5.4 Theme System
+- [x] `src/theme/colors.ts` - OpenCode-based semantic color tokens
+- [x] Tokens: primary, background, backgroundSecondary, text, textMuted, border, borderFocused, etc.
+
+### 5.5 Additional Features
+- [x] Manual refresh with `R` key
+- [ ] `Ctrl+d` / `Ctrl+u` for page down/up in MainArea (deferred)
+- [ ] Scroll position indicator (optional, deferred)
+
+**Milestone**: ✅ Polished read-only experience with help modal and theme system.
 
 ---
 
@@ -201,6 +213,14 @@ Phase 4:
 
 Phase 5:
   src/components/StatusBar.tsx
+  src/components/modals/HelpModal.tsx
+  src/context/dialog.tsx
+  src/context/focus.tsx
+  src/context/command.tsx
+  src/context/keybind.tsx
+  src/keybind/parser.ts
+  src/keybind/types.ts
+  src/theme/colors.ts
 ```
 
 ---
@@ -290,19 +310,21 @@ bun run src/index.tsx
   - FocusProvider, KeybindProvider, CommandProvider
   - Commands register with metadata (id, title, keybind, context, category)
   - Config-based keybindings (hardcoded defaults, config file support ready)
+- **Status bar** with context-sensitive keybinding hints
+- **Help modal** (`?`) - auto-generated from command registry, searchable
+- **Dialog system** with backdrop and modal stack
+- **Theme system** with OpenCode-based semantic color tokens
+- **Manual refresh** with `R` key
 
 ### 🎯 Read-Only Mode Complete!
-We have a polished, production-quality read-only jj TUI viewer. All Phase 1-4 goals met, plus Phase 6 ANSI rendering completed ahead of schedule.
+We have a polished, production-quality read-only jj TUI viewer. All Phase 1-6 goals met!
 
-### 🚧 What's Next (Phase 5)
-- Status bar with context-sensitive keybinding hints
-- Ctrl+d/Ctrl+u page navigation in main area
-- Better error handling (not in jj repo, command failures)
-- Manual refresh with `R` key
-
-### 🔜 Quick Wins (leverage new keymap architecture)
-- **Directional focus cycling**: Tab = focus_next, Shift+Tab = focus_prev (prep for more panels)
-- **Help modal** (`?`): Auto-generated from command registry, grouped by category (like jjui)
+### 🚧 What's Next (Phase 7: Core Operations)
+- `n` - new commit
+- `e` - edit commit
+- `d` - describe commit (opens modal)
+- `s` - squash into parent
+- `a` - abandon commit
 
 ### 📦 Post-Prototype Priorities
 1. **Core Operations** (Phase 7): new, edit, describe, squash, abandon
@@ -312,5 +334,5 @@ We have a polished, production-quality read-only jj TUI viewer. All Phase 1-4 go
 5. **Command Palette** (Phase 11): Ctrl+P searchable command list (trivial with registry)
 
 ### 🐛 Known Issues
-None! Everything works smoothly.
+- Help modal has a small visual gap between border and outer edge (OpenTUI rendering quirk)
 

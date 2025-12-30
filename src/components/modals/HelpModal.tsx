@@ -1,8 +1,8 @@
 import { type Accessor, For, Show, createMemo, createSignal } from "solid-js"
-import { useCommand, type CommandOption } from "../../context/command"
-import type { KeybindConfigKey } from "../../keybind"
+import { type CommandOption, useCommand } from "../../context/command"
 import { useDialog } from "../../context/dialog"
 import { useKeybind } from "../../context/keybind"
+import type { KeybindConfigKey } from "../../keybind"
 import { colors } from "../../theme"
 
 interface CategoryGroup {
@@ -67,13 +67,13 @@ export function HelpModal() {
 			flexDirection="column"
 			border
 			borderColor={colors.borderFocused}
-			backgroundColor="#1a1b26"
+			backgroundColor={colors.backgroundSecondary}
 			padding={1}
 			width="90%"
 			height="80%"
 		>
 			<box flexDirection="row" marginBottom={1}>
-				<text fg={colors.textAuthor}>Search: </text>
+				<text fg={colors.primary}>Search: </text>
 				<input
 					focused
 					placeholder="Type to filter..."
@@ -89,18 +89,18 @@ export function HelpModal() {
 							<For each={column}>
 								{(group) => (
 									<box flexDirection="column" marginBottom={1}>
-										<text fg={colors.borderFocused}>
+										<text fg={colors.primary}>
 											<b>{group.name}</b>
 										</text>
 										<For each={group.commands}>
 											{(cmd) => (
-												<text>
+												<text fg={colors.text}>
 													<Show
 														when={cmd.keybind}
 														fallback={<span>{"        "}</span>}
 													>
 														{(kb: Accessor<KeybindConfigKey>) => (
-															<span style={{ fg: colors.textTimestamp }}>
+															<span style={{ fg: colors.primary }}>
 																{keybind.print(kb()).padEnd(8)}
 															</span>
 														)}
@@ -118,7 +118,7 @@ export function HelpModal() {
 			</box>
 
 			<box marginTop={1}>
-				<text fg="#666666">Press Esc or Enter to close</text>
+				<text fg={colors.textMuted}>Press Esc or Enter to close</text>
 			</box>
 		</box>
 	)

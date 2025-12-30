@@ -64,7 +64,7 @@ function AppContent() {
 			keybind: "help",
 			context: "global",
 			category: "UI",
-			onSelect: () => dialog.open(<HelpModal />),
+			onSelect: () => dialog.open(() => <HelpModal />),
 		},
 		{
 			id: "global.refresh",

@@ -62,7 +62,7 @@ export function LogPanel() {
 			flexGrow={1}
 			height="100%"
 			border
-			borderColor={isFocused() ? colors.borderFocused : colors.borderDefault}
+			borderColor={isFocused() ? colors.borderFocused : colors.border}
 			overflow="hidden"
 			gap={0}
 		>
@@ -81,7 +81,7 @@ export function LogPanel() {
 								{(line) => (
 									<box
 										backgroundColor={
-											isSelected() ? colors.selectionBg : undefined
+											isSelected() ? colors.selectionBackground : undefined
 										}
 										overflow="hidden"
 									>
