@@ -1,15 +1,16 @@
+import { useRenderer } from "@opentui/solid"
 import {
 	type JSX,
 	createContext,
 	createEffect,
 	createSignal,
+	onCleanup,
+	onMount,
 	useContext,
 } from "solid-js"
 import { fetchDiff } from "../commander/diff"
 import { fetchLog } from "../commander/log"
 import type { Commit } from "../commander/types"
-
-type FocusedPanel = "log" | "diff"
 
 interface SyncContextValue {
 	commits: () => Commit[]
@@ -26,13 +27,15 @@ interface SyncContextValue {
 	diff: () => string | null
 	diffLoading: () => boolean
 	diffError: () => string | null
-	focusedPanel: () => FocusedPanel
-	toggleFocus: () => void
+	terminalWidth: () => number
+	terminalHeight: () => number
+	mainAreaWidth: () => number
 }
 
 const SyncContext = createContext<SyncContextValue>()
 
 export function SyncProvider(props: { children: JSX.Element }) {
+	const renderer = useRenderer()
 	const [commits, setCommits] = createSignal<Commit[]>([])
 	const [selectedIndex, setSelectedIndex] = createSignal(0)
 	const [loading, setLoading] = createSignal(false)
@@ -40,11 +43,24 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	const [diff, setDiff] = createSignal<string | null>(null)
 	const [diffLoading, setDiffLoading] = createSignal(false)
 	const [diffError, setDiffError] = createSignal<string | null>(null)
-	const [focusedPanel, setFocusedPanel] = createSignal<FocusedPanel>("log")
+	const [terminalWidth, setTerminalWidth] = createSignal(renderer.width)
+	const [terminalHeight, setTerminalHeight] = createSignal(renderer.height)
 
-	const toggleFocus = () => {
-		setFocusedPanel((p) => (p === "log" ? "diff" : "log"))
+	const mainAreaWidth = () => {
+		const width = terminalWidth()
+		const mainAreaRatio = 2 / 3
+		const borderWidth = 2
+		return Math.floor(width * mainAreaRatio) - borderWidth
 	}
+
+	onMount(() => {
+		const handleResize = (width: number, height: number) => {
+			setTerminalWidth(width)
+			setTerminalHeight(height)
+		}
+		renderer.on("resize", handleResize)
+		onCleanup(() => renderer.off("resize", handleResize))
+	})
 
 	const selectPrev = () => {
 		setSelectedIndex((i) => Math.max(0, i - 1))
@@ -67,13 +83,12 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	let diffDebounceTimer: ReturnType<typeof setTimeout> | null = null
 	let currentDiffChangeId: string | null = null
 
-	const loadDiff = async (changeId: string) => {
+	const loadDiff = async (changeId: string, columns: number) => {
 		currentDiffChangeId = changeId
 		setDiffLoading(true)
 		setDiffError(null)
 		try {
-			const result = await fetchDiff(changeId)
-			// Only update if this is still the current request
+			const result = await fetchDiff(changeId, { columns })
 			if (currentDiffChangeId === changeId) {
 				setDiff(result)
 			}
@@ -91,12 +106,13 @@ export function SyncProvider(props: { children: JSX.Element }) {
 
 	createEffect(() => {
 		const commit = selectedCommit()
+		const columns = mainAreaWidth()
 		if (commit) {
 			if (diffDebounceTimer) {
 				clearTimeout(diffDebounceTimer)
 			}
 			diffDebounceTimer = setTimeout(() => {
-				loadDiff(commit.changeId)
+				loadDiff(commit.changeId, columns)
 			}, 100)
 		}
 	})
@@ -130,8 +146,9 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		diff,
 		diffLoading,
 		diffError,
-		focusedPanel,
-		toggleFocus,
+		terminalWidth,
+		terminalHeight,
+		mainAreaWidth,
 	}
 
 	return (

@@ -1,5 +1,6 @@
 import { Show } from "solid-js"
 import type { Commit } from "../../commander/types"
+import { useFocus } from "../../context/focus"
 import { useSync } from "../../context/sync"
 import { colors } from "../../theme"
 import { AnsiText } from "../AnsiText"
@@ -34,9 +35,10 @@ function CommitHeader(props: { commit: Commit }) {
 }
 
 export function MainArea() {
-	const { selectedCommit, diff, diffLoading, diffError, focusedPanel } =
-		useSync()
-	const isFocused = () => focusedPanel() === "diff"
+	const { selectedCommit, diff, diffLoading, diffError } = useSync()
+	const focus = useFocus()
+
+	const isFocused = () => focus.is("diff")
 
 	return (
 		<box

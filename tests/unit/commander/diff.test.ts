@@ -80,7 +80,7 @@ describe("fetchDiff", () => {
 				"always",
 				"--ignore-working-copy",
 			],
-			{ cwd: undefined },
+			{ cwd: undefined, env: {} },
 		)
 	})
 
@@ -92,11 +92,27 @@ describe("fetchDiff", () => {
 			success: true,
 		})
 
-		await fetchDiff("abc123", "/custom/path")
+		await fetchDiff("abc123", { cwd: "/custom/path" })
 
 		expect(mockExecute).toHaveBeenCalledWith(
 			["diff", "-r", "abc123", "--color", "always", "--ignore-working-copy"],
-			{ cwd: "/custom/path" },
+			{ cwd: "/custom/path", env: {} },
+		)
+	})
+
+	test("passes COLUMNS env var when columns option is set", async () => {
+		mockExecute.mockResolvedValueOnce({
+			stdout: "diff output",
+			stderr: "",
+			exitCode: 0,
+			success: true,
+		})
+
+		await fetchDiff("abc123", { columns: 80 })
+
+		expect(mockExecute).toHaveBeenCalledWith(
+			["diff", "-r", "abc123", "--color", "always", "--ignore-working-copy"],
+			{ cwd: undefined, env: { COLUMNS: "80" } },
 		)
 	})
 

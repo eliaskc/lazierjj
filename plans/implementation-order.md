@@ -286,6 +286,10 @@ bun run src/index.tsx
 - Auto-hiding scrollbar (shows only when needed)
 - Copy selection with Ctrl+Y
 - Proper text wrapping (word wrap in diff, no wrap in log)
+- **Keymap registry architecture** (Option B from keyboard-architecture.md)
+  - FocusProvider, KeybindProvider, CommandProvider
+  - Commands register with metadata (id, title, keybind, context, category)
+  - Config-based keybindings (hardcoded defaults, config file support ready)
 
 ### 🎯 Read-Only Mode Complete!
 We have a polished, production-quality read-only jj TUI viewer. All Phase 1-4 goals met, plus Phase 6 ANSI rendering completed ahead of schedule.
@@ -296,11 +300,16 @@ We have a polished, production-quality read-only jj TUI viewer. All Phase 1-4 go
 - Better error handling (not in jj repo, command failures)
 - Manual refresh with `R` key
 
+### 🔜 Quick Wins (leverage new keymap architecture)
+- **Directional focus cycling**: Tab = focus_next, Shift+Tab = focus_prev (prep for more panels)
+- **Help modal** (`?`): Auto-generated from command registry, grouped by category (like jjui)
+
 ### 📦 Post-Prototype Priorities
 1. **Core Operations** (Phase 7): new, edit, describe, squash, abandon
 2. **Modals** (Phase 8): describe modal, confirmation dialogs
 3. **Bookmarks Panel** (Phase 9): bookmark list, bookmark operations
 4. **Command Mode** (Phase 10): `:` command input and execution
+5. **Command Palette** (Phase 11): Ctrl+P searchable command list (trivial with registry)
 
 ### 🐛 Known Issues
 None! Everything works smoothly.

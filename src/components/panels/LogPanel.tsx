@@ -1,11 +1,60 @@
 import { For, Show } from "solid-js"
+import { useCommand } from "../../context/command"
+import { useFocus } from "../../context/focus"
 import { useSync } from "../../context/sync"
 import { colors } from "../../theme"
 import { AnsiText } from "../AnsiText"
 
 export function LogPanel() {
-	const { commits, selectedIndex, loading, error, focusedPanel } = useSync()
-	const isFocused = () => focusedPanel() === "log"
+	const {
+		commits,
+		selectedIndex,
+		loading,
+		error,
+		selectNext,
+		selectPrev,
+		selectFirst,
+		selectLast,
+	} = useSync()
+	const focus = useFocus()
+	const command = useCommand()
+
+	const isFocused = () => focus.is("log")
+
+	command.register(() => [
+		{
+			id: "log.next",
+			title: "Next commit",
+			keybind: "nav_down",
+			context: "log",
+			category: "Navigation",
+			onSelect: selectNext,
+		},
+		{
+			id: "log.prev",
+			title: "Previous commit",
+			keybind: "nav_up",
+			context: "log",
+			category: "Navigation",
+			onSelect: selectPrev,
+		},
+		{
+			id: "log.first",
+			title: "First commit",
+			keybind: "nav_first",
+			context: "log",
+			category: "Navigation",
+			onSelect: selectFirst,
+		},
+		{
+			id: "log.last",
+			title: "Last commit",
+			keybind: "nav_last",
+			context: "log",
+			category: "Navigation",
+			onSelect: selectLast,
+		},
+	])
 
 	return (
 		<box
