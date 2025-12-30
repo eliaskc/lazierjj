@@ -3,6 +3,9 @@ import type { Commit } from "./types"
 
 const MARKER = "__LJ__"
 
+// Strip ANSI escape codes from a string (for extracting clean metadata)
+const stripAnsi = (str: string) => str.replace(/\x1b\[[0-9;]*m/g, "")
+
 function buildTemplate(): string {
 	const prefix = [
 		`"${MARKER}"`,
@@ -31,11 +34,11 @@ export function parseLogOutput(output: string): Commit[] {
 
 				const gutter = parts[0] ?? ""
 				current = {
-					changeId: parts[1] ?? "",
-					commitId: parts[2] ?? "",
-					immutable: parts[3] === "true",
+					changeId: stripAnsi(parts[1] ?? ""),
+					commitId: stripAnsi(parts[2] ?? ""),
+					immutable: stripAnsi(parts[3] ?? "") === "true",
 					isWorkingCopy: gutter.includes("@"),
-					lines: [parts[4] ?? ""],
+					lines: [gutter + (parts[4] ?? "")],
 				}
 				continue
 			}
@@ -56,7 +59,7 @@ export function parseLogOutput(output: string): Commit[] {
 export async function fetchLog(cwd?: string): Promise<Commit[]> {
 	const template = buildTemplate()
 	const result = await execute(
-		["log", "--color", "never", "--template", template],
+		["log", "--color", "always", "--template", template],
 		{
 			cwd,
 		},

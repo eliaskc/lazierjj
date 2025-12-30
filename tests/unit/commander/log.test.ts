@@ -64,4 +64,16 @@ describe("parseLogOutput", () => {
 		expect(commits).toHaveLength(1)
 		expect(commits[0]?.lines).toHaveLength(1)
 	})
+
+	test("strips ANSI codes from metadata but preserves in display", () => {
+		const output =
+			"@  __LJ__\x1b[38;5;5mwzqtrynx\x1b[39m__LJ__\x1b[38;5;4mcec3ab64\x1b[39m__LJ__false__LJ__\x1b[1m\x1b[38;5;13mw\x1b[38;5;8mzqtrynx\x1b[39m feat: test"
+
+		const commits = parseLogOutput(output)
+
+		expect(commits[0]?.changeId).toBe("wzqtrynx")
+		expect(commits[0]?.commitId).toBe("cec3ab64")
+		expect(commits[0]?.lines[0]).toContain("@  ")
+		expect(commits[0]?.lines[0]).toContain("\x1b[")
+	})
 })

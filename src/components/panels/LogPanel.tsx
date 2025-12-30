@@ -1,15 +1,6 @@
 import { For, Show } from "solid-js"
 import { useSync } from "../../context/sync"
-
-function formatCommitLine(
-	changeId: string,
-	isWorkingCopy: boolean,
-	immutable: boolean,
-): string {
-	const marker = isWorkingCopy ? "@" : immutable ? "◆" : "○"
-	const shortId = changeId.slice(0, 8)
-	return `${marker} ${shortId}`
-}
+import { AnsiText } from "../AnsiText"
 
 export function LogPanel() {
 	const { commits, selectedIndex, loading, error, focusedPanel } = useSync()
@@ -31,19 +22,19 @@ export function LogPanel() {
 			</Show>
 			<Show when={!loading() && !error()}>
 				<For each={commits()}>
-					{(commit, index) => (
-						<box
-							backgroundColor={index() === selectedIndex() ? "blue" : undefined}
-						>
-							<text>
-								{formatCommitLine(
-									commit.changeId,
-									commit.isWorkingCopy,
-									commit.immutable,
-								)}
-							</text>
-						</box>
-					)}
+					{(commit, index) => {
+						const isSelected = () => index() === selectedIndex()
+						const content = () => commit.lines.join("\n")
+						return (
+							<box
+								border={isSelected() ? ["left"] : undefined}
+								borderColor={isSelected() ? "#4ECDC4" : undefined}
+								paddingLeft={isSelected() ? 0 : 1}
+							>
+								<AnsiText content={content()} />
+							</box>
+						)
+					}}
 				</For>
 			</Show>
 		</box>
