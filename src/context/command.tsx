@@ -11,6 +11,7 @@ export type CommandOption = {
 	keybind?: KeybindConfigKey
 	context?: FocusContext | "global"
 	category?: string
+	hidden?: boolean
 	onSelect: () => void
 }
 

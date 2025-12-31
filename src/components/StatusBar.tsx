@@ -25,6 +25,7 @@ export function StatusBar() {
 
 		const seen = new Set<string>()
 		return combined.filter((cmd) => {
+			if (cmd.hidden) return false
 			if (seen.has(cmd.id)) return false
 			seen.add(cmd.id)
 			return true

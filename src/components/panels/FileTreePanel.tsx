@@ -33,8 +33,6 @@ export function FileTreePanel() {
 		toggleFolder,
 		selectNextFile,
 		selectPrevFile,
-		selectFirstFile,
-		selectLastFile,
 	} = useSync()
 	const focus = useFocus()
 	const command = useCommand()
@@ -98,22 +96,7 @@ export function FileTreePanel() {
 			category: "Navigation",
 			onSelect: selectPrevFile,
 		},
-		{
-			id: "files.first",
-			title: "First file",
-			keybind: "nav_first",
-			context: "log",
-			category: "Navigation",
-			onSelect: selectFirstFile,
-		},
-		{
-			id: "files.last",
-			title: "Last file",
-			keybind: "nav_last",
-			context: "log",
-			category: "Navigation",
-			onSelect: selectLastFile,
-		},
+
 		{
 			id: "files.toggle_or_select",
 			title: "Toggle folder / Select file",

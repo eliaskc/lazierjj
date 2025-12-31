@@ -14,8 +14,6 @@ export function LogPanel() {
 		error,
 		selectNext,
 		selectPrev,
-		selectFirst,
-		selectLast,
 		enterFilesView,
 		viewMode,
 	} = useSync()
@@ -82,22 +80,7 @@ export function LogPanel() {
 			category: "Navigation",
 			onSelect: selectPrev,
 		},
-		{
-			id: "log.first",
-			title: "First commit",
-			keybind: "nav_first",
-			context: "log",
-			category: "Navigation",
-			onSelect: selectFirst,
-		},
-		{
-			id: "log.last",
-			title: "Last commit",
-			keybind: "nav_last",
-			context: "log",
-			category: "Navigation",
-			onSelect: selectLast,
-		},
+
 		{
 			id: "log.enter_files",
 			title: "View files",

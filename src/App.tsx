@@ -55,7 +55,7 @@ function AppContent() {
 				process.exit(0)
 			},
 		},
-		...(typeof DEV === "undefined" || DEV
+		...(typeof DEV !== "undefined" && DEV === true
 			? [
 					{
 						id: "global.toggle_console",
@@ -73,6 +73,7 @@ function AppContent() {
 			keybind: "focus_next",
 			context: "global",
 			category: "UI",
+			hidden: true,
 			onSelect: () => focus.cycleNext(),
 		},
 		{
@@ -81,6 +82,7 @@ function AppContent() {
 			keybind: "focus_prev",
 			context: "global",
 			category: "UI",
+			hidden: true,
 			onSelect: () => focus.cyclePrev(),
 		},
 		{
@@ -89,6 +91,7 @@ function AppContent() {
 			keybind: "focus_panel_1",
 			context: "global",
 			category: "UI",
+			hidden: true,
 			onSelect: () => focus.set("log"),
 		},
 		{
@@ -97,6 +100,7 @@ function AppContent() {
 			keybind: "focus_panel_2",
 			context: "global",
 			category: "UI",
+			hidden: true,
 			onSelect: () => focus.set("bookmarks"),
 		},
 		{
@@ -105,6 +109,7 @@ function AppContent() {
 			keybind: "focus_panel_3",
 			context: "global",
 			category: "UI",
+			hidden: true,
 			onSelect: () => focus.set("diff"),
 		},
 		{

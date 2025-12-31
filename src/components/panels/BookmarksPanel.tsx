@@ -29,8 +29,6 @@ export function BookmarksPanel() {
 		bookmarksError,
 		selectNextBookmark,
 		selectPrevBookmark,
-		selectFirstBookmark,
-		selectLastBookmark,
 		bookmarkViewMode,
 		bookmarkCommits,
 		selectedBookmarkCommitIndex,
@@ -46,12 +44,8 @@ export function BookmarksPanel() {
 		exitBookmarkView,
 		selectPrevBookmarkCommit,
 		selectNextBookmarkCommit,
-		selectFirstBookmarkCommit,
-		selectLastBookmarkCommit,
 		selectPrevBookmarkFile,
 		selectNextBookmarkFile,
-		selectFirstBookmarkFile,
-		selectLastBookmarkFile,
 		toggleBookmarkFolder,
 	} = useSync()
 	const focus = useFocus()
@@ -182,22 +176,7 @@ export function BookmarksPanel() {
 					category: "Navigation",
 					onSelect: selectPrevBookmarkFile,
 				},
-				{
-					id: "bookmark_files.first",
-					title: "First file",
-					keybind: "nav_first",
-					context: "bookmarks",
-					category: "Navigation",
-					onSelect: selectFirstBookmarkFile,
-				},
-				{
-					id: "bookmark_files.last",
-					title: "Last file",
-					keybind: "nav_last",
-					context: "bookmarks",
-					category: "Navigation",
-					onSelect: selectLastBookmarkFile,
-				},
+
 				{
 					id: "bookmark_files.toggle",
 					title: "Toggle folder",
@@ -235,22 +214,7 @@ export function BookmarksPanel() {
 					category: "Navigation",
 					onSelect: selectPrevBookmarkCommit,
 				},
-				{
-					id: "bookmark_commits.first",
-					title: "First commit",
-					keybind: "nav_first",
-					context: "bookmarks",
-					category: "Navigation",
-					onSelect: selectFirstBookmarkCommit,
-				},
-				{
-					id: "bookmark_commits.last",
-					title: "Last commit",
-					keybind: "nav_last",
-					context: "bookmarks",
-					category: "Navigation",
-					onSelect: selectLastBookmarkCommit,
-				},
+
 				{
 					id: "bookmark_commits.enter",
 					title: "View files",
@@ -287,22 +251,7 @@ export function BookmarksPanel() {
 				category: "Navigation",
 				onSelect: selectPrevBookmark,
 			},
-			{
-				id: "bookmarks.first",
-				title: "First bookmark",
-				keybind: "nav_first",
-				context: "bookmarks",
-				category: "Navigation",
-				onSelect: selectFirstBookmark,
-			},
-			{
-				id: "bookmarks.last",
-				title: "Last bookmark",
-				keybind: "nav_last",
-				context: "bookmarks",
-				category: "Navigation",
-				onSelect: selectLastBookmark,
-			},
+
 			{
 				id: "bookmarks.enter",
 				title: "View commits",
