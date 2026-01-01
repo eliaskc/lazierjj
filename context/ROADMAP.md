@@ -13,17 +13,18 @@
 | Area | Description | Plan |
 |------|-------------|------|
 | **Core Operations** | `new`, `edit`, `describe`, `squash`, `abandon` | [Details below](#core-operations) |
-| **Diff Viewing** | Side-by-side, layout modes, difftastic integration | [plans/diff-viewing.md](./plans/diff-viewing.md) |
+| **Performance** | Profile and fix lag in bookmarks navigation | [Details below](#performance-investigation) |
+| **Command Palette** | Unified help + command execution | [Details below](#command-palette) |
+| **Mouse Support** | Click to focus, scroll, double-click actions | — |
 | **Configuration** | User config file, theme selection, custom keybinds | [plans/configuration.md](./plans/configuration.md) |
-| **Keybindings** | Context-aware keybinds, status bar visibility | [plans/keybindings.md](./plans/keybindings.md) |
 
 ### Medium Priority
 
 | Area | Description | Plan |
 |------|-------------|------|
-| **Command Palette** | Unified help + command execution | [Details below](#command-palette) |
+| **Keybindings** | Context-aware keybinds, status bar visibility | [plans/keybindings.md](./plans/keybindings.md) |
+| **Diff Viewing** | Side-by-side, layout modes, difftastic integration | [plans/diff-viewing.md](./plans/diff-viewing.md) |
 | **Release Flows** | bunx, Homebrew, npm publishing | [plans/release-flows.md](./plans/release-flows.md) |
-| **Mouse Support** | Click to focus, scroll, double-click actions | — |
 | **Auto-Refresh** | Watch filesystem, refresh on changes | — |
 
 ### Nice-to-Have
@@ -73,6 +74,25 @@ For destructive operations (abandon, undo):
 - Show commit description
 - `y` or Enter = confirm
 - `n` or Escape = cancel
+
+---
+
+## Performance Investigation
+
+Noticeable lag when navigating commits in bookmarks panel.
+
+**Suspected causes:**
+- Diff rendering (ANSI parsing via ghostty-opentui)
+- Frequent re-renders during navigation
+- Debouncing may not be aggressive enough
+
+**Investigation steps:**
+1. Static analysis first — trace the code path for navigation events
+2. Profile with `bun --inspect` or console timing
+3. Identify hot paths (diff loading? ANSI parsing? rendering?)
+4. Consider: memoization, virtualization, or async loading patterns
+
+**Success criteria:** Navigation feels instant (<50ms perceived lag)
 
 ---
 

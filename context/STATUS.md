@@ -61,7 +61,7 @@
 
 - Noticeable lag when navigating commits in bookmarks tab
   - Likely culprit: diff rendering and/or ANSI parsing
-  - Needs profiling
+  - See [ROADMAP.md#performance-investigation](./ROADMAP.md#performance-investigation) for investigation plan
 
 ### UX Polish Needed
 
