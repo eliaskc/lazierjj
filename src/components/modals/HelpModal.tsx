@@ -1,20 +1,42 @@
-import { type Accessor, For, Show, createMemo, createSignal } from "solid-js"
+import { useRenderer } from "@opentui/solid"
+import {
+	type Accessor,
+	For,
+	Show,
+	createMemo,
+	createSignal,
+	onCleanup,
+	onMount,
+} from "solid-js"
 import { type CommandOption, useCommand } from "../../context/command"
 import { useDialog } from "../../context/dialog"
 import { useKeybind } from "../../context/keybind"
+import { useTheme } from "../../context/theme"
 import type { KeybindConfigKey } from "../../keybind"
-import { colors } from "../../theme"
 
 interface CategoryGroup {
 	name: string
 	commands: CommandOption[]
 }
 
+const NARROW_THRESHOLD = 100
+
 export function HelpModal() {
+	const renderer = useRenderer()
 	const command = useCommand()
 	const keybind = useKeybind()
 	const dialog = useDialog()
+	const { colors, style } = useTheme()
 	const [filter, setFilter] = createSignal("")
+	const [terminalWidth, setTerminalWidth] = createSignal(renderer.width)
+
+	onMount(() => {
+		const handleResize = (width: number) => setTerminalWidth(width)
+		renderer.on("resize", handleResize)
+		onCleanup(() => renderer.off("resize", handleResize))
+	})
+
+	const columnCount = () => (terminalWidth() < NARROW_THRESHOLD ? 1 : 3)
 
 	const groupedCommands = createMemo(() => {
 		const all = command.all()
@@ -44,19 +66,16 @@ export function HelpModal() {
 		return result.sort((a, b) => a.name.localeCompare(b.name))
 	})
 
-	const columnCount = 3
 	const columns = createMemo(() => {
 		const groups = groupedCommands()
-		const cols: CategoryGroup[][] = Array.from(
-			{ length: columnCount },
-			() => [],
-		)
+		const numCols = columnCount()
+		const cols: CategoryGroup[][] = Array.from({ length: numCols }, () => [])
 
 		let colIndex = 0
 		for (const group of groups) {
 			const col = cols[colIndex]
 			if (col) col.push(group)
-			colIndex = (colIndex + 1) % columnCount
+			colIndex = (colIndex + 1) % numCols
 		}
 
 		return cols
@@ -66,14 +85,16 @@ export function HelpModal() {
 		<box
 			flexDirection="column"
 			border
-			borderColor={colors.borderFocused}
-			backgroundColor={colors.backgroundSecondary}
+			borderStyle={style().panel.borderStyle}
+			borderColor={colors().borderFocused}
+			backgroundColor={colors().background}
 			padding={1}
-			width="90%"
+			width="80%"
 			height="80%"
+			title="Commands"
 		>
 			<box flexDirection="row" marginBottom={1}>
-				<text fg={colors.primary}>Search: </text>
+				<text fg={colors().textMuted}>Search: </text>
 				<input
 					focused
 					placeholder="Type to filter..."
@@ -89,24 +110,24 @@ export function HelpModal() {
 							<For each={column}>
 								{(group) => (
 									<box flexDirection="column" marginBottom={1}>
-										<text fg={colors.primary}>
-											<b>{group.name}</b>
-										</text>
+										<box flexDirection="row">
+											<box width={10} flexShrink={0} />
+											<text fg={colors().primary}> {group.name}</text>
+										</box>
 										<For each={group.commands}>
 											{(cmd) => (
-												<text fg={colors.text}>
-													<Show
-														when={cmd.keybind}
-														fallback={<span>{"        "}</span>}
-													>
-														{(kb: Accessor<KeybindConfigKey>) => (
-															<span style={{ fg: colors.primary }}>
-																{keybind.print(kb()).padEnd(8)}
-															</span>
-														)}
-													</Show>{" "}
-													{cmd.title}
-												</text>
+												<box flexDirection="row">
+													<box width={10} flexShrink={0}>
+														<Show when={cmd.keybind}>
+															{(kb: Accessor<KeybindConfigKey>) => (
+																<text fg={colors().info} wrapMode="none">
+																	{keybind.print(kb()).padStart(9)}
+																</text>
+															)}
+														</Show>
+													</box>
+													<text fg={colors().text}> {cmd.title}</text>
+												</box>
 											)}
 										</For>
 									</box>
@@ -118,7 +139,7 @@ export function HelpModal() {
 			</box>
 
 			<box marginTop={1}>
-				<text fg={colors.textMuted}>Press Esc or Enter to close</text>
+				<text fg={colors().textMuted}>Press Esc or Enter to close</text>
 			</box>
 		</box>
 	)

@@ -3,8 +3,9 @@ import { For, Show, createEffect, createSignal } from "solid-js"
 import { useCommand } from "../../context/command"
 import { useFocus } from "../../context/focus"
 import { useSync } from "../../context/sync"
-import { colors } from "../../theme"
+import { useTheme } from "../../context/theme"
 import { AnsiText } from "../AnsiText"
+import { Panel } from "../Panel"
 
 export function LogPanel() {
 	const {
@@ -19,9 +20,10 @@ export function LogPanel() {
 	} = useSync()
 	const focus = useFocus()
 	const command = useCommand()
+	const { colors } = useTheme()
 
 	const isFocused = () => focus.is("log")
-	const title = () => (viewMode() === "files" ? "[1] Files" : "[1] Log")
+	const title = () => (viewMode() === "files" ? "Files" : "Log")
 
 	let scrollRef: ScrollBoxRenderable | undefined
 	const [scrollTop, setScrollTop] = createSignal(0)
@@ -92,20 +94,7 @@ export function LogPanel() {
 	])
 
 	return (
-		<box
-			flexDirection="column"
-			flexGrow={1}
-			height="100%"
-			border
-			borderColor={isFocused() ? colors.borderFocused : colors.border}
-			overflow="hidden"
-			gap={0}
-		>
-			<box backgroundColor={colors.backgroundSecondary}>
-				<text fg={isFocused() ? colors.primary : colors.textMuted}>
-					{title()}
-				</text>
-			</box>
+		<Panel title={title()} hotkey="1" focused={isFocused()}>
 			<Show when={loading()}>
 				<text>Loading...</text>
 			</Show>
@@ -126,7 +115,7 @@ export function LogPanel() {
 									{(line) => (
 										<box
 											backgroundColor={
-												isSelected() ? colors.selectionBackground : undefined
+												isSelected() ? colors().selectionBackground : undefined
 											}
 											overflow="hidden"
 										>
@@ -143,6 +132,6 @@ export function LogPanel() {
 					</For>
 				</scrollbox>
 			</Show>
-		</box>
+		</Panel>
 	)
 }

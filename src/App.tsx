@@ -11,6 +11,7 @@ import { DialogContainer, DialogProvider, useDialog } from "./context/dialog"
 import { FocusProvider, useFocus } from "./context/focus"
 import { KeybindProvider } from "./context/keybind"
 import { SyncProvider, useSync } from "./context/sync"
+import { ThemeProvider } from "./context/theme"
 
 function TopPanel() {
 	const { viewMode } = useSync()
@@ -146,16 +147,18 @@ function AppContent() {
 
 export function App() {
 	return (
-		<SyncProvider>
-			<FocusProvider>
-				<KeybindProvider>
-					<DialogProvider>
-						<CommandProvider>
-							<AppContent />
-						</CommandProvider>
-					</DialogProvider>
-				</KeybindProvider>
-			</FocusProvider>
-		</SyncProvider>
+		<ThemeProvider>
+			<SyncProvider>
+				<FocusProvider>
+					<KeybindProvider>
+						<DialogProvider>
+							<CommandProvider>
+								<AppContent />
+							</CommandProvider>
+						</DialogProvider>
+					</KeybindProvider>
+				</FocusProvider>
+			</SyncProvider>
+		</ThemeProvider>
 	)
 }

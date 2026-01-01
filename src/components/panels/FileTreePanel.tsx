@@ -3,15 +3,8 @@ import { For, Show, createEffect, createSignal } from "solid-js"
 import { useCommand } from "../../context/command"
 import { useFocus } from "../../context/focus"
 import { useSync } from "../../context/sync"
-import { colors } from "../../theme"
-
-const STATUS_COLORS: Record<string, string> = {
-	added: colors.success,
-	modified: colors.warning,
-	deleted: colors.error,
-	renamed: colors.info,
-	copied: colors.info,
-}
+import { useTheme } from "../../context/theme"
+import { Panel } from "../Panel"
 
 const STATUS_CHARS: Record<string, string> = {
 	added: "A",
@@ -36,6 +29,15 @@ export function FileTreePanel() {
 	} = useSync()
 	const focus = useFocus()
 	const command = useCommand()
+	const { colors } = useTheme()
+
+	const statusColors = () => ({
+		added: colors().success,
+		modified: colors().warning,
+		deleted: colors().error,
+		renamed: colors().info,
+		copied: colors().info,
+	})
 
 	const isFocused = () => focus.is("log")
 
@@ -117,28 +119,15 @@ export function FileTreePanel() {
 
 	const commit = selectedCommit()
 	const title = () =>
-		commit ? `[1] Files (${commit.changeId.slice(0, 8)})` : "[1] Files"
+		commit ? `Files (${commit.changeId.slice(0, 8)})` : "Files"
 
 	return (
-		<box
-			flexDirection="column"
-			flexGrow={1}
-			height="100%"
-			border
-			borderColor={isFocused() ? colors.borderFocused : colors.border}
-			overflow="hidden"
-			gap={0}
-		>
-			<box backgroundColor={colors.backgroundSecondary}>
-				<text fg={isFocused() ? colors.primary : colors.textMuted}>
-					{title()}
-				</text>
-			</box>
+		<Panel title={title()} hotkey="1" focused={isFocused()}>
 			<Show when={filesLoading()}>
-				<text fg={colors.textMuted}>Loading files...</text>
+				<text fg={colors().textMuted}>Loading files...</text>
 			</Show>
 			<Show when={filesError()}>
-				<text fg={colors.error}>Error: {filesError()}</text>
+				<text fg={colors().error}>Error: {filesError()}</text>
 			</Show>
 			<Show when={!filesLoading() && !filesError()}>
 				<scrollbox
@@ -159,21 +148,25 @@ export function FileTreePanel() {
 								? (STATUS_CHARS[node.status] ?? " ")
 								: " "
 							const statusColor = node.status
-								? STATUS_COLORS[node.status]
-								: colors.text
+								? (statusColors()[
+										node.status as keyof ReturnType<typeof statusColors>
+									] ?? colors().text)
+								: colors().text
 
 							return (
 								<box
 									backgroundColor={
-										isSelected() ? colors.selectionBackground : undefined
+										isSelected() ? colors().selectionBackground : undefined
 									}
 									overflow="hidden"
 								>
 									<text>
-										<span style={{ fg: colors.textMuted }}>{indent}</span>
+										<span style={{ fg: colors().textMuted }}>{indent}</span>
 										<span
 											style={{
-												fg: node.isDirectory ? colors.info : colors.textMuted,
+												fg: node.isDirectory
+													? colors().info
+													: colors().textMuted,
 											}}
 										>
 											{icon}{" "}
@@ -183,7 +176,7 @@ export function FileTreePanel() {
 										</Show>
 										<span
 											style={{
-												fg: node.isDirectory ? colors.info : colors.text,
+												fg: node.isDirectory ? colors().info : colors().text,
 											}}
 										>
 											{node.name}
@@ -195,6 +188,6 @@ export function FileTreePanel() {
 					</For>
 				</scrollbox>
 			</Show>
-		</box>
+		</Panel>
 	)
 }

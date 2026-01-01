@@ -3,15 +3,8 @@ import { For, Match, Show, Switch, createEffect, createSignal } from "solid-js"
 import { useCommand } from "../../context/command"
 import { useFocus } from "../../context/focus"
 import { useSync } from "../../context/sync"
-import { colors } from "../../theme"
-
-const STATUS_COLORS: Record<string, string> = {
-	added: colors.success,
-	modified: colors.warning,
-	deleted: colors.error,
-	renamed: colors.info,
-	copied: colors.info,
-}
+import { useTheme } from "../../context/theme"
+import { Panel } from "../Panel"
 
 const STATUS_CHARS: Record<string, string> = {
 	added: "A",
@@ -50,6 +43,15 @@ export function BookmarksPanel() {
 	} = useSync()
 	const focus = useFocus()
 	const command = useCommand()
+	const { colors } = useTheme()
+
+	const statusColors = () => ({
+		added: colors().success,
+		modified: colors().warning,
+		deleted: colors().error,
+		renamed: colors().info,
+		copied: colors().info,
+	})
 
 	const isFocused = () => focus.is("bookmarks")
 	const localBookmarks = () => bookmarks().filter((b) => b.isLocal)
@@ -132,12 +134,12 @@ export function BookmarksPanel() {
 		const mode = bookmarkViewMode()
 		if (mode === "files") {
 			const commit = selectedBookmarkCommit()
-			return commit ? `[2] Files (${commit.changeId.slice(0, 8)})` : "[2] Files"
+			return commit ? `Files (${commit.changeId.slice(0, 8)})` : "Files"
 		}
 		if (mode === "commits") {
-			return `[2] Commits (${activeBookmarkName()})`
+			return `Commits (${activeBookmarkName()})`
 		}
-		return "[2] Bookmarks"
+		return "Bookmarks"
 	}
 
 	const handleListEnter = () => {
@@ -264,33 +266,19 @@ export function BookmarksPanel() {
 	})
 
 	return (
-		<box
-			flexDirection="column"
-			flexGrow={1}
-			height="100%"
-			border
-			borderColor={isFocused() ? colors.borderFocused : colors.border}
-			overflow="hidden"
-			gap={0}
-		>
-			<box backgroundColor={colors.backgroundSecondary}>
-				<text fg={isFocused() ? colors.primary : colors.textMuted}>
-					{title()}
-				</text>
-			</box>
-
+		<Panel title={title()} hotkey="2" focused={isFocused()}>
 			<Switch>
 				<Match when={bookmarkViewMode() === "list"}>
 					<Show when={bookmarksLoading()}>
-						<text fg={colors.textMuted}>Loading bookmarks...</text>
+						<text fg={colors().textMuted}>Loading bookmarks...</text>
 					</Show>
 					<Show when={bookmarksError()}>
-						<text fg={colors.error}>Error: {bookmarksError()}</text>
+						<text fg={colors().error}>Error: {bookmarksError()}</text>
 					</Show>
 					<Show when={!bookmarksLoading() && !bookmarksError()}>
 						<Show
 							when={localBookmarks().length > 0}
-							fallback={<text fg={colors.textMuted}>No bookmarks</text>}
+							fallback={<text fg={colors().textMuted}>No bookmarks</text>}
 						>
 							<scrollbox
 								ref={listScrollRef}
@@ -303,15 +291,17 @@ export function BookmarksPanel() {
 										return (
 											<box
 												backgroundColor={
-													isSelected() ? colors.selectionBackground : undefined
+													isSelected()
+														? colors().selectionBackground
+														: undefined
 												}
 												overflow="hidden"
 											>
 												<text>
-													<span style={{ fg: colors.primary }}>
+													<span style={{ fg: colors().primary }}>
 														{bookmark.name}
 													</span>
-													<span style={{ fg: colors.textMuted }}>
+													<span style={{ fg: colors().textMuted }}>
 														{" "}
 														{bookmark.changeId.slice(0, 8)}
 													</span>
@@ -327,12 +317,12 @@ export function BookmarksPanel() {
 
 				<Match when={bookmarkViewMode() === "commits"}>
 					<Show when={bookmarkCommitsLoading()}>
-						<text fg={colors.textMuted}>Loading commits...</text>
+						<text fg={colors().textMuted}>Loading commits...</text>
 					</Show>
 					<Show when={!bookmarkCommitsLoading()}>
 						<Show
 							when={bookmarkCommits().length > 0}
-							fallback={<text fg={colors.textMuted}>No commits</text>}
+							fallback={<text fg={colors().textMuted}>No commits</text>}
 						>
 							<scrollbox
 								ref={commitsScrollRef}
@@ -347,7 +337,9 @@ export function BookmarksPanel() {
 										return (
 											<box
 												backgroundColor={
-													isSelected() ? colors.selectionBackground : undefined
+													isSelected()
+														? colors().selectionBackground
+														: undefined
 												}
 												overflow="hidden"
 											>
@@ -355,16 +347,16 @@ export function BookmarksPanel() {
 													<span
 														style={{
 															fg: commit.isWorkingCopy
-																? colors.primary
-																: colors.textMuted,
+																? colors().primary
+																: colors().textMuted,
 														}}
 													>
 														{icon}{" "}
 													</span>
-													<span style={{ fg: colors.warning }}>
+													<span style={{ fg: colors().warning }}>
 														{commit.changeId.slice(0, 8)}
 													</span>
-													<span style={{ fg: colors.text }}>
+													<span style={{ fg: colors().text }}>
 														{" "}
 														{commit.description}
 													</span>
@@ -380,12 +372,12 @@ export function BookmarksPanel() {
 
 				<Match when={bookmarkViewMode() === "files"}>
 					<Show when={bookmarkFilesLoading()}>
-						<text fg={colors.textMuted}>Loading files...</text>
+						<text fg={colors().textMuted}>Loading files...</text>
 					</Show>
 					<Show when={!bookmarkFilesLoading()}>
 						<Show
 							when={bookmarkFlatFiles().length > 0}
-							fallback={<text fg={colors.textMuted}>No files</text>}
+							fallback={<text fg={colors().textMuted}>No files</text>}
 						>
 							<scrollbox
 								ref={filesScrollRef}
@@ -410,23 +402,29 @@ export function BookmarksPanel() {
 											? (STATUS_CHARS[node.status] ?? " ")
 											: " "
 										const statusColor = node.status
-											? STATUS_COLORS[node.status]
-											: colors.text
+											? (statusColors()[
+													node.status as keyof ReturnType<typeof statusColors>
+												] ?? colors().text)
+											: colors().text
 
 										return (
 											<box
 												backgroundColor={
-													isSelected() ? colors.selectionBackground : undefined
+													isSelected()
+														? colors().selectionBackground
+														: undefined
 												}
 												overflow="hidden"
 											>
 												<text>
-													<span style={{ fg: colors.textMuted }}>{indent}</span>
+													<span style={{ fg: colors().textMuted }}>
+														{indent}
+													</span>
 													<span
 														style={{
 															fg: node.isDirectory
-																? colors.info
-																: colors.textMuted,
+																? colors().info
+																: colors().textMuted,
 														}}
 													>
 														{icon}{" "}
@@ -438,7 +436,9 @@ export function BookmarksPanel() {
 													</Show>
 													<span
 														style={{
-															fg: node.isDirectory ? colors.info : colors.text,
+															fg: node.isDirectory
+																? colors().info
+																: colors().text,
 														}}
 													>
 														{node.name}
@@ -453,6 +453,6 @@ export function BookmarksPanel() {
 					</Show>
 				</Match>
 			</Switch>
-		</box>
+		</Panel>
 	)
 }

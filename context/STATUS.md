@@ -1,6 +1,6 @@
 # lazierjj - Current Status
 
-> Last updated: 2025-12-31
+> Last updated: 2026-01-01
 
 ## What Works
 
@@ -27,10 +27,14 @@
 ### Infrastructure
 - **Keybind system** - Registry architecture with config support ready
 - **Command registry** - Commands register with metadata (id, title, keybind, context, category)
-- **Dialog system** - Modal stack with backdrop
-- **Theme system** - OpenCode-based semantic color tokens
-- **Status bar** - Context-sensitive keybinding hints
-- **Help modal** (`?`) - Auto-generated from command registry, searchable
+- **Dialog system** - Modal stack with backdrop, theme-aware overlay opacity
+- **Theme system** - Dual-theme support with hardcoded toggle:
+  - **lazygit theme**: Green accent, rounded borders, `•` separator, adapts to terminal background
+  - **opencode theme**: Peach accent, single borders, gap-based spacing, fixed dark background
+  - Themed scrollbars (track/thumb colors)
+  - Panel component with theme-aware borders
+- **Status bar** - Context-sensitive keybinding hints, theme-aware separator
+- **Help modal** (`?`) - Auto-generated from command registry, searchable, responsive columns
 
 ### Utilities
 - `R` - Manual refresh
@@ -55,7 +59,6 @@
 
 ### UX Polish Needed
 - `?` should toggle (also close) the help modal
-- Panel labels should sit on/inside border line (like lazygit)
 - Log and bookmark panels could be slightly wider
 
 ---

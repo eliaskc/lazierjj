@@ -9,6 +9,7 @@ import {
 	onMount,
 } from "solid-js"
 import { createSimpleContext } from "./helper"
+import { useTheme } from "./theme"
 
 interface DialogState {
 	render: () => JSX.Element
@@ -54,6 +55,7 @@ export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
 
 function DialogBackdrop(props: { onClose: () => void; children: JSX.Element }) {
 	const renderer = useRenderer()
+	const { style } = useTheme()
 	const [dimensions, setDimensions] = createSignal({
 		width: renderer.width,
 		height: renderer.height,
@@ -67,6 +69,9 @@ function DialogBackdrop(props: { onClose: () => void; children: JSX.Element }) {
 		onCleanup(() => renderer.off("resize", handleResize))
 	})
 
+	const overlayColor = () =>
+		RGBA.fromInts(0, 0, 0, style().dialog.overlayOpacity)
+
 	return (
 		<box
 			position="absolute"
@@ -74,7 +79,7 @@ function DialogBackdrop(props: { onClose: () => void; children: JSX.Element }) {
 			top={0}
 			width={dimensions().width}
 			height={dimensions().height}
-			backgroundColor={RGBA.fromInts(0, 0, 0, 150)}
+			backgroundColor={overlayColor()}
 			flexDirection="column"
 			justifyContent="center"
 			alignItems="center"

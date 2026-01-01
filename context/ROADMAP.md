@@ -66,26 +66,32 @@ The essential jj operations to make lazierjj actually useful for daily work.
 
 ### Theme System
 
-Expand theming to support terminal-native colors and named themes.
+Expand theming to support more themes and user configuration.
 
-#### Phase 1: Two Themes (MVP)
+#### ✅ Phase 1: Two Themes (DONE)
 
-**System Theme** - Adapts to user's terminal colors (like opencode):
-- Uses `none` for text/background to inherit terminal defaults
-- Generates grayscale from terminal's background color for contrast
-- Uses ANSI colors (0-15) for UI elements - respects terminal palette
-- Best for users who want lazierjj to match their terminal
+Implemented dual-theme system with hardcoded toggle (`ACTIVE_THEME` in `src/context/theme.tsx`):
 
-**OpenCode Theme** - Our default hardcoded theme:
-- Current color tokens (the OpenCode-inspired palette we have now)
-- Explicit hex colors for everything
+**lazygit theme**:
+- Green accent (`#7FD962`), rounded borders, `•` separator in status bar
+- `adaptToTerminal: true` - detects terminal background and adapts colors
+- Dialog overlay: transparent (0 opacity)
 
-**Initial Implementation**:
-- Toggle via code only (no UI yet)
-- Export `currentTheme` signal from theme context
-- Components read from theme context instead of hardcoded colors
+**opencode theme**:
+- Peach accent (`#fab283`), single borders, gap-based status bar spacing
+- `adaptToTerminal: false` - uses fixed dark background
+- Dialog overlay: semi-transparent (150 opacity)
+- Outer padding around layout
 
-#### Phase 2: Theme Switching (Later)
+**ThemeStyle config** controls:
+- `panel.borderStyle`: "rounded" | "single"
+- `statusBar.separator`: string | null (null = use gaps)
+- `dialog.overlayOpacity`: number
+- `adaptToTerminal`: boolean
+
+**Also themed**: scrollbar track/thumb colors, Panel component borders.
+
+#### Phase 2: Theme Switching (Future)
 
 Requires command picker (`Ctrl+P` or `/theme`):
 - List available themes
@@ -94,9 +100,9 @@ Requires command picker (`Ctrl+P` or `/theme`):
 
 **Config persistence**:
 - Store in `~/.config/lazierjj/config.toml` or jj config `[lazierjj]` section
-- Load on startup, default to "system" or "opencode"
+- Load on startup, default to "opencode"
 
-#### Phase 3: Theme Parity with OpenCode (Later)
+#### Phase 3: Theme Parity with OpenCode (Future)
 
 Add popular themes from opencode:
 - tokyonight, catppuccin, gruvbox, nord, everforest, etc.
@@ -106,14 +112,6 @@ Add popular themes from opencode:
 #### Reference
 
 OpenCode theme system docs: https://opencode.ai/docs/themes/
-
-Key patterns:
-- Semantic tokens: primary, secondary, accent, error, warning, success, info
-- Text tokens: text, textMuted
-- Background tokens: background, backgroundPanel, backgroundElement
-- Border tokens: border, borderActive, borderSubtle
-- Diff tokens: diffAdded, diffRemoved, diffContext, etc.
-- `"none"` value = use terminal default
 
 ---
 
@@ -125,13 +123,48 @@ Quick wins that improve the experience.
 - `?` should also close the help modal (currently only opens)
 - Simple: check if help modal is open, close instead of open
 
-#### Panel Labels on Border
-- Move `[1] Log` style labels to sit on the border line (like lazygit)
-- Currently labels are inside the panel
-
 #### Panel Width Tuning
 - Log and bookmark panels slightly wider
 - Standard log messages often get cut off
+
+---
+
+### Command Palette (Unified with Help)
+
+The help modal and command palette should be the same thing - not separate features.
+
+**Behavior:**
+- `?` opens the command palette (current help modal)
+- Shows all available commands with keybindings
+- Type to filter commands
+- `Enter` executes the selected command (not just closes)
+- Commands without keybinds are also accessible here
+
+**Why unified:**
+- One UI to learn, not two
+- All actions discoverable in one place
+- Like VSCode's command palette with `?` prefix for help
+
+---
+
+### Bookmarks Panel Tabs
+
+Add tabs to bookmarks panel like lazygit: `[2]-Local - Remotes - Tags-`
+
+**Tabs:**
+- **Local**: Current behavior (local bookmarks only)
+- **Remotes**: Remote tracking bookmarks (`origin/main`, etc.)
+- **Tags**: jj tags (if applicable)
+
+**Implementation:**
+- Tab switching via `[` / `]` or `h` / `l` when panel focused
+- Title shows current tab: `[2]-Local - Remotes - Tags-` with active tab highlighted
+- Each tab has its own selection state
+
+**Why:**
+- Currently no way to see remote bookmarks
+- Matches lazygit's branch panel UX
+- Uses OpenTUI's border title for tabs (no extra UI chrome)
 
 ---
 
@@ -308,7 +341,6 @@ Longer-term possibilities. Not planned for near-term.
 - PR status indicator in bookmark list
 - Conflict visualization
 - Revset filtering
-- Command palette (Ctrl+P)
 - Multi-select for batch operations
 - Custom graph rendering
 - Interactive rebase UI

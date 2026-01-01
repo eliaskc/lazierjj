@@ -4,28 +4,31 @@ import type { Commit } from "../../commander/types"
 import { useCommand } from "../../context/command"
 import { useFocus } from "../../context/focus"
 import { useSync } from "../../context/sync"
-import { colors } from "../../theme"
+import { useTheme } from "../../context/theme"
 import { AnsiText } from "../AnsiText"
+import { Panel } from "../Panel"
 
 function CommitHeader(props: { commit: Commit }) {
+	const { colors } = useTheme()
+
 	return (
 		<box flexDirection="column" flexShrink={0}>
 			<text>
 				{"Change: "}
-				<span style={{ fg: colors.primary }}>{props.commit.changeId}</span>
+				<span style={{ fg: colors().primary }}>{props.commit.changeId}</span>
 			</text>
 			<text>
 				{"Commit: "}
-				<span style={{ fg: colors.primary }}>{props.commit.commitId}</span>
+				<span style={{ fg: colors().primary }}>{props.commit.commitId}</span>
 			</text>
 			<text>
 				{"Author: "}
-				<span style={{ fg: colors.warning }}>{props.commit.author}</span>
+				<span style={{ fg: colors().warning }}>{props.commit.author}</span>
 				{` <${props.commit.authorEmail}>`}
 			</text>
 			<text>
 				{"Date:   "}
-				<span style={{ fg: colors.success }}>{props.commit.timestamp}</span>
+				<span style={{ fg: colors().success }}>{props.commit.timestamp}</span>
 			</text>
 			<text> </text>
 			<AnsiText content={`    ${props.commit.description}`} wrapMode="none" />
@@ -36,6 +39,7 @@ function CommitHeader(props: { commit: Commit }) {
 
 export function MainArea() {
 	const { selectedCommit, diff, diffLoading, diffError } = useSync()
+	const { colors } = useTheme()
 	const focus = useFocus()
 	const command = useCommand()
 
@@ -63,18 +67,7 @@ export function MainArea() {
 	])
 
 	return (
-		<box
-			flexDirection="column"
-			flexGrow={1}
-			height="100%"
-			border
-			borderColor={isFocused() ? colors.borderFocused : colors.border}
-		>
-			<box backgroundColor={colors.backgroundSecondary}>
-				<text fg={isFocused() ? colors.primary : colors.textMuted}>
-					[3] Diff
-				</text>
-			</box>
+		<Panel title="Diff" hotkey="3" focused={isFocused()}>
 			<Show when={diffLoading()}>
 				<text>Loading diff...</text>
 			</Show>
@@ -82,7 +75,17 @@ export function MainArea() {
 				<text>Error: {diffError()}</text>
 			</Show>
 			<Show when={!diffLoading() && !diffError()}>
-				<scrollbox ref={scrollRef} focused={isFocused()} flexGrow={1}>
+				<scrollbox
+					ref={scrollRef}
+					focused={isFocused()}
+					flexGrow={1}
+					scrollbarOptions={{
+						trackOptions: {
+							backgroundColor: colors().scrollbarTrack,
+							foregroundColor: colors().scrollbarThumb,
+						},
+					}}
+				>
 					<Show when={selectedCommit()} keyed>
 						{(commit: Commit) => <CommitHeader commit={commit} />}
 					</Show>
@@ -94,6 +97,6 @@ export function MainArea() {
 					</Show>
 				</scrollbox>
 			</Show>
-		</box>
+		</Panel>
 	)
 }
