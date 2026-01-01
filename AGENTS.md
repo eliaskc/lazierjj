@@ -78,7 +78,13 @@ The `context/` folder contains project documentation:
 
 ### Primary Docs (start here)
 - **`context/STATUS.md`** - Current state: what works, known issues
-- **`context/ROADMAP.md`** - Planned features with priorities (Next Up / Nice-to-Have)
+- **`context/ROADMAP.md`** - Priorities and planned features (links to detailed plans)
+
+### Detailed Plans
+- **`context/plans/configuration.md`** - Config system design
+- **`context/plans/keybindings.md`** - Context-aware keybinds, status bar visibility
+- **`context/plans/diff-viewing.md`** - Side-by-side diffs, layout modes, difftastic
+- **`context/plans/release-flows.md`** - bunx, Homebrew, npm publishing
 
 ### References (analysis of similar projects)
 - **`context/references/reference-jjui.md`** - jjui (Go) analysis
@@ -86,16 +92,25 @@ The `context/` folder contains project documentation:
 - **`context/references/reference-opencode.md`** - opencode patterns
 - **`context/references/reference-opentui.md`** - OpenTUI framework notes
 
-### LLM Suggestions (low priority, browse for ideas)
-- **`context/llm-suggestions/index.md`** - AI-generated improvement ideas
-- These carry less weight than ROADMAP items
+### Other
+- **`context/llm-suggestions/`** - AI-generated improvement ideas (low priority)
+- **`context/archive/`** - Historical docs (original spec, phase history)
+- **`context/opentui-research.md`** - ANSI rendering deep dive
 
-### Archive (historical reference)
-- **`context/archive/lazyjj-plan.md`** - Original full design spec
-- **`context/archive/implementation-order.md`** - Phase history
+## When to Update Documentation
 
-### Research
-- **`context/opentui-research.md`** - ANSI rendering and OpenTUI deep dive
+Keep docs in sync with changes:
+
+| Trigger | Action |
+|---------|--------|
+| **Implemented a feature** | Update `STATUS.md` (move to "What Works", remove from known issues) |
+| **Found a bug** | Add to `STATUS.md` under "Known Issues" |
+| **User mentions new feature/goal** | Add to `ROADMAP.md` or create/update a `plans/*.md` file |
+| **Completed a roadmap item** | Mark as done in `ROADMAP.md`, update `STATUS.md` |
+| **Design decision made** | Document in relevant `plans/*.md` file |
+| **Discovered useful pattern** | Add to `references/` or this file |
+
+**Don't update docs for**: Minor refactors, internal changes that don't affect features or plans.
 
 ## jj (Jujutsu) Workflow
 
