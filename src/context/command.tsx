@@ -1,6 +1,7 @@
 import { useKeyboard } from "@opentui/solid"
 import { type Accessor, createMemo, createSignal, onCleanup } from "solid-js"
 import type { KeybindConfigKey } from "../keybind"
+import { useDialog } from "./dialog"
 import { type FocusContext, useFocus } from "./focus"
 import { createSimpleContext } from "./helper"
 import { useKeybind } from "./keybind"
@@ -24,14 +25,23 @@ export const { use: useCommand, provider: CommandProvider } =
 			>([])
 			const keybind = useKeybind()
 			const focus = useFocus()
+			const dialog = useDialog()
 
 			const allCommands = createMemo(() => {
 				return registrations().flatMap((r) => r())
 			})
 
 			useKeyboard((evt) => {
+				const dialogOpen = dialog.isOpen()
+
 				for (const cmd of allCommands()) {
+					// When dialog is open, only allow help toggle (escape is handled by dialog.tsx)
+					if (dialogOpen && cmd.keybind !== "help") {
+						continue
+					}
+
 					if (
+						!dialogOpen &&
 						cmd.context &&
 						cmd.context !== "global" &&
 						cmd.context !== focus.current()

@@ -1,3 +1,4 @@
+import { RGBA, type InputRenderable } from "@opentui/core"
 import { useRenderer } from "@opentui/solid"
 import {
 	type Accessor,
@@ -81,6 +82,9 @@ export function HelpModal() {
 		return cols
 	})
 
+	const separator = () => style().statusBar.separator
+	const gap = () => (separator() ? 0 : 3)
+
 	return (
 		<box
 			flexDirection="column"
@@ -93,17 +97,21 @@ export function HelpModal() {
 			height="80%"
 			title="Commands"
 		>
-			<box flexDirection="row" marginBottom={1}>
-				<text fg={colors().textMuted}>Search: </text>
+			<box flexDirection="row" marginBottom={2} paddingLeft={4}>
 				<input
-					focused
-					placeholder="Type to filter..."
+					ref={(r: InputRenderable) => setTimeout(() => r.focus(), 1)}
 					onInput={(value) => setFilter(value)}
 					onSubmit={() => dialog.close()}
+					placeholder="Search"
+					flexGrow={1}
+					cursorColor={colors().primary}
+					textColor={colors().textMuted}
+					focusedTextColor={colors().text}
+					focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
 				/>
 			</box>
 
-			<box flexDirection="row" flexGrow={1} gap={2}>
+			<box flexDirection="row" flexGrow={1} gap={1}>
 				<For each={columns()}>
 					{(column) => (
 						<box flexDirection="column" flexGrow={1} flexBasis={0}>
@@ -138,8 +146,20 @@ export function HelpModal() {
 				</For>
 			</box>
 
-			<box marginTop={1}>
-				<text fg={colors().textMuted}>Press Esc or Enter to close</text>
+			<box marginTop={1} flexDirection="row" gap={gap()}>
+				<text>
+					<span style={{ fg: colors().primary }}>esc or ?</span>
+					<span style={{ fg: colors().text }}> Close</span>
+				</text>
+
+				{/* TODO: only show when a command is selected */}
+				<text>
+					<Show when={separator()}>
+						<span style={{ fg: colors().textMuted }}>{` ${separator()} `}</span>
+					</Show>
+					<span style={{ fg: colors().primary }}>enter</span>
+					<span style={{ fg: colors().text }}> Run command</span>
+				</text>
 			</box>
 		</box>
 	)

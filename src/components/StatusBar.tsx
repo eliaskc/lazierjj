@@ -50,8 +50,7 @@ export function StatusBar() {
 					<text>
 						<span style={{ fg: colors().primary }}>
 							{cmd.keybind ? keybind.print(cmd.keybind) : ""}
-						</span>
-						<span style={{ fg: colors().textMuted }}> </span>
+						</span>{" "}
 						<span style={{ fg: colors().text }}>{cmd.title}</span>
 						<Show when={separator() && index() < relevantCommands().length - 1}>
 							<span style={{ fg: colors().textMuted }}>
