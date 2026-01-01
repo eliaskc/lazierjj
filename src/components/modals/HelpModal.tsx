@@ -1,9 +1,11 @@
-import { RGBA, type InputRenderable } from "@opentui/core"
-import { useRenderer } from "@opentui/solid"
+import { type InputRenderable, RGBA } from "@opentui/core"
+import { useKeyboard, useRenderer } from "@opentui/solid"
+import fuzzysort from "fuzzysort"
 import {
 	type Accessor,
 	For,
 	Show,
+	createEffect,
 	createMemo,
 	createSignal,
 	onCleanup,
@@ -29,6 +31,7 @@ export function HelpModal() {
 	const dialog = useDialog()
 	const { colors, style } = useTheme()
 	const [filter, setFilter] = createSignal("")
+	const [selectedIndex, setSelectedIndex] = createSignal(-1)
 	const [terminalWidth, setTerminalWidth] = createSignal(renderer.width)
 
 	onMount(() => {
@@ -39,21 +42,58 @@ export function HelpModal() {
 
 	const columnCount = () => (terminalWidth() < NARROW_THRESHOLD ? 1 : 3)
 
-	const groupedCommands = createMemo(() => {
-		const all = command.all()
-		const filterText = filter().toLowerCase()
+	type SearchableCommand = CommandOption & { keybindStr: string }
 
-		const filtered = filterText
-			? all.filter(
-					(cmd) =>
-						cmd.title.toLowerCase().includes(filterText) ||
-						cmd.category?.toLowerCase().includes(filterText) ||
-						(cmd.keybind && keybind.print(cmd.keybind).includes(filterText)),
-				)
-			: all
+	const allCommands = createMemo((): SearchableCommand[] => {
+		return command
+			.all()
+			.filter((cmd) => !cmd.hidden)
+			.map((cmd) => ({
+				...cmd,
+				keybindStr: cmd.keybind ? keybind.print(cmd.keybind) : "",
+			}))
+	})
+
+	const matchedCommands = createMemo(() => {
+		const all = allCommands()
+		const filterText = filter().trim()
+
+		if (!filterText) {
+			return all
+		}
+
+		const results = fuzzysort.go(filterText, all, {
+			keys: ["title", "category", "keybindStr"],
+			threshold: -10000,
+		})
+
+		return results.map((r) => r.obj)
+	})
+
+	const matchedIds = createMemo(() => {
+		return new Set(matchedCommands().map((cmd) => cmd.id))
+	})
+
+	createEffect(() => {
+		const filterText = filter().trim()
+		if (filterText) {
+			setSelectedIndex(0)
+		} else {
+			setSelectedIndex(-1)
+		}
+	})
+
+	const selectedCommand = createMemo(() => {
+		const idx = selectedIndex()
+		if (idx < 0) return null
+		return matchedInColumnOrder()[idx] ?? null
+	})
+
+	const groupedCommands = createMemo(() => {
+		const all = allCommands()
 
 		const groups = new Map<string, CommandOption[]>()
-		for (const cmd of filtered) {
+		for (const cmd of all) {
 			const category = cmd.category || "Other"
 			const existing = groups.get(category) || []
 			groups.set(category, [...existing, cmd])
@@ -82,8 +122,63 @@ export function HelpModal() {
 		return cols
 	})
 
+	const commandsInColumnOrder = createMemo(() => {
+		const cols = columns()
+		const result: CommandOption[] = []
+		for (const column of cols) {
+			for (const group of column) {
+				for (const cmd of group.commands) {
+					result.push(cmd)
+				}
+			}
+		}
+		return result
+	})
+
+	const matchedInColumnOrder = createMemo(() => {
+		const matched = matchedIds()
+		return commandsInColumnOrder().filter((cmd) => matched.has(cmd.id))
+	})
+
+	const move = (direction: 1 | -1) => {
+		const matched = matchedInColumnOrder()
+		if (matched.length === 0) return
+
+		setSelectedIndex((prev) => {
+			if (prev < 0) return 0
+			let next = prev + direction
+			if (next < 0) next = matched.length - 1
+			if (next >= matched.length) next = 0
+			return next
+		})
+	}
+
+	const executeSelected = () => {
+		const cmd = selectedCommand()
+		if (cmd) {
+			dialog.close()
+			cmd.onSelect()
+		}
+	}
+
+	useKeyboard((evt) => {
+		if (evt.name === "j" || evt.name === "down") {
+			evt.preventDefault()
+			move(1)
+		} else if (evt.name === "k" || evt.name === "up") {
+			evt.preventDefault()
+			move(-1)
+		} else if (evt.name === "return") {
+			evt.preventDefault()
+			executeSelected()
+		}
+	})
+
 	const separator = () => style().statusBar.separator
 	const gap = () => (separator() ? 0 : 3)
+
+	const isMatched = (cmd: CommandOption) => matchedIds().has(cmd.id)
+	const isSelected = (cmd: CommandOption) => selectedCommand()?.id === cmd.id
 
 	return (
 		<box
@@ -95,13 +190,13 @@ export function HelpModal() {
 			padding={1}
 			width="80%"
 			height="80%"
-			title="Commands"
+			title="[esc / ?]─Commands"
 		>
 			<box flexDirection="row" marginBottom={2} paddingLeft={4}>
 				<input
 					ref={(r: InputRenderable) => setTimeout(() => r.focus(), 1)}
 					onInput={(value) => setFilter(value)}
-					onSubmit={() => dialog.close()}
+					onSubmit={() => executeSelected()}
 					placeholder="Search"
 					flexGrow={1}
 					cursorColor={colors().primary}
@@ -124,17 +219,44 @@ export function HelpModal() {
 										</box>
 										<For each={group.commands}>
 											{(cmd) => (
-												<box flexDirection="row">
+												<box
+													flexDirection="row"
+													backgroundColor={
+														isSelected(cmd)
+															? colors().selectionBackground
+															: undefined
+													}
+												>
 													<box width={10} flexShrink={0}>
 														<Show when={cmd.keybind}>
 															{(kb: Accessor<KeybindConfigKey>) => (
-																<text fg={colors().info} wrapMode="none">
+																<text
+																	fg={
+																		isSelected(cmd)
+																			? colors().selectionText
+																			: isMatched(cmd)
+																				? colors().info
+																				: colors().textMuted
+																	}
+																	wrapMode="none"
+																>
 																	{keybind.print(kb()).padStart(9)}
 																</text>
 															)}
 														</Show>
 													</box>
-													<text fg={colors().text}> {cmd.title}</text>
+													<text
+														fg={
+															isSelected(cmd)
+																? colors().selectionText
+																: isMatched(cmd)
+																	? colors().text
+																	: colors().textMuted
+														}
+													>
+														{" "}
+														{cmd.title}
+													</text>
 												</box>
 											)}
 										</For>
@@ -146,20 +268,23 @@ export function HelpModal() {
 				</For>
 			</box>
 
-			<box marginTop={1} flexDirection="row" gap={gap()}>
+			<box marginTop={1} paddingLeft={4} flexDirection="row" gap={gap()}>
 				<text>
 					<span style={{ fg: colors().primary }}>esc or ?</span>
 					<span style={{ fg: colors().text }}> Close</span>
 				</text>
 
-				{/* TODO: only show when a command is selected */}
-				<text>
-					<Show when={separator()}>
-						<span style={{ fg: colors().textMuted }}>{` ${separator()} `}</span>
-					</Show>
-					<span style={{ fg: colors().primary }}>enter</span>
-					<span style={{ fg: colors().text }}> Run command</span>
-				</text>
+				<Show when={selectedCommand()}>
+					<text>
+						<Show when={separator()}>
+							<span
+								style={{ fg: colors().textMuted }}
+							>{` ${separator()} `}</span>
+						</Show>
+						<span style={{ fg: colors().primary }}>enter</span>
+						<span style={{ fg: colors().text }}> Run command</span>
+					</text>
+				</Show>
 			</box>
 		</box>
 	)
