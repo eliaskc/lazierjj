@@ -426,49 +426,50 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		}
 	}
 
+	const computeDiffKey = (changeId: string, paths?: string[]) =>
+		paths?.length ? `${changeId}:${paths.join(",")}` : changeId
+
 	createEffect(() => {
 		const columns = mainAreaWidth()
 		const mode = viewMode()
 		const bmMode = bookmarkViewMode()
 		const focusedPanel = focus.panel()
 
-		if (diffDebounceTimer) {
-			clearTimeout(diffDebounceTimer)
-		}
+		let changeId: string
+		let paths: string[] | undefined
 
 		if (focusedPanel === "bookmarks" && bmMode === "commits") {
 			const commit = selectedBookmarkCommit()
 			if (!commit) return
-			diffDebounceTimer = setTimeout(() => {
-				loadDiff(commit.changeId, columns)
-			}, 100)
+			changeId = commit.changeId
 		} else if (focusedPanel === "bookmarks" && bmMode === "files") {
 			const commit = selectedBookmarkCommit()
 			const file = selectedBookmarkFile()
 			if (!commit || !file) return
-			const paths = file.node.isDirectory
-				? getFilePaths(file.node)
-				: [file.node.path]
-			diffDebounceTimer = setTimeout(() => {
-				loadDiff(commit.changeId, columns, paths)
-			}, 100)
+			changeId = commit.changeId
+			paths = file.node.isDirectory ? getFilePaths(file.node) : [file.node.path]
 		} else if (mode === "files") {
 			const commit = selectedCommit()
 			const file = selectedFile()
 			if (!commit || !file) return
-			const paths = file.node.isDirectory
-				? getFilePaths(file.node)
-				: [file.node.path]
-			diffDebounceTimer = setTimeout(() => {
-				loadDiff(commit.changeId, columns, paths)
-			}, 100)
+			changeId = commit.changeId
+			paths = file.node.isDirectory ? getFilePaths(file.node) : [file.node.path]
 		} else {
 			const commit = selectedCommit()
 			if (!commit) return
-			diffDebounceTimer = setTimeout(() => {
-				loadDiff(commit.changeId, columns)
-			}, 100)
+			changeId = commit.changeId
 		}
+
+		const newKey = computeDiffKey(changeId, paths)
+		if (newKey === currentDiffKey) return
+
+		if (diffDebounceTimer) {
+			clearTimeout(diffDebounceTimer)
+		}
+
+		diffDebounceTimer = setTimeout(() => {
+			loadDiff(changeId, columns, paths)
+		}, 100)
 	})
 
 	const loadLog = async () => {
