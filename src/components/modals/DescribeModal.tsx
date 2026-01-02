@@ -33,9 +33,10 @@ export function DescribeModal(props: DescribeModalProps) {
 		ref.cursorPosition = ref.value.length
 	}
 
-	const focusTextarea = (ref: TextareaRenderable | undefined) => {
+	const focusTextareaAtEnd = (ref: TextareaRenderable | undefined) => {
 		if (!ref) return
 		ref.focus()
+		ref.gotoBufferEnd()
 	}
 
 	onMount(() => {
@@ -52,7 +53,7 @@ export function DescribeModal(props: DescribeModalProps) {
 			evt.preventDefault()
 			if (focusedField() === "subject") {
 				setFocusedField("body")
-				focusTextarea(bodyRef)
+				focusTextareaAtEnd(bodyRef)
 			} else {
 				setFocusedField("subject")
 				focusInputAtEnd(subjectRef)
