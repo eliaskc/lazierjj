@@ -1,11 +1,18 @@
 {
-	"name": "lazyjuju",
-	"module": "src/index.tsx",
+	"name": "kajji",
+	"version": "0.1.0",
+	"description": "A terminal UI for Jujutsu: the rudder for your jj",
 	"type": "module",
-	"private": true,
+	"engines": {
+		"bun": ">=1.0.0"
+	},
+	"bin": {
+		"kajji": "./bin/kajji.js"
+	},
+	"files": ["bin", "src"],
 	"scripts": {
 		"dev": "NODE_ENV=development bun --watch run src/index.tsx",
-		"build": "bun build --compile src/index.tsx --outfile lazyjuju",
+		"build": "bun build --compile src/index.tsx --outfile kajji",
 		"test": "bun test",
 		"check": "tsc --noEmit",
 		"lint": "biome check .",
@@ -27,5 +34,24 @@
 		"fuzzysort": "^3.1.0",
 		"ghostty-opentui": "^1.3.11",
 		"solid-js": "1.9.9"
-	}
+	},
+	"keywords": [
+		"jj",
+		"jujutsu",
+		"tui",
+		"terminal",
+		"cli",
+		"vcs",
+		"version-control"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/eliaskc/kajji.git"
+	},
+	"homepage": "https://github.com/eliaskc/kajji#readme",
+	"bugs": {
+		"url": "https://github.com/eliaskc/kajji/issues"
+	},
+	"author": "eliaskc",
+	"license": "MIT"
 }

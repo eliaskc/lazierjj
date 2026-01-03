@@ -1,14 +1,16 @@
-# lazyjuju
+# kajji
 
-> Disclaimer: almost all code in this project has been written by coding agents (primarily Claude Opus 4.5 through [OpenCode](https://github.com/sst/opencode)).
+> The rudder for your jj
 
-A simple terminal UI for [jj (Jujutsu)](https://github.com/martinvonz/jj), inspired by [lazygit](https://github.com/jesseduffield/lazygit). Built with [OpenTUI](https://github.com/sst/opentui) and [SolidJS](https://www.solidjs.com/).
+A simple terminal UI for (Jujutsu)](https://github.com/martinvonz/jj), inspired by [lazygit](https://github.com/jesseduffield/lazygit). Built with [OpenTUI](https://github.com/sst/opentui) and [SolidJS](https://www.solidjs.com/).
+
+> Disclaimer: almost all code in this project has been written by coding agents (primarily Claude through [OpenCode](https://github.com/sst/opencode)).
 
 <!-- TODO: demo GIF -->
 
 While learning jj I found myself coming back to lazygit to view diffs and traverse the changes I'd made quickly and easily, which has become increasingly important to me with the rise of coding agents. While there are better and more feature-rich jj TUIs, I found none quite gave me a painfree experience for this primary use case.
 
-Lazyjuju is my attempt to bring the simplicity and polish of lazygit to JJ, while also letting me experiment with using coding agents to a greater extent, building a TUI for the first time and getting more familiar with jj in the process.
+kajji is my attempt to bring the simplicity and polish of lazygit to jj, while also letting me experiment with using coding agents to a greater extent, building a TUI for the first time and getting more familiar with jj in the process.
 
 ## Principles
 
@@ -29,35 +31,35 @@ Lazyjuju is my attempt to bring the simplicity and polish of lazygit to JJ, whil
 
 > **Requirements**: [Bun](https://bun.sh) and [jj](https://github.com/martinvonz/jj)
 
+```bash
+# npm
+npm install -g kajji
+
+# bun
+bun install -g kajji
+
+# pnpm
+pnpm add -g kajji
+
+# or run directly
+bunx kajji
+```
+
 ### From source
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/lazyjuju.git
-cd lazyjuju
+git clone https://github.com/eliaskc/kajji.git
+cd kajji
 bun install
 bun dev
 ```
 
-<!-- TODO: Add when released
-### Homebrew
-
-```bash
-brew install lazyjuju
-```
-
-### npx
-
-```bash
-bunx lazyjuju
-```
--->
-
 ## Usage
 
-Run `lazyjuju` (or `ljj`) in any jj repository:
+Run `kajji` in any jj repository:
 
 ```bash
-bun dev
+kajji
 ```
 
 ### Navigation
@@ -74,20 +76,19 @@ bun dev
 
 | Key      | Action                      |
 | -------- | --------------------------- |
-| `R`      | Refresh                     |
 | `?`      | Show help                   |
 | `Ctrl+Y` | Copy selection to clipboard |
 | `q`      | Quit                        |
 
 ### Operations
 
-| Key | Action              |
-| --- | ------------------- |
-| `n` | New change          |
-| `e` | Edit change         |
-| `d` | Describe change     |
-| `s` | Squash into parent  |
-| `a` | Abandon change      |
+| Key | Action             |
+| --- | ------------------ |
+| `n` | New change         |
+| `e` | Edit change        |
+| `d` | Describe change    |
+| `s` | Squash into parent |
+| `a` | Abandon change     |
 
 ## Roadmap
 
@@ -95,8 +96,6 @@ bun dev
 
 - Search and filter (`/`)
 - Command mode (`:`)
-- Mouse support
-- Auto-refresh on file changes
 - GitHub integration (create PR, open in browser)
 - Configuration (user config file, theme selection)
 

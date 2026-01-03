@@ -20,7 +20,7 @@ Covers:
 - Auto-update mechanism (installation method detection, upgrade logic)
 - Release frequency and versioning
 - Distribution channels (curl, npm, bun, brew, Docker, Tauri)
-- Recommended implementation order for Lazyjuju
+- Recommended implementation order for Kajji
 
 **Best for**: Deep understanding of how everything works together
 
@@ -130,11 +130,11 @@ define: {
 
 This bakes the version into the binary, enabling offline version checking.
 
-## Implementation Roadmap for Lazyjuju
+## Implementation Roadmap for Kajji
 
 ### Phase 1: Basic npm publishing
-- Create `packages/lazyjuju` with bin entry
-- Publish to npm as `lazyjuju`
+- Create `packages/kajji` with bin entry
+- Publish to npm as `kajji`
 
 ### Phase 2: Multi-platform binaries
 - Create `script/build.ts` for 3 platforms
@@ -147,7 +147,7 @@ This bakes the version into the binary, enabling offline version checking.
 - Auto-add to PATH
 
 ### Phase 4: Auto-update
-- Implement `lazyjuju upgrade` command
+- Implement `kajji upgrade` command
 - Detect installation method
 - Support all package managers
 

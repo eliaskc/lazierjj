@@ -142,7 +142,7 @@ abandon = false        # Disable keybind
 
 ---
 
-## Key Takeaways for lazyjuju
+## Key Takeaways for kajji
 
 1. **Template-based parsing** - Use jj templates for structured output
 2. **Single selection for targets** - Navigate to target, then act

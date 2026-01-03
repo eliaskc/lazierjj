@@ -1,4 +1,4 @@
-# lazyjuju
+# kajji
 
 > Project tracker — features, plans, and known issues in one place.
 
@@ -118,7 +118,7 @@ Start with describe modal, generalize to all inputs.
 
 ## Workspaces
 
-> lazyjuju is a jj power tool, not an agent orchestrator. Agents are just another way commits appear.
+> kajji is a jj power tool, not an agent orchestrator. Agents are just another way commits appear.
 
 **Core Features:**
 - [ ] Workspaces tab (`w`) — list all workspaces
@@ -132,9 +132,9 @@ Start with describe modal, generalize to all inputs.
   - [ ] `d` → archive workspace (after integration)
 
 **Agent Integration (bring-your-own):**
-- Human creates workspace via lazyjuju or manually
+- Human creates workspace via kajji or manually
 - Human launches agent in workspace directory (opencode, claude code, etc.)
-- Human monitors progress in lazyjuju (commits appear via auto-refresh)
+- Human monitors progress in kajji (commits appear via auto-refresh)
 - No orchestration layer — just visibility and operations
 
 **Optional: Workspace Briefing**
@@ -228,9 +228,9 @@ Lazygit-style interactive `jj split` — mark files/hunks to keep in current com
 ## Release & Distribution
 
 **Phase 1 — npm publish (initial release):**
-- [ ] Add `bin/lazyjuju.js` entry script with `#!/usr/bin/env bun`
-- [ ] Update package.json: remove `private`, add `bin`, `files`, `version: "0.1.0"`
-- [ ] Add `ljj` alias
+- [x] Add `bin/kajji.js` entry script with `#!/usr/bin/env bun`
+- [x] Update package.json: remove `private`, add `bin`, `files`, `version: "0.1.0"`
+- [x] ~~Add `kj` alias~~ (skipped — build identity with `kajji`)
 - [ ] Publish to npm (covers npm/bunx/pnpm/yarn)
 
 **Phase 2 — version indicator + update notification:**
@@ -238,7 +238,7 @@ Lazygit-style interactive `jj split` — mark files/hunks to keep in current com
 - [ ] Update check on startup (GitHub API, once per day, non-blocking)
 - [ ] Package manager detection (bun/npm/yarn/pnpm)
 - [ ] Toast notification with correct update command
-- [ ] State stored in `~/.config/lazyjuju/state.json`
+- [ ] State stored in `~/.config/kajji/state.json`
 
 **Phase 3 — compiled binaries + curl (deferred):**
 - [ ] `bun build --compile` for standalone binaries

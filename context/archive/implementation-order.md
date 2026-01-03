@@ -1,4 +1,4 @@
-# Implementation Order - lazyjuju
+# Implementation Order - kajji
 
 > Getting to a runnable prototype as fast as possible
 > 

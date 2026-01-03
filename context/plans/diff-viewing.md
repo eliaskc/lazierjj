@@ -38,7 +38,7 @@ User can override via config.
 Priority order:
 
 1. **User's jj config** — If `ui.diff.tool` is set in jj config, respect it
-2. **lazyjuju config** — If `[diff].tool` is set, use that
+2. **kajji config** — If `[diff].tool` is set, use that
 3. **Native difftastic** — Default to difftastic if available (best side-by-side)
 4. **Fallback** — `jj diff --color-words` if nothing else available
 

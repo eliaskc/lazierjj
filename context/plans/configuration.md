@@ -7,8 +7,8 @@
 
 ## Location
 
-- **Config**: `~/.config/lazyjuju/config.toml`
-- **State**: `~/.config/lazyjuju/state.json` (runtime state, not user-editable)
+- **Config**: `~/.config/kajji/config.toml`
+- **State**: `~/.config/kajji/state.json` (runtime state, not user-editable)
 - Respects `XDG_CONFIG_HOME` if set
 
 ---
@@ -27,7 +27,7 @@
 ## Proposed Structure
 
 ```toml
-# ~/.config/lazyjuju/config.toml
+# ~/.config/kajji/config.toml
 
 [ui]
 theme = "lazygit"  # or "opencode"
@@ -61,7 +61,7 @@ auto_switch_width = 120     # Switch to unified below this width
 }
 ```
 
-Not user-editable, managed by lazyjuju.
+Not user-editable, managed by kajji.
 
 ---
 

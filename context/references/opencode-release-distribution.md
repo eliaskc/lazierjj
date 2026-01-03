@@ -448,7 +448,7 @@ docker run ghcr.io/anomalyco/opencode:1.0.223
 
 ---
 
-## KEY PATTERNS FOR LAZYJUJU
+## KEY PATTERNS FOR KAJJI
 
 ### 1. **Multi-Platform Binary Strategy**
 ✅ Build for all major platforms in CI
@@ -488,11 +488,11 @@ docker run ghcr.io/anomalyco/opencode:1.0.223
 
 ---
 
-## RECOMMENDED IMPLEMENTATION ORDER FOR LAZYJUJU
+## RECOMMENDED IMPLEMENTATION ORDER FOR KAJJI
 
 1. **Phase 1**: Basic npm publishing
-   - Create `packages/lazyjuju` with bin entry
-   - Publish to npm as `lazyjuju`
+   - Create `packages/kajji` with bin entry
+   - Publish to npm as `kajji`
 
 2. **Phase 2**: Multi-platform binaries
    - Add build.ts for all platforms

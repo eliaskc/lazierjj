@@ -12,7 +12,7 @@ Phased approach starting simple (npm with Bun requirement), adding complexity on
 **Key decisions:**
 - Require Bun for initial release (simplifies everything)
 - Semantic versioning starting at `0.1.0`
-- Config/state in `~/.config/lazyjuju/` (respects XDG_CONFIG_HOME)
+- Config/state in `~/.config/kajji/` (respects XDG_CONFIG_HOME)
 - Update notification via toast, not blocking
 
 ---
@@ -25,19 +25,18 @@ Ship source code, require Bun runtime.
 
 ```json
 {
-  "name": "lazyjuju",
+  "name": "kajji",
   "version": "0.1.0",
   "private": false,
   "bin": {
-    "lazyjuju": "./bin/lazyjuju.js",
-    "ljj": "./bin/lazyjuju.js"
+    "kajji": "./bin/kajji.js"
   },
   "files": ["bin", "src"],
   // ... rest unchanged
 }
 ```
 
-### New File: `bin/lazyjuju.js`
+### New File: `bin/kajji.js`
 
 ```javascript
 #!/usr/bin/env bun
@@ -46,26 +45,26 @@ import "../src/index.tsx"
 
 ### Tasks
 
-- [ ] Create `bin/lazyjuju.js` entry script
+- [ ] Create `bin/kajji.js` entry script
 - [ ] Update package.json (remove private, add bin/files/version)
 - [ ] Test locally with `npm link`
-- [ ] Test with `bunx lazyjuju` from different directory
+- [ ] Test with `bunx kajji` from different directory
 - [ ] Publish to npm
 
 ### Installation Methods (all work after npm publish)
 
 ```bash
 # Global install
-npm install -g lazyjuju
-bun install -g lazyjuju
-pnpm add -g lazyjuju
-yarn global add lazyjuju
+npm install -g kajji
+bun install -g kajji
+pnpm add -g kajji
+yarn global add kajji
 
 # One-off run
-bunx lazyjuju
-npx lazyjuju
-pnpm dlx lazyjuju
-yarn dlx lazyjuju
+bunx kajji
+npx kajji
+pnpm dlx kajji
+yarn dlx kajji
 ```
 
 **Note:** All methods require [Bun](https://bun.sh) installed.
@@ -86,10 +85,10 @@ yarn dlx lazyjuju
 **Behavior:**
 - Check GitHub releases API on startup (non-blocking, background)
 - Frequency: Once per 24 hours
-- Store last check timestamp in `~/.config/lazyjuju/state.json`
+- Store last check timestamp in `~/.config/kajji/state.json`
 - If new version available, show toast (OpenTUI toast component)
 
-**State file:** `~/.config/lazyjuju/state.json`
+**State file:** `~/.config/kajji/state.json`
 ```json
 {
   "lastUpdateCheck": "2026-01-03T12:00:00Z",
@@ -112,7 +111,7 @@ async function detectPackageManager(): Promise<"bun" | "npm" | "yarn" | "pnpm" |
   if (execPath.includes("npm")) return "npm"
   
   // Fallback: check global install locations
-  const bunGlobal = path.join(process.env.HOME ?? "", ".bun/install/global/node_modules/lazyjuju")
+  const bunGlobal = path.join(process.env.HOME ?? "", ".bun/install/global/node_modules/kajji")
   if (await exists(bunGlobal)) return "bun"
   
   // Default to npm (most common)
@@ -123,23 +122,23 @@ async function detectPackageManager(): Promise<"bun" | "npm" | "yarn" | "pnpm" |
 **Update commands by package manager:**
 | Manager | Command                        |
 | ------- | ------------------------------ |
-| bun     | `bun update -g lazyjuju`       |
-| npm     | `npm update -g lazyjuju`       |
-| yarn    | `yarn global upgrade lazyjuju` |
-| pnpm    | `pnpm update -g lazyjuju`      |
+| bun     | `bun update -g kajji`       |
+| npm     | `npm update -g kajji`       |
+| yarn    | `yarn global upgrade kajji` |
+| pnpm    | `pnpm update -g kajji`      |
 
 ### Toast Message
 
 ```
 Update available: v0.2.0
-Run: npm update -g lazyjuju
+Run: npm update -g kajji
 ```
 
 ### Tasks
 
 - [ ] Add version constant (read from package.json or inject at build)
 - [ ] Add version indicator to StatusBar (right-aligned, muted)
-- [ ] Create `~/.config/lazyjuju/` directory structure
+- [ ] Create `~/.config/kajji/` directory structure
 - [ ] Implement update check (GitHub releases API)
 - [ ] Implement package manager detection
 - [ ] Show toast when update available
@@ -153,10 +152,10 @@ Run: npm update -g lazyjuju
 
 Would include:
 - `bun build --compile` for standalone binaries
-- Platform-specific npm packages (lazyjuju-darwin-arm64, etc.)
+- Platform-specific npm packages (kajji-darwin-arm64, etc.)
 - GitHub Actions matrix builds
 - curl install script
-- Auto-update command (`lazyjuju update`)
+- Auto-update command (`kajji update`)
 
 See `context/references/opencode-release-distribution.md` for implementation patterns.
 
@@ -165,13 +164,13 @@ See `context/references/opencode-release-distribution.md` for implementation pat
 ## Future: Homebrew
 
 ```bash
-brew tap USERNAME/lazyjuju
-brew install lazyjuju
+brew tap USERNAME/kajji
+brew install kajji
 ```
 
 Requires:
 - Compiled binaries (Phase 3)
-- Separate `homebrew-lazyjuju` repo with formula
+- Separate `homebrew-kajji` repo with formula
 - CI to update formula on release
 
 ---

@@ -1,4 +1,4 @@
-# lazyjuju Agent Guidelines
+# kajji Agent Guidelines
 
 Follow the Boy Scout rule:
 - For minor things, just improve them

@@ -1,6 +1,6 @@
 # OpenCode Code Patterns - Copy-Paste Ready
 
-This document contains ready-to-use code patterns from OpenCode that you can adapt for Lazyjuju.
+This document contains ready-to-use code patterns from OpenCode that you can adapt for Kajji.
 
 See the full document at: https://github.com/anomalyco/opencode
 

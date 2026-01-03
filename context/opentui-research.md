@@ -297,7 +297,7 @@ if (span.flags & StyleFlags.UNDERLINE) { /* underline */ }
 
 ---
 
-## Implementation Plan for lazyjuju
+## Implementation Plan for kajji
 
 ### Phase 1: Install ghostty-opentui
 ```bash

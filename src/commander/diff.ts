@@ -5,7 +5,7 @@ import {
 	executeStreaming,
 } from "./executor"
 
-const PROFILE = process.env.LAZYJUJU_PROFILE === "1"
+const PROFILE = process.env.KAJJI_PROFILE === "1"
 
 function profile(label: string) {
 	if (!PROFILE) return () => {}

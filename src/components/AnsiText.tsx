@@ -2,7 +2,7 @@ import type { TerminalLine } from "ghostty-opentui"
 import { ptyToJson } from "ghostty-opentui"
 import { For, Show, createEffect, createMemo } from "solid-js"
 
-const PROFILE = process.env.LAZYJUJU_PROFILE === "1"
+const PROFILE = process.env.KAJJI_PROFILE === "1"
 
 function profile(label: string) {
 	if (!PROFILE) return () => {}
