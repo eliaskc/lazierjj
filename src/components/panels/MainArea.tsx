@@ -284,11 +284,11 @@ export function MainArea() {
 		},
 		{
 			id: "detail.scroll_down",
-			title: "Scroll down",
+			title: "scroll down",
 			keybind: "nav_down",
 			context: "detail",
 			type: "navigation",
-			hidden: true,
+			visibility: "help-only",
 			onSelect: () => {
 				scrollRef?.scrollTo((scrollTop() || 0) + 1)
 				setScrollTop((scrollTop() || 0) + 1)
@@ -297,11 +297,11 @@ export function MainArea() {
 		},
 		{
 			id: "detail.scroll_up",
-			title: "Scroll up",
+			title: "scroll up",
 			keybind: "nav_up",
 			context: "detail",
 			type: "navigation",
-			hidden: true,
+			visibility: "help-only",
 			onSelect: () => {
 				const newPos = Math.max(0, (scrollTop() || 0) - 1)
 				scrollRef?.scrollTo(newPos)

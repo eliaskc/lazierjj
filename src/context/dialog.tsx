@@ -11,10 +11,16 @@ import {
 import { createSimpleContext } from "./helper"
 import { useTheme } from "./theme"
 
+export interface DialogHint {
+	key: string
+	label: string
+}
+
 interface DialogState {
 	id?: string
 	render: () => JSX.Element
 	onClose?: () => void
+	hints?: DialogHint[]
 }
 
 interface ConfirmOptions {
@@ -73,24 +79,29 @@ export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
 
 			const open = (
 				render: () => JSX.Element,
-				options?: { id?: string; onClose?: () => void },
+				options?: { id?: string; onClose?: () => void; hints?: DialogHint[] },
 			) => {
 				setStack((s) => [
 					...s,
-					{ id: options?.id, render, onClose: options?.onClose },
+					{
+						id: options?.id,
+						render,
+						onClose: options?.onClose,
+						hints: options?.hints,
+					},
 				])
 			}
 
 			const toggle = (
 				id: string,
 				render: () => JSX.Element,
-				options?: { onClose?: () => void },
+				options?: { onClose?: () => void; hints?: DialogHint[] },
 			) => {
 				const current = stack().at(-1)
 				if (current?.id === id) {
 					close()
 				} else {
-					open(render, { id, onClose: options?.onClose })
+					open(render, { id, onClose: options?.onClose, hints: options?.hints })
 				}
 			}
 
@@ -112,6 +123,10 @@ export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
 						),
 						{
 							id: "confirm-dialog",
+							hints: [
+								{ key: "y", label: "confirm" },
+								{ key: "n", label: "cancel" },
+							],
 							onClose: () => {
 								if (!resolved) {
 									resolved = true
@@ -126,6 +141,15 @@ export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
 			return {
 				isOpen: () => stack().length > 0,
 				current: () => stack().at(-1),
+				hints: () => stack().at(-1)?.hints ?? [],
+				setHints: (hints: DialogHint[]) => {
+					setStack((s) => {
+						if (s.length === 0) return s
+						const last = s[s.length - 1]
+						if (!last) return s
+						return [...s.slice(0, -1), { ...last, hints }]
+					})
+				},
 				open,
 				toggle,
 				close,

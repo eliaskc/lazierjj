@@ -27,7 +27,16 @@ export type Context =
 	// Detail panel
 	| "detail"
 
-export type CommandType = "action" | "navigation" | "view"
+export type CommandType = "action" | "navigation" | "view" | "git"
+
+/**
+ * Controls where a command appears:
+ * - "all": show in both status bar and help modal (default)
+ * - "help-only": show only in help modal (navigation, git ops, refresh)
+ * - "status-only": show only in status bar (modal hints)
+ * - "none": hidden everywhere (internal commands)
+ */
+export type CommandVisibility = "all" | "help-only" | "status-only" | "none"
 
 /**
  * Extract the panel from a hierarchical context

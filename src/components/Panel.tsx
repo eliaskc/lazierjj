@@ -44,20 +44,22 @@ export function Panel(props: PanelProps) {
 		return [
 			{
 				id: `${props.panelId}.next_tab`,
-				title: "Next tab",
+				title: "next tab",
 				keybind: "next_tab",
 				context: props.panelId,
 				type: "navigation",
 				panel: props.panelId,
+				visibility: "help-only" as const,
 				onSelect: () => cycleTab(1),
 			},
 			{
 				id: `${props.panelId}.prev_tab`,
-				title: "Previous tab",
+				title: "previous tab",
 				keybind: "prev_tab",
 				context: props.panelId,
 				type: "navigation",
 				panel: props.panelId,
+				visibility: "help-only" as const,
 				onSelect: () => cycleTab(-1),
 			},
 		]

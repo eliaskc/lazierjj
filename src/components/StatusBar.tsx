@@ -1,5 +1,6 @@
 import { For, Show, createMemo, createSignal, onCleanup } from "solid-js"
 import { useCommand } from "../context/command"
+import { useDialog } from "../context/dialog"
 import { useFocus } from "../context/focus"
 import { useKeybind } from "../context/keybind"
 import { useLoading } from "../context/loading"
@@ -18,6 +19,7 @@ const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", 
 
 export function StatusBar() {
 	const command = useCommand()
+	const dialog = useDialog()
 	const focus = useFocus()
 	const keybind = useKeybind()
 	const loading = useLoading()
@@ -61,6 +63,11 @@ export function StatusBar() {
 			return true
 		}
 
+		const isVisibleInStatusBar = (cmd: (typeof all)[0]) => {
+			const v = cmd.visibility ?? "all"
+			return v === "all" || v === "status-only"
+		}
+
 		const contextCmds = all.filter(
 			(cmd) => isRelevant(cmd) && cmd.context !== "global",
 		)
@@ -70,7 +77,7 @@ export function StatusBar() {
 
 		const seen = new Set<string>()
 		return [...contextCmds, ...globalCmds].filter((cmd) => {
-			if (cmd.hidden) return false
+			if (!isVisibleInStatusBar(cmd)) return false
 			if (seen.has(cmd.id)) return false
 			seen.add(cmd.id)
 			return true
@@ -79,6 +86,16 @@ export function StatusBar() {
 
 	const separator = () => style().statusBar.separator
 	const gap = () => (separator() ? 0 : 3)
+
+	const dialogHints = createMemo(() => {
+		const hints = dialog.hints()
+		if (hints.length === 0) return []
+		return [
+			...hints,
+			{ key: "esc", label: "close" },
+			{ key: "?", label: "help" },
+		]
+	})
 
 	return (
 		<box
@@ -100,21 +117,42 @@ export function StatusBar() {
 					</Show>
 				</text>
 			</Show>
-			<For each={relevantCommands()}>
-				{(cmd, index) => (
-					<text>
-						<span style={{ fg: colors().primary }}>
-							{cmd.keybind ? keybind.print(cmd.keybind) : ""}
-						</span>{" "}
-						<span style={{ fg: colors().text }}>{cmd.title}</span>
-						<Show when={separator() && index() < relevantCommands().length - 1}>
-							<span style={{ fg: colors().textMuted }}>
-								{` ${separator()} `}
-							</span>
-						</Show>
-					</text>
-				)}
-			</For>
+			<Show
+				when={dialog.isOpen() && dialogHints().length > 0}
+				fallback={
+					<For each={relevantCommands()}>
+						{(cmd, index) => (
+							<text>
+								<span style={{ fg: colors().primary }}>
+									{cmd.keybind ? keybind.print(cmd.keybind) : ""}
+								</span>{" "}
+								<span style={{ fg: colors().text }}>{cmd.title}</span>
+								<Show
+									when={separator() && index() < relevantCommands().length - 1}
+								>
+									<span style={{ fg: colors().textMuted }}>
+										{` ${separator()} `}
+									</span>
+								</Show>
+							</text>
+						)}
+					</For>
+				}
+			>
+				<For each={dialogHints()}>
+					{(hint, index) => (
+						<text>
+							<span style={{ fg: colors().primary }}>{hint.key}</span>{" "}
+							<span style={{ fg: colors().text }}>{hint.label}</span>
+							<Show when={separator() && index() < dialogHints().length - 1}>
+								<span style={{ fg: colors().textMuted }}>
+									{` ${separator()} `}
+								</span>
+							</Show>
+						</text>
+					)}
+				</For>
+			</Show>
 		</box>
 	)
 }

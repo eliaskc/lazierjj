@@ -199,7 +199,7 @@ export function BookmarksPanel() {
 					context: "refs.files",
 					type: "navigation",
 					panel: "refs",
-					hidden: true,
+					visibility: "help-only",
 					onSelect: selectNextBookmarkFile,
 				},
 				{
@@ -209,7 +209,7 @@ export function BookmarksPanel() {
 					context: "refs.files",
 					type: "navigation",
 					panel: "refs",
-					hidden: true,
+					visibility: "help-only",
 					onSelect: selectPrevBookmarkFile,
 				},
 				{
@@ -219,7 +219,7 @@ export function BookmarksPanel() {
 					context: "refs.files",
 					type: "action",
 					panel: "refs",
-					hidden: true,
+					visibility: "help-only",
 					onSelect: handleFilesEnter,
 				},
 				{
@@ -229,7 +229,7 @@ export function BookmarksPanel() {
 					context: "refs.files",
 					type: "view",
 					panel: "refs",
-					hidden: true,
+					visibility: "help-only",
 					onSelect: exitBookmarkView,
 				},
 				{
@@ -264,7 +264,7 @@ export function BookmarksPanel() {
 					context: "refs.revisions",
 					type: "navigation",
 					panel: "refs",
-					hidden: true,
+					visibility: "help-only",
 					onSelect: selectNextBookmarkCommit,
 				},
 				{
@@ -274,7 +274,7 @@ export function BookmarksPanel() {
 					context: "refs.revisions",
 					type: "navigation",
 					panel: "refs",
-					hidden: true,
+					visibility: "help-only",
 					onSelect: selectPrevBookmarkCommit,
 				},
 				{
@@ -284,7 +284,7 @@ export function BookmarksPanel() {
 					context: "refs.revisions",
 					type: "view",
 					panel: "refs",
-					hidden: true,
+					visibility: "help-only",
 					onSelect: handleCommitsEnter,
 				},
 				{
@@ -294,7 +294,7 @@ export function BookmarksPanel() {
 					context: "refs.revisions",
 					type: "view",
 					panel: "refs",
-					hidden: true,
+					visibility: "help-only",
 					onSelect: exitBookmarkView,
 				},
 				{
@@ -385,7 +385,13 @@ export function BookmarksPanel() {
 									}}
 								/>
 							),
-							{ id: "describe" },
+							{
+								id: "describe",
+								hints: [
+									{ key: "tab", label: "switch field" },
+									{ key: "enter", label: "save" },
+								],
+							},
 						)
 					},
 				},
@@ -432,7 +438,13 @@ export function BookmarksPanel() {
 									}}
 								/>
 							),
-							{ id: "bookmark-create" },
+							{
+								id: "bookmark-create",
+								hints: [
+									{ key: "tab", label: "switch field" },
+									{ key: "enter", label: "save" },
+								],
+							},
 						)
 					},
 				},
@@ -447,7 +459,7 @@ export function BookmarksPanel() {
 				context: "refs.bookmarks",
 				type: "navigation",
 				panel: "refs",
-				hidden: true,
+				visibility: "help-only",
 				onSelect: selectNextBookmark,
 			},
 			{
@@ -457,7 +469,7 @@ export function BookmarksPanel() {
 				context: "refs.bookmarks",
 				type: "navigation",
 				panel: "refs",
-				hidden: true,
+				visibility: "help-only",
 				onSelect: selectPrevBookmark,
 			},
 			{
@@ -467,7 +479,7 @@ export function BookmarksPanel() {
 				context: "refs.bookmarks",
 				type: "view",
 				panel: "refs",
-				hidden: true,
+				visibility: "help-only",
 				onSelect: handleListEnter,
 			},
 			{
@@ -492,7 +504,13 @@ export function BookmarksPanel() {
 								}}
 							/>
 						),
-						{ id: "bookmark-create" },
+						{
+							id: "bookmark-create",
+							hints: [
+								{ key: "tab", label: "switch field" },
+								{ key: "enter", label: "save" },
+							],
+						},
 					)
 				},
 			},
@@ -538,7 +556,10 @@ export function BookmarksPanel() {
 								}}
 							/>
 						),
-						{ id: "bookmark-rename" },
+						{
+							id: "bookmark-rename",
+							hints: [{ key: "enter", label: "save" }],
+						},
 					)
 				},
 			},
@@ -585,7 +606,10 @@ export function BookmarksPanel() {
 								}}
 							/>
 						),
-						{ id: "bookmark-move" },
+						{
+							id: "bookmark-move",
+							hints: [{ key: "enter", label: "confirm" }],
+						},
 					)
 				},
 			},

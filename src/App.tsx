@@ -68,7 +68,7 @@ function AppContent() {
 			keybind: "focus_next",
 			context: "global",
 			type: "navigation",
-			hidden: true,
+			visibility: "help-only",
 			onSelect: () => focus.cycleNext(),
 		},
 		{
@@ -77,7 +77,7 @@ function AppContent() {
 			keybind: "focus_prev",
 			context: "global",
 			type: "navigation",
-			hidden: true,
+			visibility: "help-only",
 			onSelect: () => focus.cyclePrev(),
 		},
 		{
@@ -86,7 +86,7 @@ function AppContent() {
 			keybind: "focus_panel_1",
 			context: "global",
 			type: "navigation",
-			hidden: true,
+			visibility: "help-only",
 			onSelect: () => focus.setPanel("log"),
 		},
 		{
@@ -95,7 +95,7 @@ function AppContent() {
 			keybind: "focus_panel_2",
 			context: "global",
 			type: "navigation",
-			hidden: true,
+			visibility: "help-only",
 			onSelect: () => focus.setPanel("refs"),
 		},
 		{
@@ -104,7 +104,7 @@ function AppContent() {
 			keybind: "focus_panel_3",
 			context: "global",
 			type: "navigation",
-			hidden: true,
+			visibility: "help-only",
 			onSelect: () => focus.setPanel("detail"),
 		},
 		{
@@ -113,7 +113,10 @@ function AppContent() {
 			keybind: "help",
 			context: "global",
 			type: "action",
-			onSelect: () => dialog.toggle("help", () => <HelpModal />),
+			onSelect: () =>
+				dialog.toggle("help", () => <HelpModal />, {
+					hints: [{ key: "enter", label: "execute" }],
+				}),
 		},
 		{
 			id: "global.refresh",
@@ -121,7 +124,7 @@ function AppContent() {
 			keybind: "refresh",
 			context: "global",
 			type: "action",
-			hidden: true,
+			visibility: "help-only",
 			onSelect: () => refresh(),
 		},
 		{
@@ -129,8 +132,8 @@ function AppContent() {
 			title: "git fetch",
 			keybind: "jj_git_fetch",
 			context: "global",
-			type: "action",
-			hidden: true,
+			type: "git",
+			visibility: "help-only",
 			onSelect: async () => {
 				const result = await globalLoading.run("Fetching...", () =>
 					jjGitFetch(),
@@ -146,8 +149,8 @@ function AppContent() {
 			title: "git fetch all",
 			keybind: "jj_git_fetch_all",
 			context: "global",
-			type: "action",
-			hidden: true,
+			type: "git",
+			visibility: "help-only",
 			onSelect: async () => {
 				const result = await globalLoading.run("Fetching all...", () =>
 					jjGitFetch({ allRemotes: true }),
@@ -163,8 +166,8 @@ function AppContent() {
 			title: "git push",
 			keybind: "jj_git_push",
 			context: "global",
-			type: "action",
-			hidden: true,
+			type: "git",
+			visibility: "help-only",
 			onSelect: async () => {
 				const result = await globalLoading.run("Pushing...", () => jjGitPush())
 				commandLog.addEntry(result)
@@ -178,7 +181,8 @@ function AppContent() {
 			title: "git push all",
 			keybind: "jj_git_push_all",
 			context: "global",
-			type: "action",
+			type: "git",
+			visibility: "help-only",
 			onSelect: async () => {
 				const result = await globalLoading.run("Pushing all...", () =>
 					jjGitPush({ all: true }),

@@ -5,9 +5,9 @@ import { useDialog } from "./dialog"
 import { useFocus } from "./focus"
 import { createSimpleContext } from "./helper"
 import { useKeybind } from "./keybind"
-import type { CommandType, Context, Panel } from "./types"
+import type { CommandType, CommandVisibility, Context, Panel } from "./types"
 
-export type { CommandType, Context }
+export type { CommandType, CommandVisibility, Context }
 
 export type CommandOption = {
 	id: string
@@ -16,7 +16,7 @@ export type CommandOption = {
 	context: Context
 	type: CommandType
 	panel?: Panel
-	hidden?: boolean
+	visibility?: CommandVisibility
 	onSelect: () => void
 }
 

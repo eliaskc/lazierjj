@@ -299,7 +299,13 @@ export function LogPanel() {
 					onCancel={() => dialog.close()}
 				/>
 			),
-			{ id: `${type}-modal` },
+			{
+				id: `${type}-modal`,
+				hints: [
+					{ key: "y", label: "confirm" },
+					{ key: "n", label: "cancel" },
+				],
+			},
 		)
 	}
 
@@ -311,7 +317,7 @@ export function LogPanel() {
 			context: "log.oplog",
 			type: "navigation",
 			panel: "log",
-			hidden: true,
+			visibility: "help-only",
 			onSelect: selectNextOpLog,
 		},
 		{
@@ -321,7 +327,7 @@ export function LogPanel() {
 			context: "log.oplog",
 			type: "navigation",
 			panel: "log",
-			hidden: true,
+			visibility: "help-only",
 			onSelect: selectPrevOpLog,
 		},
 		{
@@ -331,7 +337,7 @@ export function LogPanel() {
 			context: "log.revisions",
 			type: "navigation",
 			panel: "log",
-			hidden: true,
+			visibility: "help-only",
 			onSelect: selectNext,
 		},
 		{
@@ -341,7 +347,7 @@ export function LogPanel() {
 			context: "log.revisions",
 			type: "navigation",
 			panel: "log",
-			hidden: true,
+			visibility: "help-only",
 			onSelect: selectPrev,
 		},
 		{
@@ -351,7 +357,7 @@ export function LogPanel() {
 			context: "log.revisions",
 			type: "view",
 			panel: "log",
-			hidden: true,
+			visibility: "help-only",
 			onSelect: () => enterFilesView(),
 		},
 		{
@@ -441,7 +447,13 @@ export function LogPanel() {
 							}}
 						/>
 					),
-					{ id: "describe" },
+					{
+						id: "describe",
+						hints: [
+							{ key: "tab", label: "switch field" },
+							{ key: "enter", label: "save" },
+						],
+					},
 				)
 			},
 		},
@@ -486,7 +498,13 @@ export function LogPanel() {
 							}}
 						/>
 					),
-					{ id: "bookmark-create" },
+					{
+						id: "bookmark-create",
+						hints: [
+							{ key: "tab", label: "switch field" },
+							{ key: "enter", label: "save" },
+						],
+					},
 				)
 			},
 		},
@@ -532,7 +550,13 @@ export function LogPanel() {
 							onCancel={() => dialog.close()}
 						/>
 					),
-					{ id: "restore-modal" },
+					{
+						id: "restore-modal",
+						hints: [
+							{ key: "y", label: "confirm" },
+							{ key: "n", label: "cancel" },
+						],
+					},
 				)
 			},
 		},
@@ -543,7 +567,7 @@ export function LogPanel() {
 			context: "log.files",
 			type: "navigation",
 			panel: "log",
-			hidden: true,
+			visibility: "help-only",
 			onSelect: selectNextFile,
 		},
 		{
@@ -553,7 +577,7 @@ export function LogPanel() {
 			context: "log.files",
 			type: "navigation",
 			panel: "log",
-			hidden: true,
+			visibility: "help-only",
 			onSelect: selectPrevFile,
 		},
 		{
@@ -563,7 +587,7 @@ export function LogPanel() {
 			context: "log.files",
 			type: "action",
 			panel: "log",
-			hidden: true,
+			visibility: "help-only",
 			onSelect: handleFileEnter,
 		},
 		{
@@ -573,7 +597,7 @@ export function LogPanel() {
 			context: "log.files",
 			type: "view",
 			panel: "log",
-			hidden: true,
+			visibility: "help-only",
 			onSelect: exitFilesView,
 		},
 		{

@@ -29,6 +29,7 @@ type ContextGroup =
 	| "bookmarks"
 	| "oplog"
 	| "detail"
+	| "git"
 	| "global"
 
 interface ContextGroupData {
@@ -44,6 +45,7 @@ const GROUP_ORDER: ContextGroup[] = [
 	"oplog",
 	"detail",
 	"navigation",
+	"git",
 	"global",
 ]
 
@@ -54,6 +56,7 @@ const GROUP_LABELS: Record<ContextGroup, string> = {
 	bookmarks: "bookmarks",
 	oplog: "oplog",
 	detail: "detail",
+	git: "git",
 	global: "global",
 }
 
@@ -110,11 +113,19 @@ export function HelpModal() {
 
 	type SearchableCommand = CommandOption & { keybindStr: string }
 
+	const isVisibleInHelp = (cmd: CommandOption) => {
+		const v = cmd.visibility ?? "all"
+		return v === "all" || v === "help-only"
+	}
+
 	const allCommands = createMemo((): SearchableCommand[] => {
-		return command.all().map((cmd) => ({
-			...cmd,
-			keybindStr: cmd.keybind ? keybind.print(cmd.keybind) : "",
-		}))
+		return command
+			.all()
+			.filter(isVisibleInHelp)
+			.map((cmd) => ({
+				...cmd,
+				keybindStr: cmd.keybind ? keybind.print(cmd.keybind) : "",
+			}))
 	})
 
 	const matchedCommands = createMemo(() => {
@@ -168,7 +179,7 @@ export function HelpModal() {
 				continue
 			}
 
-			const group = contextToGroup(cmd.context)
+			const group = cmd.type === "git" ? "git" : contextToGroup(cmd.context)
 			const existing = groups.get(group) || []
 			groups.set(group, [...existing, cmd])
 		}

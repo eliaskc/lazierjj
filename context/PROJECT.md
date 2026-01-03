@@ -49,9 +49,6 @@
 - [x] `d` — describe change (modal with subject + body, character count, Tab to switch)
 - [x] `a` — abandon change (with confirmation modal)
 - [x] Command log panel — shows output/errors, scrolls to latest
-- [ ] Command log focusable
-  - [ ] Click to focus, keyboard scroll (arrows, ctrl+u/d)
-  - [ ] Increase height when focused
 - [x] `u` — undo with confirmation (shows last operation, y/n to confirm)
 - [x] `U` — redo with confirmation
 - [x] `r` — restore file/folder in file tree (discard changes, with confirmation)
@@ -91,11 +88,27 @@ All operations work in both Log panel and Bookmarks commits view.
 - [x] Smart diff loading — debounced + skips reload when content unchanged
 - [x] Auto-refresh — focus-based + polling (2s interval checking jj op log ID)
 
-## Text Editing (in modals)
+## Pre-release
 
-- [ ] Copy (`Ctrl+C`)
+Must-do before initial release:
+
+**Status bar cleanup:**
+- [x] Add `visibility` field to commands (`all` | `help-only` | `status-only` | `none`)
+- [x] Show modal hints in status bar when dialog is open
+- [x] Mark navigation commands as `help-only` (j/k, ctrl+u/d, tab, 1/2/3, [/], enter, escape)
+- [x] Mark git operations (f/F/p/P) and refresh (ctrl+r) as `help-only`
+- [x] Update HelpModal to filter by visibility
+
+**Command log:**
+- [ ] Click to focus
+- [ ] Keyboard scroll (j/k, ctrl+u/d)
+- [ ] Expand height when focused
+
+**Input improvements:**
+- [ ] Paste (`Ctrl+V` / `Cmd+V`)
 - [ ] Word navigation (`Alt+arrows`)
 - [ ] Word delete (`Alt+backspace/delete`)
+- [ ] Jump to line start/end (`Home`/`End`)
 
 Start with describe modal, generalize to all inputs.
 
@@ -253,7 +266,6 @@ Lazygit-style interactive `jj split` — mark files/hunks to keep in current com
 
 - Help modal has small visual gap between border and outer edge (OpenTUI quirk)
 - Search input in help modal doesn't render visually (filtering works though)
-- Keybinds not visible in modals (dimming overlay blocks status bar)
 - Spaces not rendering in BorderBox corner overlays
 
 ### Performance
@@ -277,9 +289,6 @@ All major performance issues have been resolved:
 - [ ] Active bookmark indication when navigating
 - [x] All command titles lowercase (e.g., "new" not "New")
 - [x] Simplified command titles in context (e.g., "create" not "Create bookmark" in bookmarks context)
-- [ ] Hide tab switching `[`/`]` from status bar, add to help modal Navigation section
-  - Group with other general nav commands (j/k, ctrl+u/d) that apply across contexts
-  - Avoid duplicating commands that appear in multiple contexts
 - [x] Semantic command grouping in help modal (revisions, files, bookmarks, oplog)
 
 ### Technical Debt
