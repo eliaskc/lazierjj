@@ -3,12 +3,13 @@ import type { JSX } from "solid-js"
 import { Show, children as resolveChildren } from "solid-js"
 
 type Dimension = number | "auto" | `${number}%`
+type CornerContent = JSX.Element | string | (() => JSX.Element | string)
 
 interface BorderBoxProps {
-	topLeft?: JSX.Element | string
-	topRight?: JSX.Element | string
-	bottomLeft?: JSX.Element | string
-	bottomRight?: JSX.Element | string
+	topLeft?: CornerContent
+	topRight?: CornerContent
+	bottomLeft?: CornerContent
+	bottomRight?: CornerContent
 
 	border?: boolean
 	borderStyle?: BorderStyle
@@ -36,10 +37,13 @@ export function BorderBox(props: BorderBoxProps) {
 	const hasOverlays = () =>
 		props.topLeft || props.topRight || props.bottomLeft || props.bottomRight
 
+	const resolveCorner = (content: CornerContent | undefined) =>
+		typeof content === "function" ? content() : content
+
 	const renderCorner = (
-		content: JSX.Element | string | undefined,
 		position: "topLeft" | "topRight" | "bottomLeft" | "bottomRight",
 	) => {
+		const content = resolveCorner(props[position])
 		if (!content) return null
 
 		const isTop = position.startsWith("top")
@@ -93,16 +97,10 @@ export function BorderBox(props: BorderBoxProps) {
 			height={props.height}
 			onMouseDown={props.onMouseDown}
 		>
-			<Show when={props.topLeft}>{renderCorner(props.topLeft, "topLeft")}</Show>
-			<Show when={props.topRight}>
-				{renderCorner(props.topRight, "topRight")}
-			</Show>
-			<Show when={props.bottomLeft}>
-				{renderCorner(props.bottomLeft, "bottomLeft")}
-			</Show>
-			<Show when={props.bottomRight}>
-				{renderCorner(props.bottomRight, "bottomRight")}
-			</Show>
+			<Show when={props.topLeft}>{() => renderCorner("topLeft")}</Show>
+			<Show when={props.topRight}>{() => renderCorner("topRight")}</Show>
+			<Show when={props.bottomLeft}>{() => renderCorner("bottomLeft")}</Show>
+			<Show when={props.bottomRight}>{() => renderCorner("bottomRight")}</Show>
 
 			<box
 				flexDirection={props.flexDirection ?? "column"}

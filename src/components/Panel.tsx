@@ -69,12 +69,20 @@ export function Panel(props: PanelProps) {
 		if (hasTabs()) {
 			return (
 				<text>
-					<span style={{ fg: colors().textMuted }}>[{props.hotkey}]─</span>
+					<Show
+						when={props.focused}
+						fallback={
+							<span style={{ fg: colors().textMuted }}>[{props.hotkey}]</span>
+						}
+					>
+						<span style={{ fg: colors().primary }}>[{props.hotkey}]</span>
+					</Show>
+					<span style={{ fg: colors().textMuted }}>─</span>
 					<For each={props.tabs}>
 						{(tab, i) => (
 							<>
 								<Show when={i() > 0}>
-									<span style={{ fg: colors().textMuted }}> - </span>
+									<span style={{ fg: colors().textMuted }}> </span>
 								</Show>
 								<span
 									style={{
@@ -95,9 +103,18 @@ export function Panel(props: PanelProps) {
 
 		return (
 			<text>
-				<span style={{ fg: colors().textMuted }}>
-					[{props.hotkey}]─{props.title}
-				</span>
+				<Show
+					when={props.focused}
+					fallback={
+						<span style={{ fg: colors().textMuted }}>
+							[{props.hotkey}]─{props.title}
+						</span>
+					}
+				>
+					<span style={{ fg: colors().primary }}>
+						[{props.hotkey}]─{props.title}
+					</span>
+				</Show>
 			</text>
 		)
 	}
@@ -110,7 +127,7 @@ export function Panel(props: PanelProps) {
 
 	return (
 		<BorderBox
-			topLeft={renderTitle()}
+			topLeft={renderTitle}
 			border
 			borderStyle={style().panel.borderStyle}
 			borderColor={props.focused ? colors().borderFocused : colors().border}
