@@ -17,6 +17,7 @@ import {
 	type DiffStats,
 	jjDiffStats,
 	jjShowDescription,
+  fetchOpLogId
 } from "../commander/operations"
 import type { Commit, FileChange } from "../commander/types"
 import {
@@ -128,6 +129,7 @@ interface SyncContextValue {
 	selectFirstBookmarkFile: () => void
 	selectLastBookmarkFile: () => void
 	toggleBookmarkFolder: (path: string) => void
+	refresh: () => Promise<void>
 }
 
 const SyncContext = createContext<SyncContextValue>()
@@ -219,6 +221,134 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		}
 		renderer.on("resize", handleResize)
 		onCleanup(() => renderer.off("resize", handleResize))
+	})
+
+	let lastOpLogId: string | null = null
+	let isRefreshing = false
+
+	const doFullRefresh = async () => {
+		if (isRefreshing) return
+		isRefreshing = true
+
+		try {
+			await Promise.all([loadLog(), loadBookmarks()])
+
+			if (viewMode() === "files") {
+				const commit = selectedCommit()
+				if (commit) {
+					const result = await fetchFiles(commit.changeId, {
+						ignoreWorkingCopy: true,
+					})
+					setFiles(result)
+					setFileTree(buildFileTree(result))
+				}
+			}
+
+			const bmMode = bookmarkViewMode()
+			if (bmMode === "commits" || bmMode === "files") {
+				const bookmarkName = activeBookmarkName()
+				if (bookmarkName) {
+					const result = await fetchLog({ revset: `::${bookmarkName}` })
+					setBookmarkCommits(result)
+
+					if (bmMode === "files") {
+						const commit = selectedBookmarkCommit()
+						if (commit) {
+							const fileResult = await fetchFiles(commit.changeId, {
+								ignoreWorkingCopy: true,
+							})
+							setBookmarkFiles(fileResult)
+							setBookmarkFileTree(buildFileTree(fileResult))
+						}
+					}
+				}
+			}
+		} finally {
+			isRefreshing = false
+		}
+	}
+
+	// Auto-refresh: focus-based + adaptive polling (2s focused, 30s unfocused)
+	onMount(() => {
+		let focusDebounceTimer: ReturnType<typeof setTimeout> | null = null
+		let pollTimer: ReturnType<typeof setTimeout> | null = null
+		let isChecking = false
+		let isFocused = true
+
+		const POLL_INTERVAL_FOCUSED = 2000
+		const POLL_INTERVAL_UNFOCUSED = 30000
+		const FOCUS_DEBOUNCE = 100
+
+		const checkAndRefresh = async () => {
+			if (isChecking) return
+			isChecking = true
+
+			try {
+				const currentId = await fetchOpLogId()
+				if (!currentId) return
+
+				if (lastOpLogId !== null && currentId !== lastOpLogId) {
+					lastOpLogId = currentId
+					await doFullRefresh()
+				} else {
+					lastOpLogId = currentId
+				}
+			} finally {
+				isChecking = false
+			}
+		}
+
+		const schedulePoll = () => {
+			if (pollTimer) {
+				clearTimeout(pollTimer)
+			}
+			const interval = isFocused
+				? POLL_INTERVAL_FOCUSED
+				: POLL_INTERVAL_UNFOCUSED
+			pollTimer = setTimeout(() => {
+				checkAndRefresh()
+				schedulePoll()
+			}, interval)
+		}
+
+		const handleFocus = () => {
+			isFocused = true
+			if (focusDebounceTimer) {
+				clearTimeout(focusDebounceTimer)
+			}
+			focusDebounceTimer = setTimeout(() => {
+				focusDebounceTimer = null
+				checkAndRefresh()
+			}, FOCUS_DEBOUNCE)
+			schedulePoll()
+		}
+
+		const handleBlur = () => {
+			isFocused = false
+			schedulePoll()
+		}
+
+		renderer.on("focus", handleFocus)
+		renderer.on("blur", handleBlur)
+
+		fetchOpLogId()
+			.then((id) => {
+				lastOpLogId = id
+			})
+			.catch(() => {})
+
+		schedulePoll()
+
+		onCleanup(() => {
+			renderer.off("focus", handleFocus)
+			renderer.off("blur", handleBlur)
+			if (pollTimer) {
+				clearTimeout(pollTimer)
+			}
+			if (focusDebounceTimer) {
+				clearTimeout(focusDebounceTimer)
+			}
+		})
 	})
 
 	createEffect(() => {
@@ -485,14 +615,13 @@ export function SyncProvider(props: { children: JSX.Element }) {
 
 	const loadDiff = (changeId: string, columns: number, paths?: string[]) => {
 		const endTotal = profile(`loadDiff(${changeId.slice(0, 8)})`)
-		const key = paths?.length ? `${changeId}:${paths.join(",")}` : changeId
+		const requestKey = currentDiffKey
 
 		if (currentDiffStream) {
 			currentDiffStream.cancel()
 			currentDiffStream = null
 		}
 
-		currentDiffKey = key
 		setDiffLoading(true)
 		setDiffError(null)
 
@@ -508,7 +637,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 			},
 			{
 				onUpdate: (content: string, lineCount: number, complete: boolean) => {
-					if (currentDiffKey !== key) return
+					if (currentDiffKey !== requestKey) return
 
 					if (firstUpdate) {
 						profile("  first render trigger")()
@@ -524,7 +653,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 					}
 				},
 				onError: (error: Error) => {
-					if (currentDiffKey !== key) return
+					if (currentDiffKey !== requestKey) return
 					setDiffError(error.message)
 					setDiff(null)
 					setDiffLoading(false)
@@ -571,6 +700,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		const newKey = computeDiffKey(changeId, paths)
 		if (newKey === currentDiffKey) return
 
+		currentDiffKey = newKey // Update key BEFORE loading to prevent duplicate loads
 		loadDiff(changeId, columns, paths)
 	})
 
@@ -713,6 +843,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		selectFirstBookmarkFile,
 		selectLastBookmarkFile,
 		toggleBookmarkFolder,
+		refresh: doFullRefresh,
 	}
 
 	return (
