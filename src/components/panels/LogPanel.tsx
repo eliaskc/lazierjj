@@ -1,5 +1,12 @@
 import type { ScrollBoxRenderable } from "@opentui/core"
-import { For, Show, createEffect, createSignal, onMount } from "solid-js"
+import {
+	For,
+	Show,
+	createEffect,
+	createMemo,
+	createSignal,
+	onMount,
+} from "solid-js"
 import { jjBookmarkCreate } from "../../commander/bookmarks"
 import {
 	type OpLogEntry,
@@ -25,6 +32,7 @@ import { useLoading } from "../../context/loading"
 import { useSync } from "../../context/sync"
 import { useTheme } from "../../context/theme"
 import type { Context } from "../../context/types"
+import { createDoubleClickDetector } from "../../utils/double-click"
 import { AnsiText } from "../AnsiText"
 import { Panel } from "../Panel"
 import { BookmarkNameModal } from "../modals/BookmarkNameModal"
@@ -42,6 +50,7 @@ export function LogPanel() {
 	const {
 		commits,
 		selectedIndex,
+		setSelectedIndex,
 		selectedCommit,
 		loading,
 		error,
@@ -500,23 +509,35 @@ export function LogPanel() {
 					<For each={commits()}>
 						{(commit, index) => {
 							const isSelected = () => index() === selectedIndex()
+							const handleClick = createDoubleClickDetector(() => {
+								setSelectedIndex(index())
+								enterFilesView()
+							})
+							const handleMouseDown = () => {
+								setSelectedIndex(index())
+								handleClick()
+							}
 							return (
-								<For each={commit.lines}>
-									{(line) => (
-										<box
-											backgroundColor={
-												isSelected() ? colors().selectionBackground : undefined
-											}
-											overflow="hidden"
-										>
-											<AnsiText
-												content={line}
-												bold={commit.isWorkingCopy}
-												wrapMode="none"
-											/>
-										</box>
-									)}
-								</For>
+								<box onMouseDown={handleMouseDown}>
+									<For each={commit.lines}>
+										{(line) => (
+											<box
+												backgroundColor={
+													isSelected()
+														? colors().selectionBackground
+														: undefined
+												}
+												overflow="hidden"
+											>
+												<AnsiText
+													content={line}
+													bold={commit.isWorkingCopy}
+													wrapMode="none"
+												/>
+											</box>
+										)}
+									</For>
+								</box>
 							)
 						}}
 					</For>

@@ -311,7 +311,7 @@ export function MainArea() {
 	])
 
 	return (
-		<Panel title="Detail" hotkey="3" focused={isFocused()}>
+		<Panel title="Detail" hotkey="3" panelId="detail" focused={isFocused()}>
 			<Show when={diffLoading() && !diff()}>
 				<text>Loading diff...</text>
 			</Show>

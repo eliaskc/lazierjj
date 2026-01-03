@@ -18,10 +18,11 @@
 - [x] `Tab` — cycle focus between panels
 - [x] `1`/`2`/`3` — jump directly to panel
 - [x] `Escape` — back navigation in drill-down views
-- [ ] Mouse support
-  - [ ] Click to focus panels
-  - [ ] Scroll wheel in panels
-  - [ ] Double-click as primary action (enter file view, drill into commits/files)
+- [x] Mouse support
+  - [x] Click to focus panels
+  - [x] Click to select items in lists
+  - [x] Click folder to toggle expand/collapse
+  - [x] Double-click as primary action (enter file view, drill into commits/files, focus diff panel)
 
 ## Bookmarks Panel
 
@@ -48,8 +49,12 @@
 - [x] `d` — describe change (modal with subject + body, character count, Tab to switch)
 - [x] `a` — abandon change (with confirmation modal)
 - [x] Command log panel — shows output/errors, scrolls to latest
+- [ ] Command log focusable
+  - [ ] Click to focus, keyboard scroll (arrows, ctrl+u/d)
+  - [ ] Increase height when focused
 - [x] `u` — undo with confirmation (shows last operation, y/n to confirm)
 - [x] `U` — redo with confirmation
+- [x] `r` — restore file/folder in file tree (discard changes, with confirmation)
 
 All operations work in both Log panel and Bookmarks commits view.
 

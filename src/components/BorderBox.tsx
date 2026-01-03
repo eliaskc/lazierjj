@@ -25,6 +25,7 @@ interface BorderBoxProps {
 	paddingBottom?: number
 	gap?: number
 	overflow?: "hidden" | "visible"
+	onMouseDown?: () => void
 
 	children: JSX.Element
 }
@@ -76,6 +77,7 @@ export function BorderBox(props: BorderBoxProps) {
 				paddingBottom={props.paddingBottom}
 				gap={props.gap}
 				overflow={props.overflow}
+				onMouseDown={props.onMouseDown}
 			>
 				{resolved()}
 			</box>
@@ -89,6 +91,7 @@ export function BorderBox(props: BorderBoxProps) {
 			flexGrow={props.flexGrow}
 			width={props.width}
 			height={props.height}
+			onMouseDown={props.onMouseDown}
 		>
 			<Show when={props.topLeft}>{renderCorner(props.topLeft, "topLeft")}</Show>
 			<Show when={props.topRight}>

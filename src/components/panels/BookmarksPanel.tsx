@@ -23,6 +23,7 @@ import { useFocus } from "../../context/focus"
 import { useLoading } from "../../context/loading"
 import { useSync } from "../../context/sync"
 import { useTheme } from "../../context/theme"
+import { createDoubleClickDetector } from "../../utils/double-click"
 import { Panel } from "../Panel"
 import { BookmarkNameModal } from "../modals/BookmarkNameModal"
 import { DescribeModal } from "../modals/DescribeModal"
@@ -39,6 +40,7 @@ export function BookmarksPanel() {
 	const {
 		bookmarks,
 		selectedBookmarkIndex,
+		setSelectedBookmarkIndex,
 		selectedBookmark,
 		bookmarksLoading,
 		bookmarksError,
@@ -47,9 +49,11 @@ export function BookmarksPanel() {
 		bookmarkViewMode,
 		bookmarkCommits,
 		selectedBookmarkCommitIndex,
+		setSelectedBookmarkCommitIndex,
 		bookmarkCommitsLoading,
 		bookmarkFlatFiles,
 		selectedBookmarkFileIndex,
+		setSelectedBookmarkFileIndex,
 		bookmarkFilesLoading,
 		bookmarkCollapsedPaths,
 		activeBookmarkName,
@@ -524,7 +528,7 @@ export function BookmarksPanel() {
 	})
 
 	return (
-		<Panel title={title()} hotkey="2" focused={isFocused()}>
+		<Panel title={title()} hotkey="2" panelId="refs" focused={isFocused()}>
 			<Switch>
 				<Match when={bookmarkViewMode() === "list"}>
 					<Show when={bookmarksLoading() && localBookmarks().length === 0}>
@@ -549,12 +553,20 @@ export function BookmarksPanel() {
 							<For each={localBookmarks()}>
 								{(bookmark, index) => {
 									const isSelected = () => index() === selectedBookmarkIndex()
+									const handleDoubleClick = createDoubleClickDetector(() => {
+										enterBookmarkCommitsView()
+									})
+									const handleMouseDown = () => {
+										setSelectedBookmarkIndex(index())
+										handleDoubleClick()
+									}
 									return (
 										<box
 											backgroundColor={
 												isSelected() ? colors().selectionBackground : undefined
 											}
 											overflow="hidden"
+											onMouseDown={handleMouseDown}
 										>
 											<text>
 												<span style={{ fg: colors().primary }}>
@@ -592,6 +604,13 @@ export function BookmarksPanel() {
 										const isSelected = () =>
 											index() === selectedBookmarkCommitIndex()
 										const icon = commit.isWorkingCopy ? "◆" : "○"
+										const handleDoubleClick = createDoubleClickDetector(() => {
+											enterBookmarkFilesView()
+										})
+										const handleMouseDown = () => {
+											setSelectedBookmarkCommitIndex(index())
+											handleDoubleClick()
+										}
 										return (
 											<box
 												backgroundColor={
@@ -600,6 +619,7 @@ export function BookmarksPanel() {
 														: undefined
 												}
 												overflow="hidden"
+												onMouseDown={handleMouseDown}
 											>
 												<text wrapMode="none">
 													<span
@@ -665,6 +685,26 @@ export function BookmarksPanel() {
 												] ?? colors().text)
 											: colors().text
 
+										const handleDoubleClick = createDoubleClickDetector(() => {
+											if (node.isDirectory) {
+												toggleBookmarkFolder(node.path)
+											} else {
+												focus.setPanel("detail")
+											}
+										})
+
+										const handleMouseDown = (e: {
+											stopPropagation: () => void
+										}) => {
+											e.stopPropagation()
+											setSelectedBookmarkFileIndex(index())
+											if (node.isDirectory) {
+												toggleBookmarkFolder(node.path)
+											} else {
+												handleDoubleClick()
+											}
+										}
+
 										return (
 											<box
 												backgroundColor={
@@ -673,6 +713,7 @@ export function BookmarksPanel() {
 														: undefined
 												}
 												overflow="hidden"
+												onMouseDown={handleMouseDown}
 											>
 												<text>
 													<span style={{ fg: colors().textMuted }}>

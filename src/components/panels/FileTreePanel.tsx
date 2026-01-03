@@ -1,9 +1,13 @@
 import type { ScrollBoxRenderable } from "@opentui/core"
 import { For, Show, createEffect, createSignal } from "solid-js"
 import { useCommand } from "../../context/command"
+import { useCommandLog } from "../../context/commandlog"
+import { useDialog } from "../../context/dialog"
 import { useFocus } from "../../context/focus"
+import { useLoading } from "../../context/loading"
 import { useSync } from "../../context/sync"
 import { useTheme } from "../../context/theme"
+import { createDoubleClickDetector } from "../../utils/double-click"
 import { Panel } from "../Panel"
 
 const STATUS_CHARS: Record<string, string> = {
@@ -19,6 +23,7 @@ export function FileTreePanel() {
 		selectedCommit,
 		flatFiles,
 		selectedFileIndex,
+		setSelectedFileIndex,
 		filesLoading,
 		filesError,
 		collapsedPaths,
@@ -26,10 +31,25 @@ export function FileTreePanel() {
 		toggleFolder,
 		selectNextFile,
 		selectPrevFile,
+		refresh,
 	} = useSync()
 	const focus = useFocus()
 	const command = useCommand()
+	const commandLog = useCommandLog()
+	const dialog = useDialog()
+	const globalLoading = useLoading()
 	const { colors } = useTheme()
+
+	const runOperation = async (
+		text: string,
+		op: () => Promise<OperationResult>,
+	) => {
+		const result = await globalLoading.run(text, op)
+		commandLog.addEntry(result)
+		if (result.success) {
+			refresh()
+		}
+	}
 
 	const statusColors = () => ({
 		added: colors().success,
@@ -129,7 +149,7 @@ export function FileTreePanel() {
 		commit ? `Files (${commit.changeId.slice(0, 8)})` : "Files"
 
 	return (
-		<Panel title={title()} hotkey="1" focused={isFocused()}>
+		<Panel title={title()} hotkey="1" panelId="log" focused={isFocused()}>
 			<Show when={filesLoading()}>
 				<text fg={colors().textMuted}>Loading files...</text>
 			</Show>
@@ -160,12 +180,31 @@ export function FileTreePanel() {
 									] ?? colors().text)
 								: colors().text
 
+							const handleDoubleClick = createDoubleClickDetector(() => {
+								if (node.isDirectory) {
+									toggleFolder(node.path)
+								} else {
+									focus.setPanel("detail")
+								}
+							})
+
+							const handleMouseDown = (e: { stopPropagation: () => void }) => {
+								e.stopPropagation()
+								setSelectedFileIndex(index())
+								if (node.isDirectory) {
+									toggleFolder(node.path)
+								} else {
+									handleDoubleClick()
+								}
+							}
+
 							return (
 								<box
 									backgroundColor={
 										isSelected() ? colors().selectionBackground : undefined
 									}
 									overflow="hidden"
+									onMouseDown={handleMouseDown}
 								>
 									<text>
 										<span style={{ fg: colors().textMuted }}>{indent}</span>

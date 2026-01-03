@@ -1,5 +1,6 @@
 import { For, type JSX, Show } from "solid-js"
 import { useCommand } from "../context/command"
+import { useFocus } from "../context/focus"
 import { useTheme } from "../context/theme"
 import type { Context, Panel as PanelType } from "../context/types"
 import { BorderBox } from "./BorderBox"
@@ -24,6 +25,7 @@ interface PanelProps {
 export function Panel(props: PanelProps) {
 	const { colors, style } = useTheme()
 	const command = useCommand()
+	const focus = useFocus()
 
 	const hasTabs = () => props.tabs && props.tabs.length > 1
 
@@ -98,6 +100,12 @@ export function Panel(props: PanelProps) {
 		)
 	}
 
+	const handleMouseDown = () => {
+		if (props.panelId) {
+			focus.setPanel(props.panelId)
+		}
+	}
+
 	return (
 		<BorderBox
 			topLeft={renderTitle()}
@@ -108,6 +116,7 @@ export function Panel(props: PanelProps) {
 			height="100%"
 			overflow="hidden"
 			gap={0}
+			onMouseDown={handleMouseDown}
 		>
 			{props.children}
 		</BorderBox>

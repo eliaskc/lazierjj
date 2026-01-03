@@ -15,9 +15,9 @@ import { fetchFiles } from "../commander/files"
 import { fetchLog } from "../commander/log"
 import {
 	type DiffStats,
+	fetchOpLogId,
 	jjDiffStats,
 	jjShowDescription,
-  fetchOpLogId
 } from "../commander/operations"
 import type { Commit, FileChange } from "../commander/types"
 import {
@@ -107,11 +107,13 @@ interface SyncContextValue {
 	bookmarkViewMode: () => BookmarkViewMode
 	bookmarkCommits: () => Commit[]
 	selectedBookmarkCommitIndex: () => number
+	setSelectedBookmarkCommitIndex: (index: number) => void
 	bookmarkCommitsLoading: () => boolean
 	selectedBookmarkCommit: () => Commit | undefined
 	bookmarkFileTree: () => FileTreeNode | null
 	bookmarkFlatFiles: () => FlatFileNode[]
 	selectedBookmarkFileIndex: () => number
+	setSelectedBookmarkFileIndex: (index: number) => void
 	bookmarkFilesLoading: () => boolean
 	selectedBookmarkFile: () => FlatFileNode | undefined
 	bookmarkCollapsedPaths: () => Set<string>
@@ -821,11 +823,13 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		bookmarkViewMode,
 		bookmarkCommits,
 		selectedBookmarkCommitIndex,
+		setSelectedBookmarkCommitIndex,
 		bookmarkCommitsLoading,
 		selectedBookmarkCommit,
 		bookmarkFileTree,
 		bookmarkFlatFiles,
 		selectedBookmarkFileIndex,
+		setSelectedBookmarkFileIndex,
 		bookmarkFilesLoading,
 		selectedBookmarkFile,
 		bookmarkCollapsedPaths,
