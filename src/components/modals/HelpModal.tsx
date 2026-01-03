@@ -69,6 +69,9 @@ const NAVIGATION_KEYBINDS = new Set([
 	"prev_tab",
 	"focus_next",
 	"focus_prev",
+	"focus_panel_1",
+	"focus_panel_2",
+	"focus_panel_3",
 ])
 
 function contextToGroup(context: Context): ContextGroup {
@@ -165,16 +168,16 @@ export function HelpModal() {
 
 	const groupedCommands = createMemo((): ContextGroupData[] => {
 		const all = allCommands()
-		const seenTitles = new Set<string>()
+		const seenKeybinds = new Set<string>()
 
 		const groups = new Map<ContextGroup, CommandOption[]>()
 		const navCommands: CommandOption[] = []
 
 		for (const cmd of all) {
 			if (NAVIGATION_KEYBINDS.has(cmd.keybind ?? "")) {
-				if (!seenTitles.has(cmd.title)) {
+				if (!seenKeybinds.has(cmd.keybind ?? "")) {
 					navCommands.push(cmd)
-					seenTitles.add(cmd.title)
+					seenKeybinds.add(cmd.keybind ?? "")
 				}
 				continue
 			}

@@ -1,20 +1,28 @@
 # Configuration System
 
 **Status**: Not started  
-**Priority**: High
+**Priority**: Medium
 
 ---
 
-## Current State
+## Location
 
-No user configuration. Theme is hardcoded toggle, keybindings are hardcoded.
+- **Config**: `~/.config/lazyjuju/config.toml`
+- **State**: `~/.config/lazyjuju/state.json` (runtime state, not user-editable)
+- Respects `XDG_CONFIG_HOME` if set
 
-## Goals
+---
 
-Design a configuration system inspired by [jjui's approach](https://github.com/idursun/jjui/wiki/Configuration):
+## Open Config Command
 
-- **Location**: `~/.config/lazyjuju/config.toml` (respects XDG_CONFIG_HOME)
-- **Alternative**: Could also read from `[lazyjuju]` section in jj's config
+- Keybind: TBD (or unbound — accessible via help modal only)
+- Visibility: `help-only` (not shown in status bar)
+- Behavior:
+  1. If config file doesn't exist, create with defaults/comments
+  2. Open in `$EDITOR` (fallback to `vim`, `nano`, `vi`)
+  3. On save, reload config (if file watcher implemented)
+
+---
 
 ## Proposed Structure
 
@@ -22,42 +30,53 @@ Design a configuration system inspired by [jjui's approach](https://github.com/i
 # ~/.config/lazyjuju/config.toml
 
 [ui]
-theme = "lazygit"  # or "opencode", custom theme name
+theme = "lazygit"  # or "opencode"
 
 [ui.colors]
-# Override specific colors
-# selected = { bg = "#3a3a3a" }
+# Override specific colors (optional)
+# primary = "#4ECDC4"
 
 [diff]
-# Diff display preferences
-tool = "difft"           # Override jj's diff tool
-default_mode = "side-by-side"  # or "unified"
-auto_switch_width = 120  # Switch to unified below this width
+tool = "difft"              # Override jj's diff tool
+default_mode = "unified"    # or "side-by-side"
+auto_switch_width = 120     # Switch to unified below this width
 
 [keybinds]
-# Global keybinds
-quit = "q"
-help = "?"
-refresh = "R"
+# Custom keybinds (optional)
+# quit = "ctrl+q"
 
 [keybinds.log]
-# Context-specific keybinds for log panel
-# ...
-
-[revisions]
-# Override jj's default revset and template
-# revset = "..."
-# template = "builtin_log_compact"
+# Context-specific overrides
 ```
 
-## Reference
+---
 
-- jjui config wiki: https://github.com/idursun/jjui/wiki/Configuration
-- jjui default config: https://github.com/idursun/jjui/blob/main/internal/config/default/config.toml
+## State File
+
+```json
+{
+  "lastUpdateCheck": "2026-01-03T12:00:00Z",
+  "dismissedVersion": null,
+  "windowSize": { "width": 120, "height": 40 }
+}
+```
+
+Not user-editable, managed by lazyjuju.
+
+---
 
 ## Tasks
 
-- [ ] Design full configuration schema
+- [ ] Create config directory on first run
 - [ ] Implement TOML parser/loader
+- [ ] Add "open config" command (help-only visibility)
+- [ ] Create default config template with comments
+- [ ] Open in $EDITOR with fallbacks
 - [ ] Add config file watcher for live reload (nice-to-have)
 - [ ] Document all config options
+
+---
+
+## Reference
+
+- jjui config: https://github.com/idursun/jjui/wiki/Configuration

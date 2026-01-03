@@ -1,313 +1,182 @@
-# OpenCode Release Flow - Quick Reference for Lazyjuju
+# Release & Distribution
 
-## The 3-Tier Distribution Model
-
-OpenCode uses a sophisticated **3-tier approach** that's worth copying:
-
-### Tier 1: Direct Binary Download (Curl)
-```bash
-curl -fsSL https://opencode.ai/install | bash
-```
-- **Pros**: No dependencies, works everywhere, fast
-- **Cons**: Manual updates, no package manager integration
-- **Implementation**: Single bash script that detects platform/arch
-
-### Tier 2: Package Managers (npm, bun, brew)
-```bash
-npm install -g opencode-ai
-bun install -g opencode-ai
-brew install opencode
-```
-- **Pros**: Integrated with existing workflows, auto-updates
-- **Cons**: Requires package manager, slower
-- **Implementation**: Wrapper package with platform-specific optional dependencies
-
-### Tier 3: Desktop App (Tauri)
-- macOS, Windows, Linux installers
-- Auto-update built-in
-- GUI optional
+**Status**: Planning complete  
+**Priority**: High (next up)
 
 ---
 
-## The Clever NPM Strategy
+## Overview
 
-Instead of publishing one massive package, OpenCode publishes **11 packages**:
+Phased approach starting simple (npm with Bun requirement), adding complexity only when needed.
 
-```
-opencode-linux-x64       ← Platform-specific (contains binary)
-opencode-linux-arm64     ← Platform-specific
-opencode-darwin-x64      ← Platform-specific
-opencode-darwin-arm64    ← Platform-specific
-opencode-windows-x64     ← Platform-specific
-... (6 more variants)
-opencode-ai              ← Wrapper (depends on all above as optional)
-```
-
-**Why this works**:
-1. Each platform package is small (~50MB vs 500MB if bundled)
-2. npm only downloads the one you need
-3. Postinstall script symlinks the right binary
-4. Graceful fallback if binary unavailable
-
-**For Lazyjuju**: Start with just 2-3 key platforms (darwin-arm64, linux-x64, windows-x64)
+**Key decisions:**
+- Require Bun for initial release (simplifies everything)
+- Semantic versioning starting at `0.1.0`
+- Config/state in `~/.config/lazyjuju/` (respects XDG_CONFIG_HOME)
+- Update notification via toast, not blocking
 
 ---
 
-## Build Matrix (What Gets Built)
+## Phase 1: npm Publish (Initial Release)
 
-```typescript
-const targets = [
-  // Linux
-  { os: "linux", arch: "x64" },
-  { os: "linux", arch: "x64", avx2: false },  // Baseline for old CPUs
-  { os: "linux", arch: "arm64" },
-  { os: "linux", arch: "arm64", abi: "musl" }, // Alpine Linux
-  
-  // macOS
-  { os: "darwin", arch: "x64" },
-  { os: "darwin", arch: "x64", avx2: false },
-  { os: "darwin", arch: "arm64" },
-  
-  // Windows
-  { os: "win32", arch: "x64" },
-  { os: "win32", arch: "x64", avx2: false },
-]
-```
+Ship source code, require Bun runtime.
 
-**Key insight**: They build **baseline variants** for older CPUs without AVX2. This is why their install script checks CPU features.
+### package.json Changes
 
----
-
-## The Release Orchestration Script
-
-One script (`publish-start.ts`) handles everything:
-
-```typescript
-// 1. Get changelog
-const notes = await buildNotes(previous, "HEAD")
-
-// 2. Update ALL versions atomically
-for (const file of pkgjsons) {
-  pkg = pkg.replaceAll(/"version": "[^"]+"/g, `"version": "${Script.version}"`)
-}
-
-// 3. Build and publish
-await import(`../packages/opencode/script/publish.ts`)
-
-// 4. Create git tag
-await $`git tag v${Script.version}`
-
-// 5. Create GitHub release with binaries
-await $`gh release create v${Script.version} --notes ${notes} ./dist/*.zip ./dist/*.tar.gz`
-```
-
-**Why this matters**: Single source of truth for versioning. No manual version bumping.
-
----
-
-## Auto-Update Detection
-
-OpenCode's `upgrade` command is smart:
-
-```typescript
-export async function method() {
-  // Check installation path
-  if (process.execPath.includes(".opencode/bin")) return "curl"
-  
-  // Check package managers
-  const checks = [
-    { name: "npm", command: () => $`npm list -g --depth=0` },
-    { name: "bun", command: () => $`bun pm ls -g` },
-    { name: "brew", command: () => $`brew list --formula opencode` },
-  ]
-  
-  for (const check of checks) {
-    if ((await check.command()).includes("opencode")) return check.name
-  }
-  
-  return "unknown"
-}
-```
-
-Then upgrades via the same method:
-```typescript
-switch (method) {
-  case "curl":
-    await $`curl -fsSL https://opencode.ai/install | bash`.env({ VERSION: target })
-  case "npm":
-    await $`npm install -g opencode-ai@${target}`
-  case "bun":
-    await $`bun install -g opencode-ai@${target}`
-  case "brew":
-    await $`brew install ${formula}`
-}
-```
-
-**For Lazyjuju**: This is the key to seamless updates. Users don't need to remember how they installed it.
-
----
-
-## GitHub Actions Workflow
-
-Two jobs:
-
-**Job 1: `publish`** (Linux runner)
-- Runs `./script/publish-start.ts`
-- Outputs: release ID, tag, version
-- Takes ~10 minutes
-
-**Job 2: `publish-tauri`** (Matrix: 5 platforms)
-- Waits for Job 1
-- Builds desktop app for each platform in parallel
-- Uploads to release created by Job 1
-- Takes ~30 minutes total
-
-**Trigger**: Push to `dev` branch OR manual workflow dispatch
-
----
-
-## Version Injection at Build Time
-
-```typescript
-await Bun.build({
-  define: {
-    OPENCODE_VERSION: `'${Script.version}'`,
-    OPENCODE_CHANNEL: `'${Script.channel}'`,
-    OPENCODE_WORKER_PATH: workerPath,
+```json
+{
+  "name": "lazyjuju",
+  "version": "0.1.0",
+  "private": false,
+  "bin": {
+    "lazyjuju": "./bin/lazyjuju.js",
+    "ljj": "./bin/lazyjuju.js"
   },
-})
-```
-
-Then in code:
-```typescript
-declare global {
-  const OPENCODE_VERSION: string
-  const OPENCODE_CHANNEL: string
+  "files": ["bin", "src"],
+  // ... rest unchanged
 }
-
-export const VERSION = OPENCODE_VERSION  // "1.0.224"
-export const CHANNEL = OPENCODE_CHANNEL  // "latest"
 ```
 
-**Why**: No runtime version lookup, version is baked into binary.
+### New File: `bin/lazyjuju.js`
+
+```javascript
+#!/usr/bin/env bun
+import "../src/index.tsx"
+```
+
+### Tasks
+
+- [ ] Create `bin/lazyjuju.js` entry script
+- [ ] Update package.json (remove private, add bin/files/version)
+- [ ] Test locally with `npm link`
+- [ ] Test with `bunx lazyjuju` from different directory
+- [ ] Publish to npm
+
+### Installation Methods (all work after npm publish)
+
+```bash
+# Global install
+npm install -g lazyjuju
+bun install -g lazyjuju
+pnpm add -g lazyjuju
+yarn global add lazyjuju
+
+# One-off run
+bunx lazyjuju
+npx lazyjuju
+pnpm dlx lazyjuju
+yarn dlx lazyjuju
+```
+
+**Note:** All methods require [Bun](https://bun.sh) installed.
 
 ---
 
-## Installation Script Highlights
+## Phase 2: Version Indicator + Update Notification
 
-The `install` script is ~400 lines of bash that:
+### Version Indicator
 
-1. **Detects platform/arch**
-   ```bash
-   os=$(uname -s | tr '[:upper:]' '[:lower:]')
-   arch=$(uname -m)
-   ```
+- Location: StatusBar, bottom-right corner (using `justifyContent="space-between"`)
+- Style: Muted color (`colors().textMuted`)
+- Format: `v0.1.0`
+- Always visible
 
-2. **Checks CPU features**
-   ```bash
-   if ! grep -qi avx2 /proc/cpuinfo; then
-     needs_baseline=true
-   fi
-   ```
+### Update Check
 
-3. **Detects libc**
-   ```bash
-   if [ -f /etc/alpine-release ]; then
-     is_musl=true
-   fi
-   ```
+**Behavior:**
+- Check GitHub releases API on startup (non-blocking, background)
+- Frequency: Once per 24 hours
+- Store last check timestamp in `~/.config/lazyjuju/state.json`
+- If new version available, show toast (OpenTUI toast component)
 
-4. **Downloads with progress**
-   ```bash
-   download_with_progress "$url" "$tmp_dir/$filename"
-   ```
+**State file:** `~/.config/lazyjuju/state.json`
+```json
+{
+  "lastUpdateCheck": "2026-01-03T12:00:00Z",
+  "dismissedVersion": null
+}
+```
 
-5. **Auto-adds to PATH**
-   ```bash
-   add_to_path "$HOME/.zshrc" "export PATH=$INSTALL_DIR:\$PATH"
-   ```
+### Package Manager Detection
 
-6. **Handles GitHub Actions**
-   ```bash
-   if [ -n "${GITHUB_ACTIONS-}" ]; then
-     echo "$INSTALL_DIR" >> $GITHUB_PATH
-   fi
-   ```
+Detect how user installed to show correct update command:
 
----
+```typescript
+async function detectPackageManager(): Promise<"bun" | "npm" | "yarn" | "pnpm" | "unknown"> {
+  // Check environment variables set by package managers
+  const execPath = process.env.npm_execpath ?? ""
+  
+  if (execPath.includes("bun")) return "bun"
+  if (execPath.includes("yarn")) return "yarn"
+  if (execPath.includes("pnpm")) return "pnpm"
+  if (execPath.includes("npm")) return "npm"
+  
+  // Fallback: check global install locations
+  const bunGlobal = path.join(process.env.HOME ?? "", ".bun/install/global/node_modules/lazyjuju")
+  if (await exists(bunGlobal)) return "bun"
+  
+  // Default to npm (most common)
+  return "npm"
+}
+```
 
-## Release Frequency
+**Update commands by package manager:**
+| Manager | Command                        |
+| ------- | ------------------------------ |
+| bun     | `bun update -g lazyjuju`       |
+| npm     | `npm update -g lazyjuju`       |
+| yarn    | `yarn global upgrade lazyjuju` |
+| pnpm    | `pnpm update -g lazyjuju`      |
 
-- **Multiple releases per day** (v1.0.219 → v1.0.223 in 24 hours)
-- **32 assets per release**:
-  - 10 CLI binaries
-  - 10 npm packages
-  - 1 wrapper package
-  - 5 Tauri installers
-  - 5 Tauri updates
-  - 1 Docker image
+### Toast Message
 
----
+```
+Update available: v0.2.0
+Run: npm update -g lazyjuju
+```
 
-## Recommended Phased Approach for Lazyjuju
+### Tasks
 
-### Phase 1 (Week 1): Basic npm publishing
-- [ ] Create `packages/lazyjuju` with bin entry
-- [ ] Publish to npm as `lazyjuju`
-- [ ] Test: `npm install -g lazyjuju`
-
-### Phase 2 (Week 2): Multi-platform binaries
-- [ ] Create `script/build.ts` for 3 platforms (darwin-arm64, linux-x64, windows-x64)
-- [ ] Publish platform-specific packages
-- [ ] Create wrapper with postinstall
-- [ ] Test: `npm install -g lazyjuju` on each platform
-
-### Phase 3 (Week 3): Installation script
-- [ ] Create `install` bash script
-- [ ] Test platform detection
-- [ ] Test PATH modification
-- [ ] Serve via GitHub Pages or short URL
-
-### Phase 4 (Week 4): Auto-update
-- [ ] Implement `lazyjuju upgrade` command
-- [ ] Detect installation method
-- [ ] Test upgrade from each method
-
-### Phase 5 (Week 5): Release automation
-- [ ] Create `script/publish-start.ts`
-- [ ] Create GitHub Actions workflow
-- [ ] Test full release cycle
-
-### Phase 6 (Week 6+): Distribution channels
-- [ ] Homebrew tap
-- [ ] Docker image
-- [ ] Desktop app (optional)
+- [ ] Add version constant (read from package.json or inject at build)
+- [ ] Add version indicator to StatusBar (right-aligned, muted)
+- [ ] Create `~/.config/lazyjuju/` directory structure
+- [ ] Implement update check (GitHub releases API)
+- [ ] Implement package manager detection
+- [ ] Show toast when update available
+- [ ] Respect XDG_CONFIG_HOME
 
 ---
 
-## Key Files to Reference
+## Phase 3: Compiled Binaries + Curl (Deferred)
 
-In OpenCode repo:
-- `install` - Installation script
-- `packages/opencode/package.json` - Package structure
-- `packages/opencode/script/build.ts` - Multi-platform build
-- `packages/opencode/script/publish.ts` - NPM publishing
-- `packages/opencode/script/postinstall.mjs` - Platform detection
-- `packages/opencode/bin/opencode` - Wrapper script
-- `packages/opencode/src/installation/index.ts` - Auto-update logic
-- `.github/workflows/publish.yml` - Release workflow
-- `script/publish-start.ts` - Release orchestration
+**Trigger:** User demand, or when Bun requirement becomes a blocker.
+
+Would include:
+- `bun build --compile` for standalone binaries
+- Platform-specific npm packages (lazyjuju-darwin-arm64, etc.)
+- GitHub Actions matrix builds
+- curl install script
+- Auto-update command (`lazyjuju update`)
+
+See `context/references/opencode-release-distribution.md` for implementation patterns.
 
 ---
 
-## Gotchas & Lessons
+## Future: Homebrew
 
-1. **Baseline builds are essential** - Many users have older CPUs without AVX2
-2. **MUSL detection matters** - Alpine Linux is common in containers
-3. **Postinstall must be robust** - Fallback to Node.js if Bun not available
-4. **Version must be injected at build time** - No runtime lookups
-5. **Upgrade detection is critical** - Users forget how they installed
-6. **GitHub Actions matrix is powerful** - Build 5 platforms in parallel
-7. **Changelog generation saves time** - Automate from git history
-8. **Optional dependencies are key** - npm doesn't fail if platform binary unavailable
+```bash
+brew tap USERNAME/lazyjuju
+brew install lazyjuju
+```
 
+Requires:
+- Compiled binaries (Phase 3)
+- Separate `homebrew-lazyjuju` repo with formula
+- CI to update formula on release
+
+---
+
+## Reference
+
+- [OpenCode release patterns](../references/opencode-release-distribution.md)
+- [OpenCode code patterns](../references/opencode-code-patterns.md)

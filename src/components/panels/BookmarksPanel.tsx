@@ -259,7 +259,7 @@ export function BookmarksPanel() {
 			return [
 				{
 					id: "refs.revisions.next",
-					title: "next revision",
+					title: "down",
 					keybind: "nav_down",
 					context: "refs.revisions",
 					type: "navigation",
@@ -269,7 +269,7 @@ export function BookmarksPanel() {
 				},
 				{
 					id: "refs.revisions.prev",
-					title: "previous revision",
+					title: "up",
 					keybind: "nav_up",
 					context: "refs.revisions",
 					type: "navigation",
@@ -454,7 +454,7 @@ export function BookmarksPanel() {
 		return [
 			{
 				id: "refs.bookmarks.next",
-				title: "next",
+				title: "down",
 				keybind: "nav_down",
 				context: "refs.bookmarks",
 				type: "navigation",
@@ -464,7 +464,7 @@ export function BookmarksPanel() {
 			},
 			{
 				id: "refs.bookmarks.prev",
-				title: "previous",
+				title: "up",
 				keybind: "nav_up",
 				context: "refs.bookmarks",
 				type: "navigation",

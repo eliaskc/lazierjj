@@ -105,6 +105,30 @@ export async function jjDescribe(
 export async function jjShowDescription(
 	revision: string,
 ): Promise<{ subject: string; body: string }> {
+	const result = await execute([
+		"log",
+		"-r",
+		revision,
+		"--no-graph",
+		"-T",
+		"description",
+	])
+
+	if (!result.success) {
+		return { subject: "", body: "" }
+	}
+
+	const description = result.stdout.trim()
+	const lines = description.split("\n")
+	const subject = lines[0] ?? ""
+	const body = lines.slice(1).join("\n").trim()
+
+	return { subject, body }
+}
+
+export async function jjShowDescriptionStyled(
+	revision: string,
+): Promise<{ subject: string; body: string }> {
 	const styledTemplate = `if(empty, label("empty", "(empty) "), "") ++ if(description.first_line(), description.first_line(), label("description placeholder", "(no description set)"))`
 	const subjectResult = await execute([
 		"log",
@@ -123,17 +147,11 @@ export async function jjShowDescription(
 		revision,
 		"--no-graph",
 		"-T",
-		'description ++ "\\n"',
+		'if(description.first_line(), description.rest(), "")',
 	])
 
 	const subject = subjectResult.success ? subjectResult.stdout.trim() : ""
-
-	let body = ""
-	if (bodyResult.success) {
-		const description = bodyResult.stdout.trim()
-		const lines = description.split("\n")
-		body = lines.slice(1).join("\n").trim()
-	}
+	const body = bodyResult.success ? bodyResult.stdout.trim() : ""
 
 	return { subject, body }
 }

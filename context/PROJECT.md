@@ -78,6 +78,7 @@ All operations work in both Log panel and Bookmarks commits view.
 - [x] Status bar — exact context match only (shows current mode + globals)
 - [x] Command palette (`?`) — semantic grouping (revisions, files, bookmarks), fuzzy search, Enter executes
 - [ ] Configuration — user config file, theme selection, custom keybinds → [plan](./plans/configuration.md)
+  - [ ] "Open config" command (`help-only` visibility, opens `$EDITOR`, creates default if missing)
 
 ## Utilities
 
@@ -111,6 +112,9 @@ Must-do before initial release:
 - [ ] Jump to line start/end (`Home`/`End`)
 
 Start with describe modal, generalize to all inputs.
+
+**Bugs:**
+- [x] Describe modal pre-fill text is garbled/corrupted
 
 ## Workspaces
 
@@ -223,17 +227,24 @@ Lazygit-style interactive `jj split` — mark files/hunks to keep in current com
 
 ## Release & Distribution
 
-**Phase 1 — npm ecosystem (one publish covers all):**
-- [ ] npm/bunx/pnpm/yarn — add `"bin"` entry, publish to npm
+**Phase 1 — npm publish (initial release):**
+- [ ] Add `bin/lazyjuju.js` entry script with `#!/usr/bin/env bun`
+- [ ] Update package.json: remove `private`, add `bin`, `files`, `version: "0.1.0"`
+- [ ] Add `ljj` alias
+- [ ] Publish to npm (covers npm/bunx/pnpm/yarn)
 
-**Phase 2 — additional channels:**
-- [ ] Homebrew tap — separate repo + formula
-- [ ] curl installer — binary builds + install script
-- [ ] GitHub Actions release workflow
+**Phase 2 — version indicator + update notification:**
+- [ ] Version indicator in StatusBar (bottom-right, muted, always visible)
+- [ ] Update check on startup (GitHub API, once per day, non-blocking)
+- [ ] Package manager detection (bun/npm/yarn/pnpm)
+- [ ] Toast notification with correct update command
+- [ ] State stored in `~/.config/lazyjuju/state.json`
 
-**Phase 3 — polish:**
-- [ ] CLI alias — short command like `ljj`, `lj`, or `juju`
-- [ ] Auto-updater with update notification + `lazyjuju update` command
+**Phase 3 — compiled binaries + curl (deferred):**
+- [ ] `bun build --compile` for standalone binaries
+- [ ] Platform-specific npm packages
+- [ ] curl install script
+- [ ] Homebrew tap
 
 → [Detailed plan](./plans/release-flows.md)
 
@@ -267,6 +278,7 @@ Lazygit-style interactive `jj split` — mark files/hunks to keep in current com
 - Help modal has small visual gap between border and outer edge (OpenTUI quirk)
 - Search input in help modal doesn't render visually (filtering works though)
 - Spaces not rendering in BorderBox corner overlays
+- Help modal narrow mode: adjust 3→1 column threshold, make scrollable, fix rendering
 
 ### Performance
 

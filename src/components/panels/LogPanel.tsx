@@ -311,18 +311,8 @@ export function LogPanel() {
 
 	command.register(() => [
 		{
-			id: "log.oplog.next",
-			title: "next operation",
-			keybind: "nav_down",
-			context: "log.oplog",
-			type: "navigation",
-			panel: "log",
-			visibility: "help-only",
-			onSelect: selectNextOpLog,
-		},
-		{
 			id: "log.oplog.prev",
-			title: "previous operation",
+			title: "up",
 			keybind: "nav_up",
 			context: "log.oplog",
 			type: "navigation",
@@ -331,8 +321,18 @@ export function LogPanel() {
 			onSelect: selectPrevOpLog,
 		},
 		{
+			id: "log.oplog.next",
+			title: "down",
+			keybind: "nav_down",
+			context: "log.oplog",
+			type: "navigation",
+			panel: "log",
+			visibility: "help-only",
+			onSelect: selectNextOpLog,
+		},
+		{
 			id: "log.revisions.next",
-			title: "next revision",
+			title: "down",
 			keybind: "nav_down",
 			context: "log.revisions",
 			type: "navigation",
@@ -342,7 +342,7 @@ export function LogPanel() {
 		},
 		{
 			id: "log.revisions.prev",
-			title: "previous revision",
+			title: "up",
 			keybind: "nav_up",
 			context: "log.revisions",
 			type: "navigation",
@@ -562,7 +562,7 @@ export function LogPanel() {
 		},
 		{
 			id: "log.files.next",
-			title: "next file",
+			title: "down",
 			keybind: "nav_down",
 			context: "log.files",
 			type: "navigation",
@@ -572,7 +572,7 @@ export function LogPanel() {
 		},
 		{
 			id: "log.files.prev",
-			title: "previous file",
+			title: "up",
 			keybind: "nav_up",
 			context: "log.files",
 			type: "navigation",

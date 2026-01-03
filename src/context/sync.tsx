@@ -16,8 +16,13 @@ import { fetchLog } from "../commander/log"
 import {
 	type DiffStats,
 	fetchOpLogId,
+	jjAbandon,
+	jjDescribe,
 	jjDiffStats,
-	jjShowDescription,
+	jjEdit,
+	jjNew,
+	jjShowDescriptionStyled,
+	jjSquash,
 } from "../commander/operations"
 import type { Commit, FileChange } from "../commander/types"
 import {
@@ -402,19 +407,20 @@ export function SyncProvider(props: { children: JSX.Element }) {
 
 		// Fetch both in parallel (keep stale data until new arrives)
 		const changeId = commit.changeId
-		Promise.all([jjShowDescription(changeId), jjDiffStats(changeId)]).then(
-			([desc, stats]) => {
-				// Only update if still the current commit
-				if (currentDetailsChangeId === changeId) {
-					setCommitDetails({
-						changeId,
-						subject: desc.subject,
-						body: desc.body,
-						stats,
-					})
-				}
-			},
-		)
+		Promise.all([
+			jjShowDescriptionStyled(changeId),
+			jjDiffStats(changeId),
+		]).then(([desc, stats]) => {
+			// Only update if still the current commit
+			if (currentDetailsChangeId === changeId) {
+				setCommitDetails({
+					changeId,
+					subject: desc.subject,
+					body: desc.body,
+					stats,
+				})
+			}
+		})
 	})
 
 	const selectPrev = () => {
