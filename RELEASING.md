@@ -77,3 +77,43 @@ kajji
 curl -fsSL https://raw.githubusercontent.com/eliaskc/kajji/main/install.sh | bash
 ~/.kajji/bin/kajji
 ```
+
+## Release Notes
+
+**GitHub**: Add `--notes` flag or `--notes-file`:
+
+```bash
+# inline
+gh release create v<version> dist/*.tar.gz dist/*.zip --title "v<version>" --notes "- Fixed foo
+- Added bar"
+
+# from file
+gh release create v<version> dist/*.tar.gz dist/*.zip --title "v<version>" --notes-file CHANGELOG.md
+
+# auto-generate from commits
+gh release create v<version> dist/*.tar.gz dist/*.zip --title "v<version>" --generate-notes
+```
+
+**npm**: npm doesn't have release notes. The README is the main documentation. For changelogs, either:
+- Keep a `CHANGELOG.md` in the repo (shown on npm if linked in README)
+- Use GitHub releases as the canonical changelog
+
+## Stats
+
+```bash
+# npm downloads (last week)
+curl -s https://api.npmjs.org/downloads/point/last-week/kajji | jq
+
+# npm downloads (last month)
+curl -s https://api.npmjs.org/downloads/point/last-month/kajji | jq
+
+# GitHub release downloads
+gh release view v<version> --json assets --jq '.assets[] | "\(.name): \(.downloadCount)"'
+
+# all releases
+gh release list
+```
+
+**Web dashboards**:
+- https://www.npmjs.com/package/kajji
+- https://npm-stat.com/charts.html?package=kajji

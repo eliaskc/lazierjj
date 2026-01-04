@@ -155,6 +155,12 @@ export function HelpModal() {
 		return new Set(matchedCommands().map((cmd) => cmd.id))
 	})
 
+	const isActive = (cmd: CommandOption) => {
+		if (!contextMatches(cmd.context, focus.activeContext())) return false
+		if (cmd.panel && cmd.panel !== focus.panel()) return false
+		return true
+	}
+
 	createEffect(() => {
 		const filterText = filter().trim()
 		if (filterText) {
@@ -221,6 +227,31 @@ export function HelpModal() {
 		return cols
 	})
 
+	const filteredGroups = createMemo((): ContextGroupData[] => {
+		const matched = matchedIds()
+		return groupedCommands()
+			.map((group) => ({
+				...group,
+				commands: group.commands.filter((cmd) => matched.has(cmd.id)),
+			}))
+			.filter((group) => group.commands.length > 0)
+	})
+
+	const filteredColumns = createMemo(() => {
+		const groups = filteredGroups()
+		const numCols = columnCount()
+		const cols: ContextGroupData[][] = Array.from({ length: numCols }, () => [])
+
+		let colIndex = 0
+		for (const group of groups) {
+			const col = cols[colIndex]
+			if (col) col.push(group)
+			colIndex = (colIndex + 1) % numCols
+		}
+
+		return cols
+	})
+
 	const commandsInColumnOrder = createMemo(() => {
 		const cols = columns()
 		const result: CommandOption[] = []
@@ -236,11 +267,17 @@ export function HelpModal() {
 
 	const matchedInColumnOrder = createMemo(() => {
 		const matched = matchedIds()
-		return commandsInColumnOrder().filter((cmd) => matched.has(cmd.id))
+		return commandsInColumnOrder().filter(
+			(cmd) => matched.has(cmd.id) && isActive(cmd),
+		)
 	})
 
+	const isNavigatable = (cmd: CommandOption) => {
+		return matchedIds().has(cmd.id) && isActive(cmd)
+	}
+
 	const getRowPositionForCommand = (cmd: CommandOption): number => {
-		const cols = columns()
+		const cols = filteredColumns()
 		let row = 0
 		for (const column of cols) {
 			let colRow = 0
@@ -338,11 +375,6 @@ export function HelpModal() {
 
 	const isMatched = (cmd: CommandOption) => matchedIds().has(cmd.id)
 	const isSelected = (cmd: CommandOption) => selectedCommand()?.id === cmd.id
-	const isActive = (cmd: CommandOption) => {
-		if (!contextMatches(cmd.context, focus.activeContext())) return false
-		if (cmd.panel && cmd.panel !== focus.panel()) return false
-		return true
-	}
 
 	const columnWidth = 32
 	const modalPadding = 4
@@ -402,7 +434,7 @@ export function HelpModal() {
 				horizontalScrollbarOptions={{ visible: false }}
 			>
 				<box flexDirection="row" gap={columnGap()} paddingRight={4}>
-					<For each={columns()}>
+					<For each={filteredColumns()}>
 						{(column) => (
 							<box flexDirection="column" width={32}>
 								<For each={column}>
@@ -424,7 +456,7 @@ export function HelpModal() {
 															fg={
 																isSelected(cmd)
 																	? colors().selectionText
-																	: isMatched(cmd) && isActive(cmd)
+																	: isNavigatable(cmd)
 																		? colors().text
 																		: colors().textMuted
 															}
@@ -437,7 +469,7 @@ export function HelpModal() {
 																	fg={
 																		isSelected(cmd)
 																			? colors().selectionText
-																			: isMatched(cmd) && isActive(cmd)
+																			: isNavigatable(cmd)
 																				? colors().info
 																				: colors().textMuted
 																	}
