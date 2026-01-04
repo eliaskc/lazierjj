@@ -123,8 +123,8 @@ Solved by replacing `<input>` with `<textarea>` using single-line keybindings (E
 Priority queue after pre-release polish:
 
 1. **Fix HIGH bugs** (see Known Issues below)
-   - [ ] Divergent change IDs break operations
-   - [ ] Diff doesn't re-render on refresh
+   - [x] Divergent change IDs break operations
+   - [x] Diff doesn't re-render on refresh
 2. **Basic rebase** — `r` to rebase selected commit onto target (revset picker)
 3. **Basic split** — `S` to invoke `jj split` on selected commit (opens in `$EDITOR`)
 
@@ -205,6 +205,31 @@ Each corner prop accepts `JSX.Element | string`. Internally wraps content in `po
 - [ ] Difftastic integration with correct width
 
 → [Detailed plan](./plans/diff-viewing.md)
+
+## Custom Diff Renderer (Future)
+
+> Post-CLI milestone. Configurable — users can opt out and use jj's native diff output.
+
+**Why custom rendering:**
+- jj-specific context (revision metadata, parent relationships, "this will squash into X" hints)
+- Deep keybind integration (navigate hunks, stage/unstage at hunk level)
+- Theme consistency with kajji's lazygit/opencode themes
+- Foundation for PR review features (inline comments, approval workflows)
+
+**Features:**
+- [ ] Side-by-side diff with aligned old/new panels
+- [ ] Hunk navigation with keyboard shortcuts
+- [ ] Word-level change highlighting
+- [ ] Syntax highlighting per filetype
+- [ ] Inline action hints (what operations will affect this code)
+- [ ] PR review: inline comments (future, when PR management lands)
+
+**Escape hatch (critical):**
+- [ ] Config option: `diff.renderer = "native" | "kajji"`
+- [ ] Native mode: use `jj diff --color always` output directly
+- [ ] Respects user's jj config (difftastic, delta, etc.)
+
+Inspiration: [lumen](https://github.com/jnsahaj/lumen) — beautiful CLI diff viewer with side-by-side layout
 
 ## Multi-Select (Visual Mode)
 
@@ -310,8 +335,6 @@ Agent-friendly CLI for operations jj doesn't expose non-interactively. TUI users
 
 ### Bugs
 
-- **HIGH:** Divergent change IDs break operations — need to detect and fall back to commit ID
-- **HIGH:** Diff doesn't re-render on refresh (manual or auto)
 - Help modal has small visual gap between border and outer edge (OpenTUI quirk)
 - Search input in help modal doesn't render visually (filtering works though)
 - Spaces not rendering in BorderBox corner overlays
@@ -407,3 +430,6 @@ Longer-term possibilities, not actively planned:
 - [archive/lazyjj-plan.md](./archive/lazyjj-plan.md) — Original full specification
 - [references/](./references/) — Analysis of jjui, lazyjj, opencode patterns
 - [plans/](./plans/) — Detailed feature specs
+
+**External inspiration:**
+- [lumen](https://github.com/jnsahaj/lumen) — Rust CLI: beautiful side-by-side diff viewer, AI commit messages, git workflow tools

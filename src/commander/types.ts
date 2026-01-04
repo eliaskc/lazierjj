@@ -9,6 +9,11 @@ export interface Commit {
 	isWorkingCopy: boolean
 	immutable: boolean
 	empty: boolean
+	divergent: boolean
+}
+
+export function getRevisionId(commit: Commit): string {
+	return commit.divergent ? commit.commitId : commit.changeId
 }
 
 export type FileStatus = "added" | "modified" | "deleted" | "renamed" | "copied"

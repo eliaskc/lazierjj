@@ -20,6 +20,8 @@ function buildTemplate(): string {
 		`"${MARKER}"`,
 		"empty",
 		`"${MARKER}"`,
+		"divergent",
+		`"${MARKER}"`,
 		styledDescription,
 		`"${MARKER}"`,
 		"author.name()",
@@ -40,7 +42,7 @@ export function parseLogOutput(output: string): Commit[] {
 	for (const line of output.split("\n")) {
 		if (line.includes(MARKER)) {
 			const parts = line.split(MARKER)
-			if (parts.length >= 10) {
+			if (parts.length >= 11) {
 				if (current) {
 					commits.push(current)
 				}
@@ -51,12 +53,13 @@ export function parseLogOutput(output: string): Commit[] {
 					commitId: stripAnsi(parts[2] ?? ""),
 					immutable: stripAnsi(parts[3] ?? "") === "true",
 					empty: stripAnsi(parts[4] ?? "") === "true",
-					description: stripAnsi(parts[5] ?? ""),
-					author: stripAnsi(parts[6] ?? ""),
-					authorEmail: stripAnsi(parts[7] ?? ""),
-					timestamp: stripAnsi(parts[8] ?? ""),
+					divergent: stripAnsi(parts[5] ?? "") === "true",
+					description: stripAnsi(parts[6] ?? ""),
+					author: stripAnsi(parts[7] ?? ""),
+					authorEmail: stripAnsi(parts[8] ?? ""),
+					timestamp: stripAnsi(parts[9] ?? ""),
 					isWorkingCopy: gutter.includes("@"),
-					lines: [gutter + (parts[9] ?? "")],
+					lines: [gutter + (parts[10] ?? "")],
 				}
 				continue
 			}

@@ -153,6 +153,13 @@ This repo uses jj, not git directly:
 - `jj new` - create new empty working copy
 - `jj squash` - squash into parent
 
+**IMPORTANT: Atomic commits**
+After completing an atomic change (a single logical unit of work), run `jj new` to create a new empty working copy. This keeps changes separate and avoids painful splitting later.
+
+- Run `jj new` after each feature, bug fix, or logical change
+- `jj describe` is optional — can be done in retrospect
+- Don't batch multiple unrelated changes into one commit
+
 ## OpenTUI Component Reference
 
 ### Layout & Containers

@@ -24,7 +24,7 @@ import {
 	jjShowDescriptionStyled,
 	jjSquash,
 } from "../commander/operations"
-import type { Commit, FileChange } from "../commander/types"
+import { type Commit, type FileChange, getRevisionId } from "../commander/types"
 import {
 	type FileTreeNode,
 	type FlatFileNode,
@@ -194,6 +194,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	const [commitDetails, setCommitDetails] = createSignal<CommitDetails | null>(
 		null,
 	)
+	const [refreshCounter, setRefreshCounter] = createSignal(0)
 
 	const flatFiles = createMemo(() => {
 		const tree = fileTree()
@@ -236,6 +237,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	const doFullRefresh = async () => {
 		if (isRefreshing) return
 		isRefreshing = true
+		setRefreshCounter((c) => c + 1)
 
 		try {
 			await Promise.all([loadLog(), loadBookmarks()])
@@ -669,45 +671,49 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		)
 	}
 
-	const computeDiffKey = (changeId: string, paths?: string[]) =>
-		paths?.length ? `${changeId}:${paths.join(",")}` : changeId
+	const computeDiffKey = (
+		commitId: string,
+		revId: string,
+		paths?: string[],
+	) => {
+		const base = `${commitId}:${revId}`
+		return paths?.length ? `${base}:${paths.join(",")}` : base
+	}
 
 	createEffect(() => {
 		const columns = mainAreaWidth()
 		const mode = viewMode()
 		const bmMode = bookmarkViewMode()
 		const focusedPanel = focus.panel()
+		refreshCounter()
 
-		let changeId: string
+		let commit: Commit | undefined
 		let paths: string[] | undefined
 
 		if (focusedPanel === "refs" && bmMode === "commits") {
-			const commit = selectedBookmarkCommit()
-			if (!commit) return
-			changeId = commit.changeId
+			commit = selectedBookmarkCommit()
 		} else if (focusedPanel === "refs" && bmMode === "files") {
-			const commit = selectedBookmarkCommit()
+			commit = selectedBookmarkCommit()
 			const file = selectedBookmarkFile()
-			if (!commit || !file) return
-			changeId = commit.changeId
+			if (!file) return
 			paths = file.node.isDirectory ? getFilePaths(file.node) : [file.node.path]
 		} else if (mode === "files") {
-			const commit = selectedCommit()
+			commit = selectedCommit()
 			const file = selectedFile()
-			if (!commit || !file) return
-			changeId = commit.changeId
+			if (!file) return
 			paths = file.node.isDirectory ? getFilePaths(file.node) : [file.node.path]
 		} else {
-			const commit = selectedCommit()
-			if (!commit) return
-			changeId = commit.changeId
+			commit = selectedCommit()
 		}
 
-		const newKey = computeDiffKey(changeId, paths)
+		if (!commit) return
+
+		const revId = getRevisionId(commit)
+		const newKey = computeDiffKey(commit.commitId, revId, paths)
 		if (newKey === currentDiffKey) return
 
-		currentDiffKey = newKey // Update key BEFORE loading to prevent duplicate loads
-		loadDiff(changeId, columns, paths)
+		currentDiffKey = newKey
+		loadDiff(revId, columns, paths)
 	})
 
 	const loadLog = async () => {
