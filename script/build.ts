@@ -53,7 +53,6 @@ for (const target of targets) {
 	try {
 		const bunTarget = `bun-${target.os}-${target.arch}`
 
-		console.log(`  target: bun-${target.os}-${target.arch}`)
 		const result = await Bun.build({
 			entrypoints: ["./src/index.tsx"],
 			minify: true,
@@ -70,7 +69,6 @@ for (const target of targets) {
 		})
 
 		if (!result.success) {
-			console.error("Build logs:", result.logs)
 			for (const log of result.logs) {
 				console.error(log.message || log)
 			}

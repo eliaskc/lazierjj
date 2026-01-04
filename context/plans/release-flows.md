@@ -1,181 +1,107 @@
 # Release & Distribution
 
-**Status**: Planning complete  
-**Priority**: High (next up)
+**Status**: Implemented (v0.1.1)
 
 ---
 
 ## Overview
 
-Phased approach starting simple (npm with Bun requirement), adding complexity only when needed.
+Kajji ships compiled binaries for all major platforms. No Bun required at runtime.
 
-**Key decisions:**
-- Require Bun for initial release (simplifies everything)
-- Semantic versioning starting at `0.1.0`
-- Config/state in `~/.config/kajji/` (respects XDG_CONFIG_HOME)
-- Update notification via toast, not blocking
+**Platforms:**
+- darwin-arm64 (Apple Silicon)
+- darwin-x64 (Intel Mac)
+- linux-arm64
+- linux-x64
 
 ---
 
-## Phase 1: npm Publish (Initial Release)
-
-Ship source code, require Bun runtime.
-
-### package.json Changes
-
-```json
-{
-  "name": "kajji",
-  "version": "0.1.0",
-  "private": false,
-  "bin": {
-    "kajji": "./bin/kajji.js"
-  },
-  "files": ["bin", "src"],
-  // ... rest unchanged
-}
-```
-
-### New File: `bin/kajji.js`
-
-```javascript
-#!/usr/bin/env bun
-import "../src/index.tsx"
-```
-
-### Tasks
-
-- [ ] Create `bin/kajji.js` entry script
-- [ ] Update package.json (remove private, add bin/files/version)
-- [ ] Test locally with `npm link`
-- [ ] Test with `bunx kajji` from different directory
-- [ ] Publish to npm
-
-### Installation Methods (all work after npm publish)
+## Installation Methods
 
 ```bash
-# Global install
+# npm (recommended)
 npm install -g kajji
+
+# bun/pnpm/yarn
 bun install -g kajji
-pnpm add -g kajji
-yarn global add kajji
 
-# One-off run
-bunx kajji
-npx kajji
-pnpm dlx kajji
-yarn dlx kajji
+# curl (standalone binary)
+curl -fsSL https://raw.githubusercontent.com/eliaskc/kajji/main/install.sh | bash
 ```
-
-**Note:** All methods require [Bun](https://bun.sh) installed.
 
 ---
 
-## Phase 2: Version Indicator + Update Notification
+## How It Works
 
-### Version Indicator
+### npm Distribution
 
-- Location: StatusBar, bottom-right corner (using `justifyContent="space-between"`)
-- Style: Muted color (`colors().textMuted`)
-- Format: `v0.1.0`
-- Always visible
+1. **Wrapper package** (`kajji`) contains:
+   - `bin/kajji` — Node.js wrapper script
+   - `script/postinstall.mjs` — symlinks platform binary
+   - `optionalDependencies` for all platform packages
 
-### Update Check
+2. **Platform packages** (`kajji-darwin-arm64`, etc.) contain:
+   - Pre-compiled binary in `bin/kajji`
+   - `os` and `cpu` fields for platform filtering
 
-**Behavior:**
-- Check GitHub releases API on startup (non-blocking, background)
-- Frequency: Once per 24 hours
-- Store last check timestamp in `~/.config/kajji/state.json`
-- If new version available, show toast (OpenTUI toast component)
+3. **On install**:
+   - npm installs wrapper + matching platform package
+   - postinstall creates symlink to binary
+   - Wrapper detects platform and executes correct binary
 
-**State file:** `~/.config/kajji/state.json`
-```json
-{
-  "lastUpdateCheck": "2026-01-03T12:00:00Z",
-  "dismissedVersion": null
-}
-```
+### Curl Distribution
 
-### Package Manager Detection
-
-Detect how user installed to show correct update command:
-
-```typescript
-async function detectPackageManager(): Promise<"bun" | "npm" | "yarn" | "pnpm" | "unknown"> {
-  // Check environment variables set by package managers
-  const execPath = process.env.npm_execpath ?? ""
-  
-  if (execPath.includes("bun")) return "bun"
-  if (execPath.includes("yarn")) return "yarn"
-  if (execPath.includes("pnpm")) return "pnpm"
-  if (execPath.includes("npm")) return "npm"
-  
-  // Fallback: check global install locations
-  const bunGlobal = path.join(process.env.HOME ?? "", ".bun/install/global/node_modules/kajji")
-  if (await exists(bunGlobal)) return "bun"
-  
-  // Default to npm (most common)
-  return "npm"
-}
-```
-
-**Update commands by package manager:**
-| Manager | Command                        |
-| ------- | ------------------------------ |
-| bun     | `bun update -g kajji`       |
-| npm     | `npm update -g kajji`       |
-| yarn    | `yarn global upgrade kajji` |
-| pnpm    | `pnpm update -g kajji`      |
-
-### Toast Message
-
-```
-Update available: v0.2.0
-Run: npm update -g kajji
-```
-
-### Tasks
-
-- [ ] Add version constant (read from package.json or inject at build)
-- [ ] Add version indicator to StatusBar (right-aligned, muted)
-- [ ] Create `~/.config/kajji/` directory structure
-- [ ] Implement update check (GitHub releases API)
-- [ ] Implement package manager detection
-- [ ] Show toast when update available
-- [ ] Respect XDG_CONFIG_HOME
+1. Script detects OS and architecture
+2. Downloads archive from GitHub releases
+3. Extracts binary to `~/.kajji/bin/`
+4. Adds to PATH in shell config
 
 ---
 
-## Phase 3: Compiled Binaries + Curl (Deferred)
-
-**Trigger:** User demand, or when Bun requirement becomes a blocker.
-
-Would include:
-- `bun build --compile` for standalone binaries
-- Platform-specific npm packages (kajji-darwin-arm64, etc.)
-- GitHub Actions matrix builds
-- curl install script
-- Auto-update command (`kajji update`)
-
-See `context/references/opencode-release-distribution.md` for implementation patterns.
-
----
-
-## Future: Homebrew
+## Publishing a Release
 
 ```bash
-brew tap USERNAME/kajji
-brew install kajji
+# 1. Bump version in package.json
+
+# 2. Build all platforms
+bun run script/build.ts
+
+# 3. Publish to npm
+bun run script/publish.ts
+
+# 4. Create git tag
+git tag v<version>
+git push origin v<version>
+
+# 5. Create GitHub release
+gh release create v<version> dist/*.tar.gz dist/*.zip --title "v<version>"
+
+# 6. Mark as latest (if prerelease)
+gh release edit v<version> --prerelease=false
 ```
 
-Requires:
-- Compiled binaries (Phase 3)
-- Separate `homebrew-kajji` repo with formula
-- CI to update formula on release
+---
+
+## Build Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `script/build.ts` | Compile binaries for all platforms |
+| `script/publish.ts` | Package and publish to npm |
+| `script/postinstall.mjs` | Symlink binary after npm install |
+| `install.sh` | Curl install script |
+
+---
+
+## Future
+
+- [ ] Homebrew tap
+- [ ] GitHub Actions for automated releases
+- [ ] Version indicator in UI
+- [ ] Update notification
 
 ---
 
 ## Reference
 
 - [OpenCode release patterns](../references/opencode-release-distribution.md)
-- [OpenCode code patterns](../references/opencode-code-patterns.md)

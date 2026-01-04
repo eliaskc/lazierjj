@@ -226,24 +226,20 @@ Lazygit-style interactive `jj split` — mark files/hunks to keep in current com
 
 ## Release & Distribution
 
-**Phase 1 — npm publish (initial release):**
-- [x] Add `bin/kajji.js` entry script with `#!/usr/bin/env bun`
-- [x] Update package.json: remove `private`, add `bin`, `files`, `version: "0.1.0"`
-- [x] ~~Add `kj` alias~~ (skipped — build identity with `kajji`)
-- [ ] Publish to npm (covers npm/bunx/pnpm/yarn)
+**Compiled binaries (v0.1.1+):**
+- [x] `bun build --compile` for standalone binaries (darwin-arm64, darwin-x64, linux-arm64, linux-x64)
+- [x] Platform-specific npm packages (`kajji-darwin-arm64`, etc.)
+- [x] Wrapper package with `optionalDependencies`
+- [x] Curl install script
+- [x] Published to npm — no Bun required at runtime
+- [ ] Homebrew tap
 
-**Phase 2 — version indicator + update notification:**
+**Version indicator + update notification:**
 - [ ] Version indicator in StatusBar (bottom-right, muted, always visible)
 - [ ] Update check on startup (GitHub API, once per day, non-blocking)
-- [ ] Package manager detection (bun/npm/yarn/pnpm)
+- [ ] Package manager detection (bun/npm/yarn/pnpm/curl)
 - [ ] Toast notification with correct update command
 - [ ] State stored in `~/.config/kajji/state.json`
-
-**Phase 3 — compiled binaries + curl (deferred):**
-- [ ] `bun build --compile` for standalone binaries
-- [ ] Platform-specific npm packages
-- [ ] curl install script
-- [ ] Homebrew tap
 
 → [Detailed plan](./plans/release-flows.md)
 

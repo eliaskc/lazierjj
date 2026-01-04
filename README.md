@@ -31,23 +31,26 @@ Kajji is my attempt to bring the simplicity and polish of lazygit to jj, while a
 
 ## Installation
 
-> **Requirements**: [Bun](https://bun.sh) and [jj](https://github.com/martinvonz/jj)
+> **Requirements**: [jj](https://github.com/martinvonz/jj)
 
 ```bash
-# npm
+# recommended (standalone binary, no dependencies)
+curl -fsSL https://raw.githubusercontent.com/eliaskc/kajji/main/install.sh | bash
+
+# or via package manager
 npm install -g kajji
-
-# bun
 bun install -g kajji
-
-# pnpm
 pnpm add -g kajji
+yarn global add kajji
 
-# or run directly
+# or run directly without installing
+npx kajji
 bunx kajji
 ```
 
 ### From source
+
+> **Requirements**: [Bun](https://bun.sh)
 
 ```bash
 git clone https://github.com/eliaskc/kajji.git
