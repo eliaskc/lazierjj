@@ -11,6 +11,9 @@ import { createSimpleContext } from "./helper"
 const NARROW_THRESHOLD = 100
 const MEDIUM_THRESHOLD = 150
 
+const HELP_MODAL_1_COL_THRESHOLD = 90
+const HELP_MODAL_2_COL_THRESHOLD = 130
+
 const LAYOUT_WIDE_REVISIONS = { left: 2, right: 3 }
 const LAYOUT_WIDE_FILES = { left: 3, right: 7 }
 const LAYOUT_MEDIUM_REVISIONS = { left: 1, right: 1 }
@@ -39,6 +42,13 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
 
 			const isMedium = createMemo(() => terminalWidth() < MEDIUM_THRESHOLD)
 
+			const helpModalColumns = createMemo(() => {
+				const width = terminalWidth()
+				if (width < HELP_MODAL_1_COL_THRESHOLD) return 1
+				if (width < HELP_MODAL_2_COL_THRESHOLD) return 2
+				return 3
+			})
+
 			const layoutRatio = createMemo(() => {
 				if (isMedium()) {
 					return logPanelInFilesMode()
@@ -62,6 +72,8 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
 				layoutRatio,
 				mainAreaWidth,
 				isNarrow,
+				isMedium,
+				helpModalColumns,
 				setLogPanelInFilesMode,
 			}
 		},

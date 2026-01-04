@@ -1,4 +1,8 @@
-import { RGBA, type TextareaRenderable } from "@opentui/core"
+import {
+	RGBA,
+	type ScrollBoxRenderable,
+	type TextareaRenderable,
+} from "@opentui/core"
 import { useKeyboard } from "@opentui/solid"
 import { BorderBox } from "../BorderBox"
 
@@ -108,9 +112,11 @@ export function HelpModal() {
 	const { colors, style } = useTheme()
 	const [filter, setFilter] = createSignal("")
 	const [selectedIndex, setSelectedIndex] = createSignal(-1)
+	const [scrollTop, setScrollTop] = createSignal(0)
 	let searchInputRef: TextareaRenderable | undefined
+	let scrollRef: ScrollBoxRenderable | undefined
 
-	const columnCount = () => (layout.isNarrow() ? 1 : 3)
+	const columnCount = () => layout.helpModalColumns()
 
 	type SearchableCommand = CommandOption & { keybindStr: string }
 
@@ -233,6 +239,59 @@ export function HelpModal() {
 		return commandsInColumnOrder().filter((cmd) => matched.has(cmd.id))
 	})
 
+	const getRowPositionForCommand = (cmd: CommandOption): number => {
+		const cols = columns()
+		let row = 0
+		for (const column of cols) {
+			let colRow = 0
+			for (const group of column) {
+				colRow += 1
+				for (const c of group.commands) {
+					if (c.id === cmd.id) {
+						return row + colRow
+					}
+					colRow += 1
+				}
+				colRow += 1
+			}
+			if (columnCount() === 1) {
+				row = colRow
+			}
+		}
+		return 0
+	}
+
+	const scrollIntoView = (cmd: CommandOption | null) => {
+		if (!scrollRef || !cmd) return
+		if (columnCount() !== 1) return
+
+		const rowPos = getRowPositionForCommand(cmd)
+		const margin = 2
+		const refAny = scrollRef as unknown as Record<string, unknown>
+		const viewportHeight =
+			(typeof refAny.height === "number" ? refAny.height : null) ??
+			(typeof refAny.rows === "number" ? refAny.rows : null) ??
+			10
+
+		const currentScrollTop = scrollTop()
+		const visibleStart = currentScrollTop
+		const visibleEnd = currentScrollTop + viewportHeight - 1
+		const safeStart = visibleStart + margin
+		const safeEnd = visibleEnd - margin
+
+		let newScrollTop = currentScrollTop
+		if (rowPos < safeStart) {
+			newScrollTop = Math.max(0, rowPos - margin)
+		} else if (rowPos > safeEnd) {
+			newScrollTop = Math.max(0, rowPos - viewportHeight + margin + 1)
+		}
+
+		if (newScrollTop !== currentScrollTop) {
+			scrollRef.scrollTo(newScrollTop)
+			setScrollTop(newScrollTop)
+		}
+	}
+
 	const move = (direction: 1 | -1) => {
 		const matched = matchedInColumnOrder()
 		if (matched.length === 0) return
@@ -246,6 +305,13 @@ export function HelpModal() {
 		})
 	}
 
+	createEffect(() => {
+		const cmd = selectedCommand()
+		if (cmd) {
+			scrollIntoView(cmd)
+		}
+	})
+
 	const executeSelected = () => {
 		const cmd = selectedCommand()
 		if (cmd) {
@@ -255,10 +321,10 @@ export function HelpModal() {
 	}
 
 	useKeyboard((evt) => {
-		if (evt.name === "j" || evt.name === "down") {
+		if (evt.name === "down") {
 			evt.preventDefault()
 			move(1)
-		} else if (evt.name === "k" || evt.name === "up") {
+		} else if (evt.name === "up") {
 			evt.preventDefault()
 			move(-1)
 		} else if (evt.name === "return") {
@@ -278,18 +344,33 @@ export function HelpModal() {
 		return true
 	}
 
+	const columnWidth = 32
+	const modalPadding = 4
+	const contentPaddingRight = 4
+	const columnGap = () => (columnCount() === 3 ? 4 : 2)
+	const totalColumnsWidth = () => columnCount() * columnWidth
+	const totalGapsWidth = () => (columnCount() - 1) * columnGap()
+	const modalWidth = () =>
+		totalColumnsWidth() +
+		totalGapsWidth() +
+		2 * modalPadding +
+		contentPaddingRight
+
 	return (
 		<BorderBox
 			border
 			borderStyle={style().panel.borderStyle}
 			borderColor={colors().borderFocused}
 			backgroundColor={colors().background}
-			padding={1}
-			width="80%"
+			paddingLeft={modalPadding}
+			paddingRight={modalPadding}
+			paddingTop={2}
+			paddingBottom={2}
+			width={modalWidth()}
 			height="80%"
 			topLeft={<text fg={colors().borderFocused}>[esc / ?]─Commands</text>}
 		>
-			<box flexDirection="row" marginBottom={2} paddingLeft={4}>
+			<box flexDirection="row" marginBottom={2}>
 				<textarea
 					ref={(r) => {
 						searchInputRef = r
@@ -314,28 +395,42 @@ export function HelpModal() {
 				/>
 			</box>
 
-			<box flexDirection="row" flexGrow={1} gap={1}>
-				<For each={columns()}>
-					{(column) => (
-						<box flexDirection="column" flexGrow={1} flexBasis={0}>
-							<For each={column}>
-								{(group) => (
-									<box flexDirection="column" marginBottom={1}>
-										<box flexDirection="row">
-											<box width={10} flexShrink={0} />
-											<text fg={colors().primary}> {group.label}</text>
-										</box>
-										<For each={group.commands}>
-											{(cmd) => (
-												<box
-													flexDirection="row"
-													backgroundColor={
-														isSelected(cmd)
-															? colors().selectionBackground
-															: undefined
-													}
-												>
-													<box width={10} flexShrink={0}>
+			<scrollbox
+				ref={scrollRef}
+				flexGrow={1}
+				scrollX={false}
+				horizontalScrollbarOptions={{ visible: false }}
+			>
+				<box flexDirection="row" gap={columnGap()} paddingRight={4}>
+					<For each={columns()}>
+						{(column) => (
+							<box flexDirection="column" width={32}>
+								<For each={column}>
+									{(group) => (
+										<box flexDirection="column" marginBottom={1}>
+											<text fg={colors().primary}>{group.label}</text>
+											<For each={group.commands}>
+												{(cmd) => (
+													<box
+														flexDirection="row"
+														justifyContent="space-between"
+														backgroundColor={
+															isSelected(cmd)
+																? colors().selectionBackground
+																: undefined
+														}
+													>
+														<text
+															fg={
+																isSelected(cmd)
+																	? colors().selectionText
+																	: isMatched(cmd) && isActive(cmd)
+																		? colors().text
+																		: colors().textMuted
+															}
+														>
+															{cmd.title}
+														</text>
 														<Show when={cmd.keybind}>
 															{(kb: Accessor<KeybindConfigKey>) => (
 																<text
@@ -348,33 +443,21 @@ export function HelpModal() {
 																	}
 																	wrapMode="none"
 																>
-																	{keybind.print(kb()).padStart(9)}
+																	{keybind.print(kb())}
 																</text>
 															)}
 														</Show>
 													</box>
-													<text
-														fg={
-															isSelected(cmd)
-																? colors().selectionText
-																: isMatched(cmd) && isActive(cmd)
-																	? colors().text
-																	: colors().textMuted
-														}
-													>
-														{" "}
-														{cmd.title}
-													</text>
-												</box>
-											)}
-										</For>
-									</box>
-								)}
-							</For>
-						</box>
-					)}
-				</For>
-			</box>
+												)}
+											</For>
+										</box>
+									)}
+								</For>
+							</box>
+						)}
+					</For>
+				</box>
+			</scrollbox>
 		</BorderBox>
 	)
 }

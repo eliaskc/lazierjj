@@ -76,7 +76,7 @@ All operations work in both Log panel and Bookmarks commits view.
 - [x] Focus tracking — sibling mode system (e.g., `log.revisions`, `log.files`) without inheritance
 - [x] Dialog system — modal stack with backdrop, theme-aware overlay
 - [x] Theme system — dual-theme support (lazygit, opencode)
-- [x] Status bar — exact context match only (shows current mode + globals)
+- [x] Status bar — context commands (left, truncates on narrow terminals) + global commands (right, fixed)
 - [x] Command palette (`?`) — semantic grouping (revisions, files, bookmarks), fuzzy search, Enter executes
 - [ ] Configuration — user config file, theme selection, custom keybinds → [plan](./plans/configuration.md)
   - [ ] "Open config" command (`help-only` visibility, opens `$EDITOR`, creates default if missing)
@@ -323,10 +323,19 @@ Agent-friendly CLI for operations jj doesn't expose non-interactively. TUI users
 
 ---
 
+## Revset Filtering
+
+Revsets are jj's query language for selecting commits (e.g., `trunk()..@`, `author(me)`, `description(fix)`, `all()`). Users need to filter the log and see further back than jj's default visible set.
+
+- [ ] `/` — open revset input modal in log.revisions and log.oplog
+- [ ] Show current revset in panel title when filtered (e.g., `[1]─Log (author(me))`)
+- [ ] Clear filter with Escape or empty input
+- [ ] Preset shortcuts for common filters (e.g., `a` for all, `m` for mine)
+
 ## Nice-to-Have
 
-- [ ] Search & filter — `/` to filter log by description/change ID
 - [ ] Command mode — `:` to run arbitrary jj commands
+- [ ] Smart paste in describe modal — if pasted text contains a newline, put first line in subject and rest in body
 
 ---
 
@@ -337,8 +346,9 @@ Agent-friendly CLI for operations jj doesn't expose non-interactively. TUI users
 - Help modal has small visual gap between border and outer edge (OpenTUI quirk)
 - Search input in help modal doesn't render visually (filtering works though)
 - Spaces not rendering in BorderBox corner overlays
-- Help modal narrow mode: adjust 3→1 column threshold, make scrollable, fix rendering
-- Single-line textarea inputs have slight right margin → [OpenTUI issue draft](./issues/opentui-textarea-width.md)
+- Help modal narrow mode: scroll-to-selection only works in 1-column mode (multi-column doesn't need it typically)
+- Single-line textarea inputs have slight right margin (body textarea doesn't have this issue) → [OpenTUI issue draft](./issues/opentui-textarea-width.md)
+- Modals with multiple focusable sections (e.g., SetBookmarkModal, DescribeModal) need mouse click support to switch focus between sections
 
 ### Performance
 
@@ -365,6 +375,7 @@ All major performance issues have been resolved:
 
 ### UX Polish
 
+- [ ] Status bar truncation indicator — show `...` when context commands are truncated due to narrow terminal
 - [ ] List position indicator — show "X of Y" on panel borders for scrollable lists (revisions, files, bookmarks, commits, oplog). Like lazygit. Decide: always show vs. only when overflow.
 - [ ] Log/bookmark panels slightly wider
 - [ ] Selected bookmark should match working copy on load

@@ -84,6 +84,13 @@ export function StatusBar() {
 		})
 	})
 
+	const contextCommands = createMemo(() =>
+		relevantCommands().filter((cmd) => cmd.context !== "global"),
+	)
+	const globalCommands = createMemo(() =>
+		relevantCommands().filter((cmd) => cmd.context === "global"),
+	)
+
 	const separator = () => style().statusBar.separator
 	const gap = () => (separator() ? 0 : 3)
 
@@ -97,6 +104,8 @@ export function StatusBar() {
 		]
 	})
 
+	const commandGap = separator() ? ` ${separator()} ` : "   "
+
 	return (
 		<box
 			height={1}
@@ -104,7 +113,6 @@ export function StatusBar() {
 			paddingLeft={1}
 			paddingRight={1}
 			flexDirection="row"
-			gap={gap()}
 		>
 			<Show when={loading.isLoading()}>
 				<text>
@@ -120,30 +128,67 @@ export function StatusBar() {
 			<Show
 				when={dialog.isOpen() && dialogHints().length > 0}
 				fallback={
-					<For each={relevantCommands()}>
-						{(cmd, index) => (
-							<text>
-								<span style={{ fg: colors().primary }}>
-									{cmd.keybind ? keybind.print(cmd.keybind) : ""}
-								</span>{" "}
-								<span style={{ fg: colors().text }}>{cmd.title}</span>
-								<Show
-									when={separator() && index() < relevantCommands().length - 1}
-								>
-									<span style={{ fg: colors().textMuted }}>
-										{` ${separator()} `}
-									</span>
-								</Show>
+					<>
+						<box flexGrow={1} overflow="hidden">
+							<text wrapMode="none">
+								<For each={contextCommands()}>
+									{(cmd, index) => (
+										<>
+											<span style={{ fg: colors().primary }}>
+												{cmd.keybind ? keybind.print(cmd.keybind) : ""}
+											</span>{" "}
+											<span style={{ fg: colors().textMuted }}>
+												{cmd.title}
+											</span>
+											<Show when={index() < contextCommands().length - 1}>
+												<span
+													style={{
+														fg: separator() ? colors().textMuted : undefined,
+													}}
+												>
+													{commandGap}
+												</span>
+											</Show>
+										</>
+									)}
+								</For>
 							</text>
-						)}
-					</For>
+						</box>
+						<Show when={globalCommands().length > 0}>
+							<box flexShrink={0}>
+								<text wrapMode="none">
+									<For each={globalCommands()}>
+										{(cmd, index) => (
+											<>
+												<Show when={index() > 0}>
+													<span
+														style={{
+															fg: separator() ? colors().textMuted : undefined,
+														}}
+													>
+														{commandGap}
+													</span>
+												</Show>
+												<span style={{ fg: colors().primary }}>
+													{cmd.keybind ? keybind.print(cmd.keybind) : ""}
+												</span>{" "}
+												<span style={{ fg: colors().textMuted }}>
+													{cmd.title}
+												</span>
+											</>
+										)}
+									</For>
+								</text>
+							</box>
+						</Show>
+					</>
 				}
 			>
 				<For each={dialogHints()}>
 					{(hint, index) => (
 						<text>
 							<span style={{ fg: colors().primary }}>{hint.key}</span>{" "}
-							<span style={{ fg: colors().text }}>{hint.label}</span>
+							<span style={{ fg: colors().textMuted }}>{hint.label}</span>
 							<Show when={separator() && index() < dialogHints().length - 1}>
 								<span style={{ fg: colors().textMuted }}>
 									{` ${separator()} `}
