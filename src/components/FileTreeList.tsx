@@ -81,7 +81,7 @@ export function FileTreeList(props: FileTreeListProps) {
 						overflow="hidden"
 						onMouseDown={handleMouseDown}
 					>
-						<text>
+						<text wrapMode="none">
 							<span style={{ fg: colors().textMuted }}>{indent}</span>
 							<span
 								style={{

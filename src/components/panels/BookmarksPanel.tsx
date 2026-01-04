@@ -32,9 +32,9 @@ import { createDoubleClickDetector } from "../../utils/double-click"
 import { FileTreeList } from "../FileTreeList"
 import { Panel } from "../Panel"
 import { BookmarkNameModal } from "../modals/BookmarkNameModal"
-import { BookmarkPickerModal } from "../modals/BookmarkPickerModal"
 import { DescribeModal } from "../modals/DescribeModal"
 import { RevisionPickerModal } from "../modals/RevisionPickerModal"
+import { SetBookmarkModal } from "../modals/SetBookmarkModal"
 
 export function BookmarksPanel() {
 	const renderer = useRenderer()
@@ -520,8 +520,8 @@ export function BookmarksPanel() {
 					},
 				},
 				{
-					id: "refs.revisions.bookmark",
-					title: "create bookmark",
+					id: "refs.revisions.set_bookmark",
+					title: "set bookmark",
 					keybind: "bookmark_set",
 					context: "refs.revisions",
 					type: "action",
@@ -531,56 +531,28 @@ export function BookmarksPanel() {
 						if (!commit) return
 						dialog.open(
 							() => (
-								<BookmarkNameModal
-									title="Create Bookmark"
-									commits={bookmarkCommits()}
-									defaultRevision={commit.changeId}
-									onSave={(name, revision) => {
-										runOperation("Creating bookmark...", () =>
-											jjBookmarkCreate(name, { revision }),
-										)
-									}}
-								/>
-							),
-							{
-								id: "bookmark-create",
-								hints: [
-									{ key: "tab", label: "switch field" },
-									{ key: "enter", label: "save" },
-								],
-							},
-						)
-					},
-				},
-				{
-					id: "refs.revisions.bookmark_move",
-					title: "move bookmark here",
-					keybind: "bookmark_move",
-					context: "refs.revisions",
-					type: "action",
-					panel: "refs",
-					onSelect: () => {
-						const commit = selectedBookmarkCommit()
-						if (!commit) return
-						if (localBookmarks().length === 0) {
-							dialog.confirm({ message: "No bookmarks to move." })
-							return
-						}
-						dialog.open(
-							() => (
-								<BookmarkPickerModal
-									title={`Move bookmark to ${commit.changeId.slice(0, 8)}`}
+								<SetBookmarkModal
+									title={`Set bookmark on ${commit.changeId.slice(0, 8)}`}
 									bookmarks={localBookmarks()}
-									onSelect={(bookmark) => {
+									changeId={commit.changeId}
+									onMove={(bookmark) => {
 										runOperation("Moving bookmark...", () =>
 											jjBookmarkSet(bookmark.name, commit.changeId),
 										)
 									}}
+									onCreate={(name) => {
+										runOperation("Creating bookmark...", () =>
+											jjBookmarkCreate(name, { revision: commit.changeId }),
+										)
+									}}
 								/>
 							),
 							{
-								id: "bookmark-move",
-								hints: [{ key: "enter", label: "confirm" }],
+								id: "set-bookmark",
+								hints: [
+									{ key: "tab", label: "switch" },
+									{ key: "enter", label: "confirm" },
+								],
 							},
 						)
 					},
@@ -661,6 +633,8 @@ export function BookmarksPanel() {
 				onSelect: async () => {
 					const bookmark = selectedBookmark()
 					if (!bookmark) return
+					const currentIndex = selectedBookmarkIndex()
+					const totalBookmarks = localBookmarks().length
 					const confirmed = await dialog.confirm({
 						message: `Delete bookmark "${bookmark.name}"?`,
 					})
@@ -668,6 +642,9 @@ export function BookmarksPanel() {
 						await runOperation("Deleting bookmark...", () =>
 							jjBookmarkDelete(bookmark.name),
 						)
+						if (currentIndex >= totalBookmarks - 1 && currentIndex > 0) {
+							setSelectedBookmarkIndex(currentIndex - 1)
+						}
 					}
 				},
 			},

@@ -443,6 +443,13 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	const localBookmarks = () => bookmarks().filter((b) => b.isLocal)
 	const selectedBookmark = () => localBookmarks()[selectedBookmarkIndex()]
 
+	createEffect(() => {
+		const maxIndex = localBookmarks().length - 1
+		if (maxIndex >= 0 && selectedBookmarkIndex() > maxIndex) {
+			setSelectedBookmarkIndex(maxIndex)
+		}
+	})
+
 	const selectPrevBookmark = () => {
 		setSelectedBookmarkIndex((i) => Math.max(0, i - 1))
 	}
@@ -729,6 +736,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 			setSelectedFileIndex(0)
 			setCollapsedPaths(new Set<string>())
 			setViewMode("files")
+			layout.setLogPanelInFilesMode(true)
 			focus.setActiveContext("log.files")
 		} catch (e) {
 			setFilesError(e instanceof Error ? e.message : "Failed to load files")
@@ -743,6 +751,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		setFileTree(null)
 		setSelectedFileIndex(0)
 		setCollapsedPaths(new Set<string>())
+		layout.setLogPanelInFilesMode(false)
 		focus.setActiveContext("log.revisions")
 	}
 

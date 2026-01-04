@@ -1,24 +1,30 @@
 import { useRenderer } from "@opentui/solid"
-import { createMemo, createSignal, onCleanup, onMount } from "solid-js"
-import { useFocus } from "./focus"
+import {
+	type Accessor,
+	createMemo,
+	createSignal,
+	onCleanup,
+	onMount,
+} from "solid-js"
 import { createSimpleContext } from "./helper"
 
 const NARROW_THRESHOLD = 100
 const MEDIUM_THRESHOLD = 150
 
-const LAYOUT_WIDE = { left: 2, right: 3 }
-const LAYOUT_MEDIUM = { left: 1, right: 1 }
-const LAYOUT_FILES = { left: 1, right: 3 }
+const LAYOUT_WIDE_REVISIONS = { left: 2, right: 3 }
+const LAYOUT_WIDE_FILES = { left: 3, right: 7 }
+const LAYOUT_MEDIUM_REVISIONS = { left: 1, right: 1 }
+const LAYOUT_MEDIUM_FILES = { left: 2, right: 3 }
 
 export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
 	{
 		name: "Layout",
 		init: () => {
 			const renderer = useRenderer()
-			const focus = useFocus()
 
 			const [terminalWidth, setTerminalWidth] = createSignal(renderer.width)
 			const [terminalHeight, setTerminalHeight] = createSignal(renderer.height)
+			const [logPanelInFilesMode, setLogPanelInFilesMode] = createSignal(false)
 
 			onMount(() => {
 				const handleResize = (width: number, height: number) => {
@@ -31,15 +37,15 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
 
 			const isNarrow = createMemo(() => terminalWidth() < NARROW_THRESHOLD)
 
-			const isFileContext = createMemo(() => {
-				const ctx = focus.activeContext()
-				return ctx === "log.files" || ctx === "refs.files"
-			})
+			const isMedium = createMemo(() => terminalWidth() < MEDIUM_THRESHOLD)
 
 			const layoutRatio = createMemo(() => {
-				if (isFileContext()) return LAYOUT_FILES
-				if (terminalWidth() < MEDIUM_THRESHOLD) return LAYOUT_MEDIUM
-				return LAYOUT_WIDE
+				if (isMedium()) {
+					return logPanelInFilesMode()
+						? LAYOUT_MEDIUM_FILES
+						: LAYOUT_MEDIUM_REVISIONS
+				}
+				return logPanelInFilesMode() ? LAYOUT_WIDE_FILES : LAYOUT_WIDE_REVISIONS
 			})
 
 			const mainAreaWidth = createMemo(() => {
@@ -56,6 +62,7 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
 				layoutRatio,
 				mainAreaWidth,
 				isNarrow,
+				setLogPanelInFilesMode,
 			}
 		},
 	},

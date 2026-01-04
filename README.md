@@ -109,7 +109,8 @@ kajji
 | `c` | Create bookmark |
 | `d` | Delete bookmark |
 | `r` | Rename bookmark |
-| `b` | Create bookmark on commit |
+| `b` | Set bookmark on commit |
+| `m` | Move bookmark |
 
 See [PROJECT](./context/PROJECT.md) for the full roadmap.
 

@@ -37,9 +37,9 @@
   - [x] `d` — delete bookmark (confirmation dialog)
   - [x] `r` — rename bookmark (modal for new name)
   - [x] `x` — forget bookmark (local only, no remote propagation)
-  - [x] `b` — create bookmark on selected commit (works in Log and Bookmarks commits view)
+  - [x] `b` — set bookmark on selected commit (move existing or create new; works in Log and Bookmarks commits view)
+  - [x] `m` — move bookmark to different commit (in bookmarks list view)
 - [ ] Bookmark operations (Phase 2 — medium effort)
-  - [ ] `m` — move bookmark to different commit (revset picker)
   - [ ] `t`/`T` — track/untrack remote bookmark
 
 ## Core Operations
@@ -53,7 +53,6 @@
 - [x] `u` — undo with confirmation (shows last operation, y/n to confirm)
 - [x] `U` — redo with confirmation
 - [x] `r` — restore file/folder in file tree (discard changes, with confirmation)
-- [ ] `B` — move bookmark here (in revisions view: pick bookmark to move to selected commit)
 
 All operations work in both Log panel and Bookmarks commits view.
 
@@ -366,6 +365,7 @@ All major performance issues have been resolved:
 
 ### UX Polish
 
+- [ ] List position indicator — show "X of Y" on panel borders for scrollable lists (revisions, files, bookmarks, commits, oplog). Like lazygit. Decide: always show vs. only when overflow.
 - [ ] Log/bookmark panels slightly wider
 - [ ] Selected bookmark should match working copy on load
 - [ ] Active bookmark indication when navigating

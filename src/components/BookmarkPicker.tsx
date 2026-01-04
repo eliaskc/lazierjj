@@ -137,10 +137,8 @@ export function BookmarkPicker(props: BookmarkPickerProps) {
 									isSelected() ? colors().selectionBackground : undefined
 								}
 								overflow="hidden"
-								paddingLeft={1}
-								paddingRight={1}
 							>
-								<text>
+								<text wrapMode="none">
 									<span style={{ fg: colors().primary }}>{bookmark.name}</span>
 									<span style={{ fg: colors().textMuted }}>
 										{" "}
