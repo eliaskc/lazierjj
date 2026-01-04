@@ -108,6 +108,15 @@ function AppContent() {
 			onSelect: () => focus.setPanel("detail"),
 		},
 		{
+			id: "global.focus_panel_4",
+			title: "focus command log",
+			keybind: "focus_panel_4",
+			context: "global",
+			type: "navigation",
+			visibility: "help-only",
+			onSelect: () => focus.setPanel("commandlog"),
+		},
+		{
 			id: "global.help",
 			title: "help",
 			keybind: "help",

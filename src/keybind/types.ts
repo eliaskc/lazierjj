@@ -13,6 +13,7 @@ export type KeybindConfigKey =
 	| "focus_panel_1"
 	| "focus_panel_2"
 	| "focus_panel_3"
+	| "focus_panel_4"
 	| "nav_down"
 	| "nav_up"
 	| "nav_page_up"
@@ -52,6 +53,7 @@ export const DEFAULT_KEYBINDS: KeybindConfig = {
 	focus_panel_1: "1",
 	focus_panel_2: "2",
 	focus_panel_3: "3",
+	focus_panel_4: "4",
 	nav_down: "j,down",
 	nav_up: "k,up",
 	nav_page_up: "ctrl+u",

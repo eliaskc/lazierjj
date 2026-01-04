@@ -1,7 +1,7 @@
 /**
  * Panel represents the physical UI region (derived from context's first segment)
  */
-export type Panel = "log" | "refs" | "detail"
+export type Panel = "log" | "refs" | "detail" | "commandlog"
 
 /**
  * Context represents the current interaction mode (what keys mean right now).
@@ -26,6 +26,8 @@ export type Context =
 	| "refs.files"
 	// Detail panel
 	| "detail"
+	// Command log panel
+	| "commandlog"
 
 export type CommandType = "action" | "navigation" | "view" | "git"
 
@@ -44,8 +46,13 @@ export type CommandVisibility = "all" | "help-only" | "status-only" | "none"
 export function panelFromContext(context: Context): Panel | null {
 	if (context === "global" || context === "help") return null
 	const panel = context.split(".")[0]
-	if (panel === "log" || panel === "refs" || panel === "detail") {
-		return panel
+	if (
+		panel === "log" ||
+		panel === "refs" ||
+		panel === "detail" ||
+		panel === "commandlog"
+	) {
+		return panel as Panel
 	}
 	return null
 }

@@ -4,7 +4,7 @@ import { type Context, type Panel, panelFromContext } from "./types"
 
 export type { Panel }
 
-const PANEL_ORDER: Panel[] = ["log", "refs", "detail"]
+const PANEL_ORDER: Panel[] = ["log", "refs", "detail", "commandlog"]
 
 export const { use: useFocus, provider: FocusProvider } = createSimpleContext({
 	name: "Focus",
@@ -30,6 +30,9 @@ export const { use: useFocus, provider: FocusProvider } = createSimpleContext({
 					break
 				case "detail":
 					setActiveContext("detail")
+					break
+				case "commandlog":
+					setActiveContext("commandlog")
 					break
 			}
 		}
