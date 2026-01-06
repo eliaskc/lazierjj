@@ -204,6 +204,9 @@ Each corner prop accepts `JSX.Element | string`. Internally wraps content in `po
 ## Diff Viewing
 
 - [x] Basic diff display with ANSI colors
+- [x] Split/unified view with width-based default (split if mainAreaWidth >= 90)
+- [ ] Dynamic line number width — adapt to max line number in file (1-5 digits)
+- [ ] Synchronized horizontal scroll — both sides of split diff scroll together (like @pierre/diffs)
 - [ ] Layout modes — half-width, full-width, unified
 - [ ] Auto-switch based on terminal width
 - [ ] Manual toggle keybind (`v` or `+`/`-`)

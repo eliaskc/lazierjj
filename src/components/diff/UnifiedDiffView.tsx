@@ -216,7 +216,7 @@ interface DiffLineViewProps {
 	wordDiff?: WordDiffSegment[]
 }
 
-const LINE_NUM_WIDTH = 4
+const LINE_NUM_WIDTH = 3
 
 interface TokenWithEmphasis extends SyntaxToken {
 	emphasis?: boolean
@@ -304,7 +304,7 @@ function DiffLineView(props: DiffLineViewProps) {
 			case "deletion":
 				return { char: BAR_CHAR, color: BAR_COLORS.deletion }
 			default:
-				return { char: " ", color: colors().textMuted }
+				return { char: " ", color: undefined }
 		}
 	})
 
@@ -315,23 +315,19 @@ function DiffLineView(props: DiffLineViewProps) {
 				<span style={{ fg: oldLineNumColor() }}>{oldLineNum()}</span>
 				<span style={{ fg: newLineNumColor() }}> {newLineNum()}</span>
 				<span style={{ fg: colors().textMuted }}> │ </span>
+				<For each={tokens()}>
+					{(token) => (
+						<span
+							style={{
+								fg: token.color,
+								bg: token.emphasis ? emphasisBg() : undefined,
+							}}
+						>
+							{token.content}
+						</span>
+					)}
+				</For>
 			</text>
-			<box flexGrow={1}>
-				<text>
-					<For each={tokens()}>
-						{(token) => (
-							<span
-								style={{
-									fg: token.color,
-									bg: token.emphasis ? emphasisBg() : undefined,
-								}}
-							>
-								{token.content}
-							</span>
-						)}
-					</For>
-				</text>
-			</box>
 		</box>
 	)
 }

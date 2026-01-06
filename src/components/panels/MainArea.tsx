@@ -27,6 +27,10 @@ const INITIAL_LIMIT = 1000
 const LIMIT_INCREMENT = 200
 const LOAD_THRESHOLD = 200
 
+// Threshold for when to default to split view vs unified
+// Split needs ~36 chars per side (bar + linenum + separator + ~30 content)
+const SPLIT_VIEW_THRESHOLD = 90
+
 function formatTimestamp(timestamp: string): string {
 	// Input: "2026-01-02 14:30:45 -0800"
 	// Output: "Thu Jan 2 14:30:45 2026 -0800"
@@ -232,6 +236,10 @@ export function MainArea() {
 	// Custom diff renderer state
 	const [renderMode, setRenderMode] = createSignal<DiffRenderMode>("custom")
 	const [viewStyle, setViewStyle] = createSignal<DiffViewStyle>("unified")
+
+	createEffect(() => {
+		setViewStyle(mainAreaWidth() >= SPLIT_VIEW_THRESHOLD ? "split" : "unified")
+	})
 	const [parsedFiles, setParsedFiles] = createSignal<FlattenedFile[]>([])
 	const [parsedDiffLoading, setParsedDiffLoading] = createSignal(false)
 	const [parsedDiffError, setParsedDiffError] = createSignal<string | null>(
