@@ -1,15 +1,22 @@
 import { For, Show, createMemo } from "solid-js"
+import { useTheme } from "../../context/theme"
 import {
+	type DiffLine,
+	type FileId,
+	type FlattenedFile,
+	type FlattenedHunk,
+	type HunkId,
 	flattenDiff,
 	getFileStatusColor,
 	getFileStatusIndicator,
-	type FlattenedFile,
-	type FlattenedHunk,
-	type DiffLine,
-	type FileId,
-	type HunkId,
 } from "../../diff"
-import { useTheme } from "../../context/theme"
+
+// Subtle background colors for diff lines
+const DIFF_BG = {
+	addition: "#132a13",
+	deletion: "#2d1515",
+	hunkHeader: "#1a1a2e",
+} as const
 
 interface UnifiedDiffViewProps {
 	files: FlattenedFile[]
@@ -56,31 +63,37 @@ function FileSection(props: FileSectionProps) {
 
 	return (
 		<box flexDirection="column">
-			{/* File header */}
-			<text wrapMode="none">
-				<span style={{ fg: getFileStatusColor(props.file.type) }}>
-					{getFileStatusIndicator(props.file.type)}
-				</span>{" "}
-				<span style={{ fg: colors().text }}>{props.file.name}</span>
-				<Show when={props.file.prevName}>
-					<span style={{ fg: colors().textMuted }}>
-						{" "}
-						(from {props.file.prevName})
-					</span>
-				</Show>
-				<span style={{ fg: colors().textMuted }}> | </span>
-				<Show when={props.file.additions > 0}>
-					<span style={{ fg: colors().success }}>+{props.file.additions}</span>
-				</Show>
-				<Show when={props.file.additions > 0 && props.file.deletions > 0}>
-					<span style={{ fg: colors().textMuted }}> </span>
-				</Show>
-				<Show when={props.file.deletions > 0}>
-					<span style={{ fg: colors().error }}>-{props.file.deletions}</span>
-				</Show>
-			</text>
+			<box
+				backgroundColor={colors().backgroundElement}
+				paddingLeft={1}
+				paddingRight={1}
+			>
+				<text wrapMode="none">
+					<span style={{ fg: getFileStatusColor(props.file.type) }}>
+						{getFileStatusIndicator(props.file.type)}
+					</span>{" "}
+					<span style={{ fg: colors().text }}>{props.file.name}</span>
+					<Show when={props.file.prevName}>
+						<span style={{ fg: colors().textMuted }}>
+							{" "}
+							← {props.file.prevName}
+						</span>
+					</Show>
+					<span style={{ fg: colors().textMuted }}> │ </span>
+					<Show when={props.file.additions > 0}>
+						<span style={{ fg: colors().success }}>
+							+{props.file.additions}
+						</span>
+					</Show>
+					<Show when={props.file.additions > 0 && props.file.deletions > 0}>
+						<span style={{ fg: colors().textMuted }}> </span>
+					</Show>
+					<Show when={props.file.deletions > 0}>
+						<span style={{ fg: colors().error }}>-{props.file.deletions}</span>
+					</Show>
+				</text>
+			</box>
 
-			{/* Hunks */}
 			<For each={props.file.hunks}>
 				{(hunk) => (
 					<HunkSection
@@ -90,7 +103,6 @@ function FileSection(props: FileSectionProps) {
 				)}
 			</For>
 
-			{/* Spacer between files */}
 			<text> </text>
 		</box>
 	)
@@ -106,18 +118,18 @@ function HunkSection(props: HunkSectionProps) {
 
 	return (
 		<box flexDirection="column">
-			{/* Hunk header */}
-			<text wrapMode="none">
-				<span
-					style={{
-						fg: props.isCurrent ? colors().info : colors().textMuted,
-					}}
-				>
-					{props.hunk.header}
-				</span>
-			</text>
+			<box backgroundColor={DIFF_BG.hunkHeader} paddingLeft={1}>
+				<text wrapMode="none">
+					<span
+						style={{
+							fg: props.isCurrent ? colors().info : colors().textMuted,
+						}}
+					>
+						{props.hunk.header}
+					</span>
+				</text>
+			</box>
 
-			{/* Lines */}
 			<For each={props.hunk.lines}>
 				{(line) => <DiffLineView line={line} />}
 			</For>
@@ -128,6 +140,8 @@ function HunkSection(props: HunkSectionProps) {
 interface DiffLineViewProps {
 	line: DiffLine
 }
+
+const LINE_NUM_WIDTH = 5
 
 function DiffLineView(props: DiffLineViewProps) {
 	const { colors } = useTheme()
@@ -145,32 +159,33 @@ function DiffLineView(props: DiffLineViewProps) {
 		}
 	})
 
-	const prefix = createMemo(() => {
+	const lineBg = createMemo(() => {
 		switch (props.line.type) {
 			case "addition":
-				return "+"
+				return DIFF_BG.addition
 			case "deletion":
-				return "-"
+				return DIFF_BG.deletion
 			default:
-				return " "
+				return undefined
 		}
 	})
 
-	// Format line numbers: old and new columns
-	const lineNum = createMemo(() => {
-		const old = props.line.oldLineNumber?.toString().padStart(4, " ") ?? "    "
-		const newNum =
-			props.line.newLineNumber?.toString().padStart(4, " ") ?? "    "
-		return `${old} ${newNum}`
-	})
+	const oldLineNum = createMemo(() =>
+		(props.line.oldLineNumber?.toString() ?? "").padStart(LINE_NUM_WIDTH, " "),
+	)
+
+	const newLineNum = createMemo(() =>
+		(props.line.newLineNumber?.toString() ?? "").padStart(LINE_NUM_WIDTH, " "),
+	)
 
 	return (
-		<text wrapMode="none">
-			<span style={{ fg: colors().textMuted }}>{lineNum()}</span>
-			<span style={{ fg: lineColor() }}>
-				{prefix()}
-				{props.line.content}
-			</span>
-		</text>
+		<box flexDirection="row" backgroundColor={lineBg()}>
+			<text wrapMode="none">
+				<span style={{ fg: colors().textMuted }}>{oldLineNum()}</span>
+				<span style={{ fg: colors().textMuted }}> {newLineNum()}</span>
+				<span style={{ fg: colors().textMuted }}> │ </span>
+				<span style={{ fg: lineColor() }}>{props.line.content}</span>
+			</text>
+		</box>
 	)
 }

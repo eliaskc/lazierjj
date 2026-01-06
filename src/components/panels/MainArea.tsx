@@ -539,14 +539,14 @@ export function MainArea() {
 								<Show when={viewStyle() === "unified"}>
 									<UnifiedDiffView
 										files={parsedFiles()}
-										activeFileId={activeFileId()}
+										activeFileId={null}
 										currentHunkId={activeHunkId()}
 									/>
 								</Show>
 								<Show when={viewStyle() === "split"}>
 									<SplitDiffView
 										files={parsedFiles()}
-										activeFileId={activeFileId()}
+										activeFileId={null}
 										currentHunkId={activeHunkId()}
 										width={mainAreaWidth()}
 									/>

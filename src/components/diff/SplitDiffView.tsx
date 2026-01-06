@@ -1,12 +1,23 @@
 import { For, Show, createMemo } from "solid-js"
+import { useTheme } from "../../context/theme"
 import type {
-	FlattenedFile,
-	FlattenedHunk,
 	DiffLine,
 	FileId,
+	FlattenedFile,
+	FlattenedHunk,
 	HunkId,
 } from "../../diff"
-import { useTheme } from "../../context/theme"
+import { getFileStatusColor, getFileStatusIndicator } from "../../diff"
+
+// Subtle background colors for diff lines
+const DIFF_BG = {
+	addition: "#132a13",
+	deletion: "#2d1515",
+	empty: "#1a1a1a",
+	hunkHeader: "#1a1a2e",
+} as const
+
+const LINE_NUM_WIDTH = 5
 
 interface SplitDiffViewProps {
 	files: FlattenedFile[]
@@ -62,27 +73,37 @@ function SplitFileSection(props: SplitFileSectionProps) {
 
 	return (
 		<box flexDirection="column">
-			{/* File header - spans both columns */}
-			<text wrapMode="none">
-				<span style={{ fg: colors().info }}>{props.file.name}</span>
-			</text>
-
-			{/* Column headers */}
-			<box flexDirection="row">
+			<box
+				backgroundColor={colors().backgroundElement}
+				paddingLeft={1}
+				paddingRight={1}
+			>
 				<text wrapMode="none">
-					<span style={{ fg: colors().textMuted }}>
-						{"─".repeat(Math.min(props.columnWidth, 40))} Old
-					</span>
-				</text>
-				<text fg={colors().textMuted}> │ </text>
-				<text wrapMode="none">
-					<span style={{ fg: colors().textMuted }}>
-						New {"─".repeat(Math.min(props.columnWidth - 4, 36))}
-					</span>
+					<span style={{ fg: getFileStatusColor(props.file.type) }}>
+						{getFileStatusIndicator(props.file.type)}
+					</span>{" "}
+					<span style={{ fg: colors().text }}>{props.file.name}</span>
+					<Show when={props.file.prevName}>
+						<span style={{ fg: colors().textMuted }}>
+							{" "}
+							← {props.file.prevName}
+						</span>
+					</Show>
+					<span style={{ fg: colors().textMuted }}> │ </span>
+					<Show when={props.file.additions > 0}>
+						<span style={{ fg: colors().success }}>
+							+{props.file.additions}
+						</span>
+					</Show>
+					<Show when={props.file.additions > 0 && props.file.deletions > 0}>
+						<span style={{ fg: colors().textMuted }}> </span>
+					</Show>
+					<Show when={props.file.deletions > 0}>
+						<span style={{ fg: colors().error }}>-{props.file.deletions}</span>
+					</Show>
 				</text>
 			</box>
 
-			{/* Hunks */}
 			<For each={props.file.hunks}>
 				{(hunk) => (
 					<SplitHunkSection
@@ -107,25 +128,22 @@ interface SplitHunkSectionProps {
 function SplitHunkSection(props: SplitHunkSectionProps) {
 	const { colors } = useTheme()
 
-	// Build aligned rows for split view
-	const alignedRows = createMemo(() => {
-		return buildAlignedRows(props.hunk.lines)
-	})
+	const alignedRows = createMemo(() => buildAlignedRows(props.hunk.lines))
 
 	return (
 		<box flexDirection="column">
-			{/* Hunk header */}
-			<text wrapMode="none">
-				<span
-					style={{
-						fg: props.isCurrent ? colors().info : colors().textMuted,
-					}}
-				>
-					{props.hunk.header}
-				</span>
-			</text>
+			<box backgroundColor={DIFF_BG.hunkHeader} paddingLeft={1}>
+				<text wrapMode="none">
+					<span
+						style={{
+							fg: props.isCurrent ? colors().info : colors().textMuted,
+						}}
+					>
+						{props.hunk.header}
+					</span>
+				</text>
+			</box>
 
-			{/* Aligned rows */}
 			<For each={alignedRows()}>
 				{(row) => <SplitRowView row={row} columnWidth={props.columnWidth} />}
 			</For>
@@ -203,52 +221,67 @@ interface SplitRowViewProps {
 function SplitRowView(props: SplitRowViewProps) {
 	const { colors } = useTheme()
 
-	const formatCell = (line: DiffLine | null, side: "left" | "right") => {
-		if (!line) {
-			return " ".repeat(Math.min(props.columnWidth, 60))
+	const contentWidth = createMemo(() => props.columnWidth - LINE_NUM_WIDTH - 3)
+
+	const formatLineNum = (num: number | undefined) =>
+		(num?.toString() ?? "").padStart(LINE_NUM_WIDTH, " ")
+
+	const formatContent = (line: DiffLine | null, maxWidth: number) => {
+		if (!line) return ""
+		const content = line.content
+		if (content.length > maxWidth) {
+			return `${content.slice(0, maxWidth - 1)}…`
 		}
-
-		const lineNum =
-			side === "left"
-				? (line.oldLineNumber?.toString().padStart(4, " ") ?? "    ")
-				: (line.newLineNumber?.toString().padStart(4, " ") ?? "    ")
-
-		const prefix =
-			line.type === "context" ? " " : line.type === "deletion" ? "-" : "+"
-		const content = `${lineNum} ${prefix}${line.content}`
-
-		// Truncate to column width
-		if (content.length > props.columnWidth) {
-			return `${content.slice(0, props.columnWidth - 1)}…`
-		}
-		return content.padEnd(props.columnWidth)
+		return content
 	}
 
-	const leftColor = () => {
+	const leftBg = createMemo(() => {
+		if (!props.row.left) return DIFF_BG.empty
+		return props.row.left.type === "deletion" ? DIFF_BG.deletion : undefined
+	})
+
+	const rightBg = createMemo(() => {
+		if (!props.row.right) return DIFF_BG.empty
+		return props.row.right.type === "addition" ? DIFF_BG.addition : undefined
+	})
+
+	const leftColor = createMemo(() => {
 		if (!props.row.left) return colors().textMuted
 		return props.row.left.type === "deletion" ? colors().error : colors().text
-	}
+	})
 
-	const rightColor = () => {
+	const rightColor = createMemo(() => {
 		if (!props.row.right) return colors().textMuted
 		return props.row.right.type === "addition"
 			? colors().success
 			: colors().text
-	}
+	})
 
 	return (
 		<box flexDirection="row">
-			<text wrapMode="none">
-				<span style={{ fg: leftColor() }}>
-					{formatCell(props.row.left, "left")}
-				</span>
-			</text>
-			<text fg={colors().textMuted}> │ </text>
-			<text wrapMode="none">
-				<span style={{ fg: rightColor() }}>
-					{formatCell(props.row.right, "right")}
-				</span>
-			</text>
+			<box backgroundColor={leftBg()} flexGrow={1} flexBasis={0}>
+				<text wrapMode="none">
+					<span style={{ fg: colors().textMuted }}>
+						{formatLineNum(props.row.left?.oldLineNumber)}
+					</span>
+					<span style={{ fg: colors().textMuted }}> │ </span>
+					<span style={{ fg: leftColor() }}>
+						{formatContent(props.row.left, contentWidth())}
+					</span>
+				</text>
+			</box>
+			<text fg={colors().border}>│</text>
+			<box backgroundColor={rightBg()} flexGrow={1} flexBasis={0}>
+				<text wrapMode="none">
+					<span style={{ fg: colors().textMuted }}>
+						{formatLineNum(props.row.right?.newLineNumber)}
+					</span>
+					<span style={{ fg: colors().textMuted }}> │ </span>
+					<span style={{ fg: rightColor() }}>
+						{formatContent(props.row.right, contentWidth())}
+					</span>
+				</text>
+			</box>
 		</box>
 	)
 }
