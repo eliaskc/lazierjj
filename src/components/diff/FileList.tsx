@@ -1,11 +1,11 @@
 import { For, Show, createMemo } from "solid-js"
+import { useTheme } from "../../context/theme"
 import {
+	type FileId,
+	type FlattenedFile,
 	getFileStatusColor,
 	getFileStatusIndicator,
-	type FlattenedFile,
-	type FileId,
 } from "../../diff"
-import { useTheme } from "../../context/theme"
 
 interface FileListProps {
 	files: FlattenedFile[]

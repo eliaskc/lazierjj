@@ -56,3 +56,13 @@ export {
 	shouldComputeWordDiff,
 	type WordDiffSegment,
 } from "./word-diff"
+
+// Syntax highlighting
+export {
+	getLanguage,
+	initHighlighter,
+	isHighlighterReady,
+	tokenizeLine,
+	tokenizeLineSync,
+	type SyntaxToken,
+} from "./syntax"

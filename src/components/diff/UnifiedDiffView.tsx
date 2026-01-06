@@ -6,9 +6,11 @@ import {
 	type FlattenedFile,
 	type FlattenedHunk,
 	type HunkId,
-	flattenDiff,
+	type SyntaxToken,
 	getFileStatusColor,
 	getFileStatusIndicator,
+	getLanguage,
+	tokenizeLineSync,
 } from "../../diff"
 
 // Subtle background colors for diff lines
@@ -99,6 +101,7 @@ function FileSection(props: FileSectionProps) {
 					<HunkSection
 						hunk={hunk}
 						isCurrent={hunk.hunkId === props.currentHunkId}
+						filename={props.file.name}
 					/>
 				)}
 			</For>
@@ -111,6 +114,7 @@ function FileSection(props: FileSectionProps) {
 interface HunkSectionProps {
 	hunk: FlattenedHunk
 	isCurrent: boolean
+	filename: string
 }
 
 function HunkSection(props: HunkSectionProps) {
@@ -131,7 +135,7 @@ function HunkSection(props: HunkSectionProps) {
 			</box>
 
 			<For each={props.hunk.lines}>
-				{(line) => <DiffLineView line={line} />}
+				{(line) => <DiffLineView line={line} filename={props.filename} />}
 			</For>
 		</box>
 	)
@@ -139,6 +143,7 @@ function HunkSection(props: HunkSectionProps) {
 
 interface DiffLineViewProps {
 	line: DiffLine
+	filename: string
 }
 
 const LINE_NUM_WIDTH = 5
@@ -146,18 +151,7 @@ const LINE_NUM_WIDTH = 5
 function DiffLineView(props: DiffLineViewProps) {
 	const { colors } = useTheme()
 
-	const lineColor = createMemo(() => {
-		switch (props.line.type) {
-			case "addition":
-				return colors().success
-			case "deletion":
-				return colors().error
-			case "hunk-header":
-				return colors().info
-			default:
-				return colors().text
-		}
-	})
+	const language = createMemo(() => getLanguage(props.filename))
 
 	const lineBg = createMemo(() => {
 		switch (props.line.type) {
@@ -168,6 +162,17 @@ function DiffLineView(props: DiffLineViewProps) {
 			default:
 				return undefined
 		}
+	})
+
+	const tokens = createMemo((): SyntaxToken[] => {
+		if (props.line.type === "hunk-header") {
+			return [{ content: props.line.content, color: colors().info }]
+		}
+		const result = tokenizeLineSync(props.line.content, language())
+		return result.map((t) => ({
+			content: t.content,
+			color: t.color ?? colors().text,
+		}))
 	})
 
 	const oldLineNum = createMemo(() =>
@@ -184,7 +189,9 @@ function DiffLineView(props: DiffLineViewProps) {
 				<span style={{ fg: colors().textMuted }}>{oldLineNum()}</span>
 				<span style={{ fg: colors().textMuted }}> {newLineNum()}</span>
 				<span style={{ fg: colors().textMuted }}> │ </span>
-				<span style={{ fg: lineColor() }}>{props.line.content}</span>
+				<For each={tokens()}>
+					{(token) => <span style={{ fg: token.color }}>{token.content}</span>}
+				</For>
 			</text>
 		</box>
 	)

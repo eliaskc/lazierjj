@@ -1,13 +1,13 @@
 import {
-	parsePatchFiles,
 	type ChangeContent,
 	type ContextContent,
 	type FileDiffMetadata,
 	type Hunk,
 	type ParsedPatch,
+	parsePatchFiles,
 } from "@pierre/diffs"
 import { execute } from "../commander/executor"
-import { fileId, hunkId, type FileId, type HunkId } from "./identifiers"
+import { type FileId, type HunkId, fileId, hunkId } from "./identifiers"
 
 // Re-export types for convenience
 export type {

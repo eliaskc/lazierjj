@@ -6,8 +6,14 @@ import type {
 	FlattenedFile,
 	FlattenedHunk,
 	HunkId,
+	SyntaxToken,
 } from "../../diff"
-import { getFileStatusColor, getFileStatusIndicator } from "../../diff"
+import {
+	getFileStatusColor,
+	getFileStatusIndicator,
+	getLanguage,
+	tokenizeLineSync,
+} from "../../diff"
 
 // Subtle background colors for diff lines
 const DIFF_BG = {
@@ -110,6 +116,7 @@ function SplitFileSection(props: SplitFileSectionProps) {
 						hunk={hunk}
 						isCurrent={hunk.hunkId === props.currentHunkId}
 						columnWidth={props.columnWidth}
+						filename={props.file.name}
 					/>
 				)}
 			</For>
@@ -123,6 +130,7 @@ interface SplitHunkSectionProps {
 	hunk: FlattenedHunk
 	isCurrent: boolean
 	columnWidth: number
+	filename: string
 }
 
 function SplitHunkSection(props: SplitHunkSectionProps) {
@@ -145,7 +153,13 @@ function SplitHunkSection(props: SplitHunkSectionProps) {
 			</box>
 
 			<For each={alignedRows()}>
-				{(row) => <SplitRowView row={row} columnWidth={props.columnWidth} />}
+				{(row) => (
+					<SplitRowView
+						row={row}
+						columnWidth={props.columnWidth}
+						filename={props.filename}
+					/>
+				)}
 			</For>
 		</box>
 	)
@@ -216,23 +230,51 @@ function buildAlignedRows(lines: DiffLine[]): AlignedRow[] {
 interface SplitRowViewProps {
 	row: AlignedRow
 	columnWidth: number
+	filename: string
 }
 
 function SplitRowView(props: SplitRowViewProps) {
 	const { colors } = useTheme()
 
 	const contentWidth = createMemo(() => props.columnWidth - LINE_NUM_WIDTH - 3)
+	const language = createMemo(() => getLanguage(props.filename))
 
 	const formatLineNum = (num: number | undefined) =>
 		(num?.toString() ?? "").padStart(LINE_NUM_WIDTH, " ")
 
-	const formatContent = (line: DiffLine | null, maxWidth: number) => {
-		if (!line) return ""
+	const tokenizeContent = (
+		line: DiffLine | null,
+		maxWidth: number,
+		fallbackColor: string,
+	): SyntaxToken[] => {
+		if (!line) return []
+
 		const content = line.content
-		if (content.length > maxWidth) {
-			return `${content.slice(0, maxWidth - 1)}…`
+		const tokens = tokenizeLineSync(content, language())
+
+		let currentLen = 0
+		const result: SyntaxToken[] = []
+
+		for (const token of tokens) {
+			if (currentLen >= maxWidth) break
+
+			const remaining = maxWidth - currentLen
+			if (token.content.length <= remaining) {
+				result.push({
+					content: token.content,
+					color: token.color ?? fallbackColor,
+				})
+				currentLen += token.content.length
+			} else {
+				result.push({
+					content: `${token.content.slice(0, remaining - 1)}…`,
+					color: token.color ?? fallbackColor,
+				})
+				break
+			}
 		}
-		return content
+
+		return result
 	}
 
 	const leftBg = createMemo(() => {
@@ -245,17 +287,13 @@ function SplitRowView(props: SplitRowViewProps) {
 		return props.row.right.type === "addition" ? DIFF_BG.addition : undefined
 	})
 
-	const leftColor = createMemo(() => {
-		if (!props.row.left) return colors().textMuted
-		return props.row.left.type === "deletion" ? colors().error : colors().text
-	})
+	const leftTokens = createMemo(() =>
+		tokenizeContent(props.row.left, contentWidth(), colors().text),
+	)
 
-	const rightColor = createMemo(() => {
-		if (!props.row.right) return colors().textMuted
-		return props.row.right.type === "addition"
-			? colors().success
-			: colors().text
-	})
+	const rightTokens = createMemo(() =>
+		tokenizeContent(props.row.right, contentWidth(), colors().text),
+	)
 
 	return (
 		<box flexDirection="row">
@@ -265,9 +303,11 @@ function SplitRowView(props: SplitRowViewProps) {
 						{formatLineNum(props.row.left?.oldLineNumber)}
 					</span>
 					<span style={{ fg: colors().textMuted }}> │ </span>
-					<span style={{ fg: leftColor() }}>
-						{formatContent(props.row.left, contentWidth())}
-					</span>
+					<For each={leftTokens()}>
+						{(token) => (
+							<span style={{ fg: token.color }}>{token.content}</span>
+						)}
+					</For>
 				</text>
 			</box>
 			<text fg={colors().border}>│</text>
@@ -277,9 +317,11 @@ function SplitRowView(props: SplitRowViewProps) {
 						{formatLineNum(props.row.right?.newLineNumber)}
 					</span>
 					<span style={{ fg: colors().textMuted }}> │ </span>
-					<span style={{ fg: rightColor() }}>
-						{formatContent(props.row.right, contentWidth())}
-					</span>
+					<For each={rightTokens()}>
+						{(token) => (
+							<span style={{ fg: token.color }}>{token.content}</span>
+						)}
+					</For>
 				</text>
 			</box>
 		</box>
