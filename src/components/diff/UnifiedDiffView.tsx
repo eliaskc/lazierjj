@@ -16,12 +16,19 @@ import {
 } from "../../diff"
 
 const DIFF_BG = {
-	addition: "#132a13",
-	deletion: "#2d1515",
+	addition: "#12211E",
+	deletion: "#361815",
 	hunkHeader: "#1a1a2e",
 	additionEmphasis: "#1a4a1a",
 	deletionEmphasis: "#4a1a1a",
 } as const
+
+const BAR_COLORS = {
+	addition: "#00cab1",
+	deletion: "#ff2e3f",
+} as const
+
+const BAR_CHAR = "▌"
 
 interface UnifiedDiffViewProps {
 	files: FlattenedFile[]
@@ -73,7 +80,7 @@ function FileSection(props: FileSectionProps) {
 				paddingLeft={1}
 				paddingRight={1}
 			>
-				<text wrapMode="none">
+				<text>
 					<span style={{ fg: getFileStatusColor(props.file.type) }}>
 						{getFileStatusIndicator(props.file.type)}
 					</span>{" "}
@@ -84,7 +91,7 @@ function FileSection(props: FileSectionProps) {
 							← {props.file.prevName}
 						</span>
 					</Show>
-					<span style={{ fg: colors().textMuted }}> │ </span>
+					<span style={{ fg: colors().textMuted }}>│ </span>
 					<Show when={props.file.additions > 0}>
 						<span style={{ fg: colors().success }}>
 							+{props.file.additions}
@@ -179,7 +186,7 @@ function HunkSection(props: HunkSectionProps) {
 	return (
 		<box flexDirection="column">
 			<box backgroundColor={DIFF_BG.hunkHeader} paddingLeft={1}>
-				<text wrapMode="none">
+				<text>
 					<span
 						style={{
 							fg: props.isCurrent ? colors().info : colors().textMuted,
@@ -209,7 +216,7 @@ interface DiffLineViewProps {
 	wordDiff?: WordDiffSegment[]
 }
 
-const LINE_NUM_WIDTH = 5
+const LINE_NUM_WIDTH = 4
 
 interface TokenWithEmphasis extends SyntaxToken {
 	emphasis?: boolean
@@ -290,25 +297,41 @@ function DiffLineView(props: DiffLineViewProps) {
 		props.line.type === "addition" ? colors().success : colors().textMuted,
 	)
 
+	const bar = createMemo(() => {
+		switch (props.line.type) {
+			case "addition":
+				return { char: BAR_CHAR, color: BAR_COLORS.addition }
+			case "deletion":
+				return { char: BAR_CHAR, color: BAR_COLORS.deletion }
+			default:
+				return { char: " ", color: colors().textMuted }
+		}
+	})
+
 	return (
 		<box flexDirection="row" backgroundColor={lineBg()}>
 			<text wrapMode="none">
+				<span style={{ fg: bar().color }}>{bar().char}</span>
 				<span style={{ fg: oldLineNumColor() }}>{oldLineNum()}</span>
 				<span style={{ fg: newLineNumColor() }}> {newLineNum()}</span>
 				<span style={{ fg: colors().textMuted }}> │ </span>
-				<For each={tokens()}>
-					{(token) => (
-						<span
-							style={{
-								fg: token.color,
-								bg: token.emphasis ? emphasisBg() : undefined,
-							}}
-						>
-							{token.content}
-						</span>
-					)}
-				</For>
 			</text>
+			<box flexGrow={1}>
+				<text>
+					<For each={tokens()}>
+						{(token) => (
+							<span
+								style={{
+									fg: token.color,
+									bg: token.emphasis ? emphasisBg() : undefined,
+								}}
+							>
+								{token.content}
+							</span>
+						)}
+					</For>
+				</text>
+			</box>
 		</box>
 	)
 }

@@ -18,8 +18,8 @@ import {
 } from "../../diff"
 
 const DIFF_BG = {
-	addition: "#132a13",
-	deletion: "#2d1515",
+	addition: "#12211E",
+	deletion: "#361815",
 	empty: "#1a1a1a",
 	hunkHeader: "#1a1a2e",
 	additionEmphasis: "#1a4a1a",
@@ -31,10 +31,11 @@ const BAR_COLORS = {
 	deletion: "#ff2e3f",
 } as const
 
+const BAR_CHAR = "▌"
 const EMPTY_STRIPE_CHAR = "╱"
 const EMPTY_STRIPE_COLOR = "#2a2a2a"
 
-const LINE_NUM_WIDTH = 5
+const LINE_NUM_WIDTH = 4
 
 interface SplitDiffViewProps {
 	files: FlattenedFile[]
@@ -95,7 +96,7 @@ function SplitFileSection(props: SplitFileSectionProps) {
 				paddingLeft={1}
 				paddingRight={1}
 			>
-				<text wrapMode="none">
+				<text>
 					<span style={{ fg: getFileStatusColor(props.file.type) }}>
 						{getFileStatusIndicator(props.file.type)}
 					</span>{" "}
@@ -152,7 +153,7 @@ function SplitHunkSection(props: SplitHunkSectionProps) {
 	return (
 		<box flexDirection="column">
 			<box backgroundColor={DIFF_BG.hunkHeader} paddingLeft={1}>
-				<text wrapMode="none">
+				<text>
 					<span
 						style={{
 							fg: props.isCurrent ? colors().info : colors().textMuted,
@@ -257,7 +258,7 @@ interface TokenWithEmphasis extends SyntaxToken {
 function SplitRowView(props: SplitRowViewProps) {
 	const { colors } = useTheme()
 
-	const contentWidth = createMemo(() => props.columnWidth - LINE_NUM_WIDTH - 3)
+	const contentWidth = createMemo(() => props.columnWidth - LINE_NUM_WIDTH - 2)
 	const language = createMemo(() => getLanguage(props.filename))
 
 	const formatLineNum = (num: number | undefined) =>
@@ -370,16 +371,16 @@ function SplitRowView(props: SplitRowViewProps) {
 	})
 
 	const leftBar = createMemo(() => {
-		if (!props.row.left) return { char: " ", color: EMPTY_STRIPE_COLOR }
+		if (!props.row.left) return null
 		if (props.row.left.type === "deletion")
-			return { char: "┆", color: BAR_COLORS.deletion }
+			return { char: BAR_CHAR, color: BAR_COLORS.deletion }
 		return { char: " ", color: colors().textMuted }
 	})
 
 	const rightBar = createMemo(() => {
-		if (!props.row.right) return { char: " ", color: EMPTY_STRIPE_COLOR }
+		if (!props.row.right) return null
 		if (props.row.right.type === "addition")
-			return { char: "▌", color: BAR_COLORS.addition }
+			return { char: BAR_CHAR, color: BAR_COLORS.addition }
 		return { char: " ", color: colors().textMuted }
 	})
 
@@ -389,61 +390,83 @@ function SplitRowView(props: SplitRowViewProps) {
 
 	return (
 		<box flexDirection="row">
-			<box backgroundColor={leftBg()} flexGrow={1} flexBasis={0}>
-				<text wrapMode="none">
-					<span style={{ fg: leftBar().color }}>{leftBar().char}</span>
-					<span style={{ fg: leftLineNumColor() }}>
-						{formatLineNum(props.row.left?.oldLineNumber)}
-					</span>
-					<span style={{ fg: colors().backgroundElement }}> │ </span>
-					<Show
-						when={props.row.left}
-						fallback={
+			<box
+				backgroundColor={leftBg()}
+				flexGrow={1}
+				flexBasis={0}
+				flexDirection="row"
+			>
+				<Show
+					when={props.row.left}
+					fallback={
+						<text wrapMode="none">
 							<span style={{ fg: EMPTY_STRIPE_COLOR }}>{emptyFill()}</span>
-						}
-					>
-						<For each={leftTokens()}>
-							{(token) => (
-								<span
-									style={{
-										fg: token.color,
-										bg: token.emphasis ? DIFF_BG.deletionEmphasis : undefined,
-									}}
-								>
-									{token.content}
-								</span>
-							)}
-						</For>
-					</Show>
-				</text>
+						</text>
+					}
+				>
+					<text wrapMode="none">
+						<span style={{ fg: leftBar()?.color }}>{leftBar()?.char}</span>
+						<span style={{ fg: leftLineNumColor() }}>
+							{formatLineNum(props.row.left?.oldLineNumber)}
+						</span>
+						<span style={{ fg: colors().backgroundElement }}>│ </span>
+					</text>
+					<box flexGrow={1}>
+						<text>
+							<For each={leftTokens()}>
+								{(token) => (
+									<span
+										style={{
+											fg: token.color,
+											bg: token.emphasis ? DIFF_BG.deletionEmphasis : undefined,
+										}}
+									>
+										{token.content}
+									</span>
+								)}
+							</For>
+						</text>
+					</box>
+				</Show>
 			</box>
-			<box backgroundColor={rightBg()} flexGrow={1} flexBasis={0}>
-				<text wrapMode="none">
-					<span style={{ fg: rightBar().color }}>{rightBar().char}</span>
-					<span style={{ fg: rightLineNumColor() }}>
-						{formatLineNum(props.row.right?.newLineNumber)}
-					</span>
-					<span style={{ fg: colors().backgroundElement }}> │ </span>
-					<Show
-						when={props.row.right}
-						fallback={
+			<box
+				backgroundColor={rightBg()}
+				flexGrow={1}
+				flexBasis={0}
+				flexDirection="row"
+			>
+				<Show
+					when={props.row.right}
+					fallback={
+						<text wrapMode="none">
 							<span style={{ fg: EMPTY_STRIPE_COLOR }}>{emptyFill()}</span>
-						}
-					>
-						<For each={rightTokens()}>
-							{(token) => (
-								<span
-									style={{
-										fg: token.color,
-										bg: token.emphasis ? DIFF_BG.additionEmphasis : undefined,
-									}}
-								>
-									{token.content}
-								</span>
-							)}
-						</For>
-					</Show>
-				</text>
+						</text>
+					}
+				>
+					<text wrapMode="none">
+						<span style={{ fg: rightBar()?.color }}>{rightBar()?.char}</span>
+						<span style={{ fg: rightLineNumColor() }}>
+							{formatLineNum(props.row.right?.newLineNumber)}
+						</span>
+						<span style={{ fg: colors().backgroundElement }}>│ </span>
+					</text>
+					<box flexGrow={1}>
+						<text>
+							<For each={rightTokens()}>
+								{(token) => (
+									<span
+										style={{
+											fg: token.color,
+											bg: token.emphasis ? DIFF_BG.additionEmphasis : undefined,
+										}}
+									>
+										{token.content}
+									</span>
+								)}
+							</For>
+						</text>
+					</box>
+				</Show>
 			</box>
 		</box>
 	)
