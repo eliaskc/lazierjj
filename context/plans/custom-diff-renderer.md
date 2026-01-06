@@ -416,13 +416,12 @@ src/
 
 ## Implementation Phases
 
-**Note:** PR review comes before interactive splitting. The structured row model for annotations is the same substrate splitting will reuse.
+**Note:** Interactive splitting comes before PR review. Splitting only needs hunk-level identification (path + @@ coords), while PR review needs full line-level anchoring for GitHub API compatibility.
 
 ### Phase 1: Basic Rendering (MVP)
-- [x] Add `@pierre/diffs` dependency
-- [x] Create parser wrapper (`src/diff/parser.ts`)
+- [ ] Add `@pierre/diffs` dependency
+- [ ] Create parser wrapper (`src/diff/parser.ts`)
 - [ ] Implement stable identifiers (`src/diff/identifiers.ts`)
-- [ ] Build row index with full coordinates
 - [ ] Basic file-at-a-time unified view
 - [ ] Add `d` toggle to switch to passthrough
 
@@ -433,20 +432,20 @@ src/
 - [ ] Word-level highlighting
 - [ ] Hunk navigation (`[`/`]`)
 
-### Phase 3: PR Review Features
-- [ ] Fetch PR patches via GitHub API
-- [ ] Annotation anchoring with LineAnchor
-- [ ] Inline comment rendering
-- [ ] Comment input modal
-- [ ] GitHub comment sync
-- → See [pr-management.md](./pr-management.md)
-
-### Phase 4: Interactive Splitting
+### Phase 3: Interactive Splitting
 - [ ] Hunk selection state (keyed by stable hunkId)
 - [ ] Visual selection indicators
 - [ ] Split mode entry/exit
 - [ ] Execute split with selections
 - → See [interactive-splitting.md](./interactive-splitting.md)
+
+### Phase 4: PR Review Features
+- [ ] Fetch PR patches via GitHub API
+- [ ] Annotation anchoring with LineAnchor (line-level, not just hunk-level)
+- [ ] Inline comment rendering
+- [ ] Comment input modal
+- [ ] GitHub comment sync
+- → See [pr-management.md](./pr-management.md)
 
 ### Phase 5: AI Features
 - [ ] Hunk selection for AI context

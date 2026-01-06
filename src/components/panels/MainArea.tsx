@@ -15,8 +15,13 @@ import { useFocus } from "../../context/focus"
 import { useLayout } from "../../context/layout"
 import { type CommitDetails, useSync } from "../../context/sync"
 import { useTheme } from "../../context/theme"
+import { fetchParsedDiff, flattenDiff, type FlattenedFile } from "../../diff"
 import { AnsiText } from "../AnsiText"
+import { FileSummary, SplitDiffView, UnifiedDiffView } from "../diff"
 import { Panel } from "../Panel"
+
+type DiffRenderMode = "passthrough" | "custom"
+type DiffViewStyle = "unified" | "split"
 
 const INITIAL_LIMIT = 1000
 const LIMIT_INCREMENT = 200
@@ -224,6 +229,93 @@ export function MainArea() {
 		null,
 	)
 
+	// Custom diff renderer state
+	const [renderMode, setRenderMode] = createSignal<DiffRenderMode>("custom")
+	const [viewStyle, setViewStyle] = createSignal<DiffViewStyle>("unified")
+	const [parsedFiles, setParsedFiles] = createSignal<FlattenedFile[]>([])
+	const [parsedDiffLoading, setParsedDiffLoading] = createSignal(false)
+	const [parsedDiffError, setParsedDiffError] = createSignal<string | null>(
+		null,
+	)
+	const [activeFileIndex, setActiveFileIndex] = createSignal(0)
+	const [activeHunkIndex, setActiveHunkIndex] = createSignal(0)
+
+	// Derived state
+	const activeFileId = createMemo(() => {
+		const files = parsedFiles()
+		const idx = activeFileIndex()
+		return files[idx]?.fileId ?? null
+	})
+
+	const activeHunkId = createMemo(() => {
+		const files = parsedFiles()
+		const fileIdx = activeFileIndex()
+		const hunkIdx = activeHunkIndex()
+		const file = files[fileIdx]
+		return file?.hunks[hunkIdx]?.hunkId ?? null
+	})
+
+	// Navigation functions
+	const navigateFile = (direction: 1 | -1) => {
+		const files = parsedFiles()
+		if (files.length === 0) return
+		const newIdx = Math.max(
+			0,
+			Math.min(files.length - 1, activeFileIndex() + direction),
+		)
+		setActiveFileIndex(newIdx)
+		setActiveHunkIndex(0) // Reset hunk when changing files
+		scrollRef?.scrollTo(0)
+	}
+
+	const navigateHunk = (direction: 1 | -1) => {
+		const files = parsedFiles()
+		const fileIdx = activeFileIndex()
+		const file = files[fileIdx]
+		if (!file) return
+
+		const hunkIdx = activeHunkIndex()
+		const newHunkIdx = hunkIdx + direction
+
+		if (newHunkIdx < 0) {
+			// Go to previous file's last hunk
+			if (fileIdx > 0) {
+				const prevFile = files[fileIdx - 1]
+				setActiveFileIndex(fileIdx - 1)
+				setActiveHunkIndex(prevFile ? prevFile.hunks.length - 1 : 0)
+			}
+		} else if (newHunkIdx >= file.hunks.length) {
+			// Go to next file's first hunk
+			if (fileIdx < files.length - 1) {
+				setActiveFileIndex(fileIdx + 1)
+				setActiveHunkIndex(0)
+			}
+		} else {
+			setActiveHunkIndex(newHunkIdx)
+		}
+	}
+
+	// Fetch parsed diff when commit changes and we're in custom mode
+	createEffect(() => {
+		const commit = activeCommit()
+		const mode = renderMode()
+
+		if (commit && mode === "custom") {
+			setParsedDiffLoading(true)
+			setParsedDiffError(null)
+
+			fetchParsedDiff(commit.changeId)
+				.then((files) => {
+					setParsedFiles(flattenDiff(files))
+					setParsedDiffLoading(false)
+				})
+				.catch((err) => {
+					setParsedDiffError(err.message)
+					setParsedDiffLoading(false)
+				})
+		}
+	})
+
 	createEffect(() => {
 		const commit = activeCommit()
 		if (commit && commit.changeId !== currentCommitId()) {
@@ -231,6 +323,10 @@ export function MainArea() {
 			setScrollTop(0)
 			setLimit(INITIAL_LIMIT)
 			scrollRef?.scrollTo(0)
+			// Clear parsed files and reset navigation when switching commits
+			setParsedFiles([])
+			setActiveFileIndex(0)
+			setActiveHunkIndex(0)
 		}
 	})
 
@@ -307,6 +403,83 @@ export function MainArea() {
 				setScrollTop(newPos)
 			},
 		},
+		{
+			id: "detail.toggle_diff_renderer",
+			title: "toggle diff view",
+			keybind: "toggle_diff_view",
+			context: "detail",
+			type: "view",
+			visibility: "all",
+			onSelect: () => {
+				setRenderMode((m) => (m === "passthrough" ? "custom" : "passthrough"))
+			},
+		},
+		{
+			id: "detail.toggle_diff_style",
+			title: "toggle split/unified",
+			keybind: "toggle_diff_style",
+			context: "detail",
+			type: "view",
+			visibility: "help-only",
+			onSelect: () => {
+				if (renderMode() === "custom") {
+					setViewStyle((s) => (s === "unified" ? "split" : "unified"))
+				}
+			},
+		},
+		// Navigation commands (only work in custom render mode)
+		{
+			id: "detail.prev_hunk",
+			title: "previous hunk",
+			keybind: "nav_prev_hunk",
+			context: "detail",
+			type: "navigation",
+			visibility: "help-only",
+			onSelect: () => {
+				if (renderMode() === "custom") {
+					navigateHunk(-1)
+				}
+			},
+		},
+		{
+			id: "detail.next_hunk",
+			title: "next hunk",
+			keybind: "nav_next_hunk",
+			context: "detail",
+			type: "navigation",
+			visibility: "help-only",
+			onSelect: () => {
+				if (renderMode() === "custom") {
+					navigateHunk(1)
+				}
+			},
+		},
+		{
+			id: "detail.prev_file",
+			title: "previous file",
+			keybind: "nav_prev_file",
+			context: "detail",
+			type: "navigation",
+			visibility: "help-only",
+			onSelect: () => {
+				if (renderMode() === "custom") {
+					navigateFile(-1)
+				}
+			},
+		},
+		{
+			id: "detail.next_file",
+			title: "next file",
+			keybind: "nav_next_file",
+			context: "detail",
+			type: "navigation",
+			visibility: "help-only",
+			onSelect: () => {
+				if (renderMode() === "custom") {
+					navigateFile(1)
+				}
+			},
+		},
 	])
 
 	return (
@@ -338,15 +511,51 @@ export function MainArea() {
 							/>
 						)}
 					</Show>
-					<Show when={diff()}>
-						<ghostty-terminal
-							ansi={diff() ?? ""}
-							cols={mainAreaWidth()}
-							limit={limit()}
-						/>
+					<Show when={renderMode() === "passthrough"}>
+						<Show when={diff()}>
+							<ghostty-terminal
+								ansi={diff() ?? ""}
+								cols={mainAreaWidth()}
+								limit={limit()}
+							/>
+						</Show>
+						<Show when={!diff()}>
+							<text>No changes in this commit.</text>
+						</Show>
 					</Show>
-					<Show when={!diff()}>
-						<text>No changes in this commit.</text>
+					<Show when={renderMode() === "custom"}>
+						<Show when={parsedDiffLoading()}>
+							<text fg={colors().textMuted}>Parsing diff...</text>
+						</Show>
+						<Show when={parsedDiffError()}>
+							<text fg={colors().error}>Error: {parsedDiffError()}</text>
+						</Show>
+						<Show when={!parsedDiffLoading() && !parsedDiffError()}>
+							<Show when={parsedFiles().length > 0}>
+								<FileSummary
+									files={parsedFiles()}
+									activeFileId={activeFileId()}
+								/>
+								<Show when={viewStyle() === "unified"}>
+									<UnifiedDiffView
+										files={parsedFiles()}
+										activeFileId={activeFileId()}
+										currentHunkId={activeHunkId()}
+									/>
+								</Show>
+								<Show when={viewStyle() === "split"}>
+									<SplitDiffView
+										files={parsedFiles()}
+										activeFileId={activeFileId()}
+										currentHunkId={activeHunkId()}
+										width={mainAreaWidth()}
+									/>
+								</Show>
+							</Show>
+							<Show when={parsedFiles().length === 0 && !diffLoading()}>
+								<text>No changes in this commit.</text>
+							</Show>
+						</Show>
 					</Show>
 				</scrollbox>
 			</Show>
