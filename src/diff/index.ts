@@ -69,6 +69,8 @@ export {
 	type SyntaxToken,
 } from "./syntax"
 
+export type { SupportedLanguages } from "@pierre/diffs"
+
 // Syntax cache
 export {
 	clearSyntaxCache,
@@ -77,6 +79,11 @@ export {
 	resetSyntaxStats,
 	tokenizeWithCache,
 } from "./syntax-cache"
+
+export {
+	createSyntaxScheduler,
+	type SyntaxScheduler,
+} from "./syntax-scheduler"
 
 // Virtualization
 export {

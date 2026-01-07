@@ -1,4 +1,12 @@
-import { For, Show, createMemo, createEffect } from "solid-js"
+import {
+	For,
+	Show,
+	createMemo,
+	createEffect,
+	createSignal,
+	createContext,
+	useContext,
+} from "solid-js"
 import { useTheme } from "../../context/theme"
 import type {
 	DiffLine,
@@ -6,19 +14,23 @@ import type {
 	FlattenedFile,
 	FlattenedHunk,
 	HunkId,
+	SupportedLanguages,
+	SyntaxScheduler,
 	SyntaxToken,
 	WordDiffSegment,
 } from "../../diff"
 import {
 	computeWordDiff,
+	createSyntaxScheduler,
 	getFileStatusColor,
 	getFileStatusIndicator,
 	getLanguage,
 	getLineNumWidth,
 	getMaxLineNumber,
 	getVisibleRange,
-	tokenizeWithCache,
 } from "../../diff"
+
+const SchedulerContext = createContext<SyntaxScheduler>()
 
 const DIFF_BG = {
 	addition: "#0d2818",
@@ -192,6 +204,7 @@ interface VirtualizedSplitViewProps {
 
 export function VirtualizedSplitView(props: VirtualizedSplitViewProps) {
 	const { colors } = useTheme()
+	const scheduler = createSyntaxScheduler()
 
 	const filesToRender = createMemo(() => {
 		if (props.activeFileId) {
@@ -221,6 +234,64 @@ export function VirtualizedSplitView(props: VirtualizedSplitViewProps) {
 		return rows().slice(start, end)
 	})
 
+	createEffect(() => {
+		props.files
+		scheduler.clearStore()
+	})
+
+	createEffect(() => {
+		const visible = visibleRows()
+		const itemsToTokenize: Array<{
+			key: string
+			content: string
+			language: ReturnType<typeof getLanguage>
+		}> = []
+
+		for (const row of visible) {
+			if (row.type !== "content") continue
+			const language = getLanguage(row.fileName)
+
+			if (row.left) {
+				if (row.leftWordDiff) {
+					for (const seg of row.leftWordDiff) {
+						itemsToTokenize.push({
+							key: scheduler.makeKey(seg.text, language),
+							content: seg.text,
+							language,
+						})
+					}
+				} else {
+					itemsToTokenize.push({
+						key: scheduler.makeKey(row.left.content, language),
+						content: row.left.content,
+						language,
+					})
+				}
+			}
+			if (row.right) {
+				if (row.rightWordDiff) {
+					for (const seg of row.rightWordDiff) {
+						itemsToTokenize.push({
+							key: scheduler.makeKey(seg.text, language),
+							content: seg.text,
+							language,
+						})
+					}
+				} else {
+					itemsToTokenize.push({
+						key: scheduler.makeKey(row.right.content, language),
+						content: row.right.content,
+						language,
+					})
+				}
+			}
+		}
+
+		if (itemsToTokenize.length > 0) {
+			scheduler.prefetch(itemsToTokenize, "high")
+		}
+	})
+
 	const fileStats = createMemo(() => {
 		const stats = new Map<
 			FileId,
@@ -238,25 +309,27 @@ export function VirtualizedSplitView(props: VirtualizedSplitViewProps) {
 	})
 
 	return (
-		<box flexDirection="column">
-			<Show when={rows().length === 0}>
-				<text fg={colors().textMuted}>No changes</text>
-			</Show>
-			<Show when={rows().length > 0}>
-				<box height={visibleRange().start} flexShrink={0} />
-				<For each={visibleRows()}>
-					{(row) => (
-						<VirtualizedSplitRow
-							row={row}
-							lineNumWidth={lineNumWidth()}
-							currentHunkId={props.currentHunkId}
-							fileStats={fileStats()}
-						/>
-					)}
-				</For>
-				<box height={rows().length - visibleRange().end} flexShrink={0} />
-			</Show>
-		</box>
+		<SchedulerContext.Provider value={scheduler}>
+			<box flexDirection="column">
+				<Show when={rows().length === 0}>
+					<text fg={colors().textMuted}>No changes</text>
+				</Show>
+				<Show when={rows().length > 0}>
+					<box height={visibleRange().start} flexShrink={0} />
+					<For each={visibleRows()}>
+						{(row) => (
+							<VirtualizedSplitRow
+								row={row}
+								lineNumWidth={lineNumWidth()}
+								currentHunkId={props.currentHunkId}
+								fileStats={fileStats()}
+							/>
+						)}
+					</For>
+					<box height={rows().length - visibleRange().end} flexShrink={0} />
+				</Show>
+			</box>
+		</SchedulerContext.Provider>
 	)
 }
 
@@ -352,39 +425,12 @@ interface TokenWithEmphasis extends SyntaxToken {
 
 function SplitContentRow(props: SplitContentRowProps) {
 	const { colors } = useTheme()
+	const scheduler = useContext(SchedulerContext)
 
 	const language = createMemo(() => getLanguage(props.row.fileName))
 
 	const formatLineNum = (num: number | undefined) =>
 		(num?.toString() ?? "").padStart(props.lineNumWidth, " ")
-
-	const tokenizeWithWordDiff = (
-		content: string,
-		wordDiff: WordDiffSegment[] | undefined,
-		emphasisType: "removed" | "added",
-	): TokenWithEmphasis[] => {
-		if (!wordDiff) {
-			const tokens = tokenizeWithCache(content, language())
-			return tokens.map((t) => ({
-				content: t.content,
-				color: t.color ?? colors().text,
-			}))
-		}
-
-		const result: TokenWithEmphasis[] = []
-		for (const segment of wordDiff) {
-			const segmentTokens = tokenizeWithCache(segment.text, language())
-			const isEmphasis = segment.type === emphasisType
-			for (const token of segmentTokens) {
-				result.push({
-					content: token.content,
-					color: token.color ?? colors().text,
-					emphasis: isEmphasis,
-				})
-			}
-		}
-		return result
-	}
 
 	const leftBg = createMemo(() => {
 		if (!props.row.left) return DIFF_BG.empty
@@ -397,14 +443,101 @@ function SplitContentRow(props: SplitContentRowProps) {
 	})
 
 	const defaultColor = colors().text
-	const leftTokens = createMemo((): TokenWithEmphasis[] => {
-		const content = props.row.left?.content ?? ""
-		return [{ content, color: defaultColor }]
-	})
 
-	const rightTokens = createMemo((): TokenWithEmphasis[] => {
-		const content = props.row.right?.content ?? ""
-		return [{ content, color: defaultColor }]
+	const tokenizeSegments = (
+		wordDiff: WordDiffSegment[],
+		emphasisType: "removed" | "added",
+		lang: SupportedLanguages,
+	): TokenWithEmphasis[] => {
+		if (!scheduler) {
+			return wordDiff.map((seg) => ({
+				content: seg.text,
+				color: defaultColor,
+				emphasis: seg.type === emphasisType,
+			}))
+		}
+
+		const result: TokenWithEmphasis[] = []
+		for (const seg of wordDiff) {
+			const key = scheduler.makeKey(seg.text, lang)
+			const cached = scheduler.store[key]
+			const isEmphasis = seg.type === emphasisType
+
+			if (cached) {
+				for (const token of cached) {
+					result.push({
+						content: token.content,
+						color: token.color ?? defaultColor,
+						emphasis: isEmphasis,
+					})
+				}
+			} else {
+				result.push({
+					content: seg.text,
+					color: defaultColor,
+					emphasis: isEmphasis,
+				})
+			}
+		}
+		return result
+	}
+
+	const [leftTokens, setLeftTokens] = createSignal<TokenWithEmphasis[]>([])
+	const [rightTokens, setRightTokens] = createSignal<TokenWithEmphasis[]>([])
+
+	createEffect(() => {
+		const lang = language()
+		scheduler?.version()
+
+		const leftContent = props.row.left?.content ?? ""
+		if (!leftContent) {
+			setLeftTokens([])
+		} else {
+			const wordDiff = props.row.leftWordDiff
+			if (wordDiff) {
+				setLeftTokens(tokenizeSegments(wordDiff, "removed", lang))
+			} else if (!scheduler) {
+				setLeftTokens([{ content: leftContent, color: defaultColor }])
+			} else {
+				const key = scheduler.makeKey(leftContent, lang)
+				const cached = scheduler.store[key]
+				if (cached) {
+					setLeftTokens(
+						cached.map((t) => ({
+							content: t.content,
+							color: t.color ?? defaultColor,
+						})),
+					)
+				} else {
+					setLeftTokens([{ content: leftContent, color: defaultColor }])
+				}
+			}
+		}
+
+		const rightContent = props.row.right?.content ?? ""
+		if (!rightContent) {
+			setRightTokens([])
+		} else {
+			const wordDiff = props.row.rightWordDiff
+			if (wordDiff) {
+				setRightTokens(tokenizeSegments(wordDiff, "added", lang))
+			} else if (!scheduler) {
+				setRightTokens([{ content: rightContent, color: defaultColor }])
+			} else {
+				const key = scheduler.makeKey(rightContent, lang)
+				const cached = scheduler.store[key]
+				if (cached) {
+					setRightTokens(
+						cached.map((t) => ({
+							content: t.content,
+							color: t.color ?? defaultColor,
+						})),
+					)
+				} else {
+					setRightTokens([{ content: rightContent, color: defaultColor }])
+				}
+			}
+		}
 	})
 
 	const leftLineNumColor = createMemo(() => {

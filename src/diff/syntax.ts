@@ -43,6 +43,52 @@ export async function initHighlighter(): Promise<void> {
 	})
 
 	highlighter = await highlighterPromise
+
+	warmupHighlighterAsync()
+}
+
+const WARMUP_PATTERNS = [
+	'const x = { a: 1, b: "test" }',
+	'import { foo, bar } from "module"',
+	"export function Component(props: Props) {",
+	"const [state, setState] = useState<string>()",
+	'return <div className="test">{children}</div>',
+	"async function fetchData(): Promise<void> {}",
+	"interface Props { value: string; onChange: (v: string) => void }",
+	"type Result<T> = { data: T; error?: Error }",
+]
+
+const WARMUP_LANGS: SupportedLanguages[] = ["typescript", "tsx"]
+
+function warmupHighlighterAsync(): void {
+	if (!highlighter) return
+
+	let langIndex = 0
+	let patternIndex = 0
+
+	const processOne = () => {
+		if (!highlighter) return
+		if (langIndex >= WARMUP_LANGS.length) return
+
+		const lang = WARMUP_LANGS[langIndex]
+		const pattern = WARMUP_PATTERNS[patternIndex]
+
+		if (lang && pattern) {
+			highlighter.codeToTokens(pattern, { lang, theme: "ayu-dark" })
+		}
+
+		patternIndex++
+		if (patternIndex >= WARMUP_PATTERNS.length) {
+			patternIndex = 0
+			langIndex++
+		}
+
+		if (langIndex < WARMUP_LANGS.length) {
+			setTimeout(processOne, 0)
+		}
+	}
+
+	setTimeout(processOne, 0)
 }
 
 async function getHighlighter(): Promise<DiffsHighlighter> {
