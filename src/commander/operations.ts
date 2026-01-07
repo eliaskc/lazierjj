@@ -157,6 +157,7 @@ export async function jjShowDescription(
 		"-r",
 		revision,
 		"--no-graph",
+		"--ignore-working-copy",
 		"-T",
 		"description",
 	])
@@ -186,10 +187,19 @@ export async function jjShowDescriptionStyled(
 			"--no-graph",
 			"--color",
 			"always",
+			"--ignore-working-copy",
 			"-T",
 			styledTemplate,
 		]),
-		execute(["log", "-r", revision, "--no-graph", "-T", "description"]),
+		execute([
+			"log",
+			"-r",
+			revision,
+			"--no-graph",
+			"--ignore-working-copy",
+			"-T",
+			"description",
+		]),
 	])
 
 	const subject = subjectResult.success ? subjectResult.stdout.trim() : ""
@@ -324,13 +334,23 @@ export interface DiffStats {
 }
 
 export async function jjDiffStats(revision: string): Promise<DiffStats> {
-	const result = await execute(["diff", "--stat", "-r", revision])
+	const result = await execute([
+		"diff",
+		"--stat",
+		"-r",
+		revision,
+		"--ignore-working-copy",
+	])
 
 	if (!result.success) {
 		return { files: [], totalFiles: 0, totalInsertions: 0, totalDeletions: 0 }
 	}
 
-	const lines = result.stdout.trim().split("\n")
+	return parseDiffStats(result.stdout)
+}
+
+function parseDiffStats(output: string): DiffStats {
+	const lines = output.trim().split("\n")
 	const files: DiffStats["files"] = []
 	let totalFiles = 0
 	let totalInsertions = 0
@@ -363,4 +383,64 @@ export async function jjDiffStats(revision: string): Promise<DiffStats> {
 	}
 
 	return { files, totalFiles, totalInsertions, totalDeletions }
+}
+
+/**
+ * Fetch commit details (description + diff stats) in a single jj command.
+ * This reduces lock contention compared to running separate commands.
+ */
+export interface CommitDetailsResult {
+	subject: string
+	body: string
+	stats: DiffStats
+}
+
+const DETAILS_SEPARATOR = "\n---KAJJI_DETAILS_SEPARATOR---\n"
+
+export async function jjCommitDetails(
+	revision: string,
+): Promise<CommitDetailsResult> {
+	// Combined template: styled subject, then separator, then description, then separator, then diff stats
+	// We use a unique separator to split the output reliably
+	const styledSubjectTemplate = `if(empty, label("empty", "(empty) "), "") ++ if(description.first_line(), description.first_line(), label("description placeholder", "(no description set)"))`
+
+	const result = await execute([
+		"log",
+		"-r",
+		revision,
+		"--no-graph",
+		"--color",
+		"always",
+		"--ignore-working-copy",
+		"-T",
+		`${styledSubjectTemplate} ++ "${DETAILS_SEPARATOR}" ++ description ++ "${DETAILS_SEPARATOR}" ++ diff.stat(80)`,
+	])
+
+	if (!result.success) {
+		return {
+			subject: "",
+			body: "",
+			stats: {
+				files: [],
+				totalFiles: 0,
+				totalInsertions: 0,
+				totalDeletions: 0,
+			},
+		}
+	}
+
+	const parts = result.stdout.split(DETAILS_SEPARATOR)
+	const subject = (parts[0] ?? "").trim()
+	const fullDescription = (parts[1] ?? "").trim()
+	const statsOutput = parts[2] ?? ""
+
+	// Body is everything after the first line of description
+	const descLines = fullDescription.split("\n")
+	const body = descLines.slice(1).join("\n").trim()
+
+	return {
+		subject,
+		body,
+		stats: parseDiffStats(statsOutput),
+	}
 }

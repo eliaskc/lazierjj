@@ -2,27 +2,29 @@ import { appendFileSync, mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 export const PROFILE_ENABLED = process.env.KAJJI_PROFILE === "1"
-export const NO_PASSTHROUGH = process.env.KAJJI_NO_PASSTHROUGH === "1"
-export const NO_SYNTAX = process.env.KAJJI_NO_SYNTAX === "1"
 
-const TEST_NAME = process.env.KAJJI_PROFILE_NAME || "default"
+const PROFILE_NAME = process.env.KAJJI_PROFILE_NAME || "default"
+const PROFILE_MESSAGE = process.env.KAJJI_PROFILE_MESSAGE || ""
 const PROFILE_DIR = join(process.cwd(), ".kajji-profiles")
-const PROFILE_FILE = join(PROFILE_DIR, `${TEST_NAME}-${Date.now()}.log`)
+const PROFILE_FILE = join(PROFILE_DIR, `${PROFILE_NAME}.log`)
 
 let initialized = false
+const startTime = performance.now()
 
 function ensureDir() {
 	if (initialized) return
 	try {
 		mkdirSync(PROFILE_DIR, { recursive: true })
 		const header = [
-			`# Kajji Profile: ${TEST_NAME}`,
+			"# Kajji Profile",
+			`# Name: ${PROFILE_NAME}`,
+			PROFILE_MESSAGE ? `# Description: ${PROFILE_MESSAGE}` : null,
 			`# Started: ${new Date().toISOString()}`,
-			`# NO_PASSTHROUGH: ${NO_PASSTHROUGH}`,
-			`# NO_SYNTAX: ${NO_SYNTAX}`,
-			"#",
+			"# ",
 			"",
-		].join("\n")
+		]
+			.filter(Boolean)
+			.join("\n")
 		writeFileSync(PROFILE_FILE, header)
 		initialized = true
 	} catch {
@@ -30,15 +32,22 @@ function ensureDir() {
 	}
 }
 
+function formatTimestamp(): string {
+	const elapsed = performance.now() - startTime
+	const seconds = Math.floor(elapsed / 1000)
+	const ms = Math.floor(elapsed % 1000)
+	return `${seconds.toString().padStart(4, " ")}.${ms.toString().padStart(3, "0")}`
+}
+
 export function profileLog(label: string, data?: Record<string, unknown>) {
 	if (!PROFILE_ENABLED) return
 
 	ensureDir()
 
-	const timestamp = performance.now().toFixed(2)
+	const timestamp = formatTimestamp()
 	const msg = data
-		? `[${timestamp}ms] ${label}: ${JSON.stringify(data)}`
-		: `[${timestamp}ms] ${label}`
+		? `[${timestamp}] ${label}: ${JSON.stringify(data)}`
+		: `[${timestamp}] ${label}`
 
 	try {
 		appendFileSync(PROFILE_FILE, `${msg}\n`)
@@ -46,6 +55,7 @@ export function profileLog(label: string, data?: Record<string, unknown>) {
 		// silent fail
 	}
 
+	// Also log to stderr for real-time visibility
 	console.error(`[PROFILE] ${msg}`)
 }
 
@@ -56,6 +66,14 @@ export function profile(label: string) {
 		const ms = (performance.now() - start).toFixed(2)
 		profileLog(label, { ms: Number(ms), ...(extra ? { extra } : {}) })
 	}
+}
+
+/**
+ * Simple profile log for inline messages (no timing wrapper)
+ */
+export function profileMsg(message: string) {
+	if (!PROFILE_ENABLED) return
+	profileLog(message)
 }
 
 let renderStart: number | null = null

@@ -4,7 +4,6 @@ import {
 	getFiletypeFromFileName,
 	getSharedHighlighter,
 } from "@pierre/diffs"
-import { NO_SYNTAX } from "../utils/profiler"
 
 export interface SyntaxToken {
 	content: string
@@ -63,10 +62,6 @@ export async function tokenizeLine(
 	content: string,
 	language: SupportedLanguages,
 ): Promise<SyntaxToken[]> {
-	if (NO_SYNTAX) {
-		return [{ content }]
-	}
-
 	try {
 		const hl = await getHighlighter()
 
@@ -104,7 +99,7 @@ export function tokenizeLineSync(
 	content: string,
 	language: SupportedLanguages,
 ): SyntaxToken[] {
-	if (NO_SYNTAX || !highlighter) {
+	if (!highlighter) {
 		return [{ content }]
 	}
 

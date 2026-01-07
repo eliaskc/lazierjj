@@ -11,18 +11,17 @@ import {
 } from "solid-js"
 import { type Bookmark, fetchBookmarks } from "../commander/bookmarks"
 import { streamDiffPTY } from "../commander/diff"
-import { NO_PASSTHROUGH } from "../utils/profiler"
+
 import { fetchFiles } from "../commander/files"
 import { fetchLog } from "../commander/log"
 import {
 	type DiffStats,
 	fetchOpLogId,
 	jjAbandon,
+	jjCommitDetails,
 	jjDescribe,
-	jjDiffStats,
 	jjEdit,
 	jjNew,
-	jjShowDescriptionStyled,
 	jjSquash,
 } from "../commander/operations"
 import { type Commit, type FileChange, getRevisionId } from "../commander/types"
@@ -37,16 +36,7 @@ import { useFocus } from "./focus"
 import { useLayout } from "./layout"
 import { useLoading } from "./loading"
 
-const PROFILE = process.env.KAJJI_PROFILE === "1"
-
-function profile(label: string) {
-	if (!PROFILE) return () => {}
-	const start = performance.now()
-	return (extra?: string) => {
-		const ms = (performance.now() - start).toFixed(2)
-		console.error(`[PROFILE] ${label}: ${ms}ms${extra ? ` (${extra})` : ""}`)
-	}
-}
+import { profile, profileMsg } from "../utils/profiler"
 
 export type ViewMode = "log" | "files"
 export type BookmarkViewMode = "list" | "commits" | "files"
@@ -376,6 +366,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 
 	// Fetch full commit details when selection changes
 	// Works for both main log and bookmark commits views
+	// Uses combined jjCommitDetails to reduce lock contention (single jj command)
 	let currentDetailsChangeId: string | null = null
 	createEffect(() => {
 		const commit = activeCommit()
@@ -389,19 +380,18 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		if (commit.changeId === currentDetailsChangeId) return
 		currentDetailsChangeId = commit.changeId
 
-		// Fetch both in parallel (keep stale data until new arrives)
 		const changeId = commit.changeId
-		Promise.all([
-			jjShowDescriptionStyled(changeId),
-			jjDiffStats(changeId),
-		]).then(([desc, stats]) => {
+		profileMsg(`--- select commit: ${changeId.slice(0, 8)}`)
+		const endDetails = profile(`commitDetails(${changeId.slice(0, 8)})`)
+		jjCommitDetails(changeId).then((details) => {
+			endDetails()
 			// Only update if still the current commit
 			if (currentDetailsChangeId === changeId) {
 				setCommitDetails({
 					changeId,
-					subject: desc.subject,
-					body: desc.body,
-					stats,
+					subject: details.subject,
+					body: details.body,
+					stats: details.stats,
 				})
 			}
 		})
@@ -702,9 +692,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		if (newKey === currentDiffKey) return
 
 		currentDiffKey = newKey
-		if (!NO_PASSTHROUGH) {
-			loadDiff(revId, columns, paths)
-		}
+		loadDiff(revId, columns, paths)
 	})
 
 	const loadLog = async () => {
