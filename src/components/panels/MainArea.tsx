@@ -8,12 +8,13 @@ import {
 	onCleanup,
 	onMount,
 } from "solid-js"
+import { streamDiffPTY } from "../../commander/diff"
 import type { DiffStats } from "../../commander/operations"
-import type { Commit } from "../../commander/types"
+import { type Commit, getRevisionId } from "../../commander/types"
 import { useCommand } from "../../context/command"
 import { useFocus } from "../../context/focus"
 import { useLayout } from "../../context/layout"
-import { type CommitDetails, type ViewMode, useSync } from "../../context/sync"
+import { type CommitDetails, useSync } from "../../context/sync"
 import { useTheme } from "../../context/theme"
 import { type FlattenedFile, fetchParsedDiff, flattenDiff } from "../../diff"
 import { getFilePaths } from "../../utils/file-tree"
@@ -219,16 +220,13 @@ export function MainArea() {
 	const {
 		activeCommit,
 		commitDetails,
-		diff,
-		diffLoading,
-		diffError,
-		diffLineCount,
 		viewMode,
 		selectedFile,
 		bookmarkViewMode,
 		selectedBookmarkFile,
 	} = useSync()
-	const { mainAreaWidth } = useLayout()
+	const layout = useLayout()
+	const { mainAreaWidth } = layout
 	const { colors } = useTheme()
 	const focus = useFocus()
 	const command = useCommand()
@@ -242,9 +240,15 @@ export function MainArea() {
 		null,
 	)
 
-	// Custom diff renderer state
+	// Render mode state
 	const [renderMode, setRenderMode] = createSignal<DiffRenderMode>("custom")
 	const [viewStyle, setViewStyle] = createSignal<DiffViewStyle>("unified")
+
+	// PTY passthrough state (only used when renderMode === "passthrough")
+	const [ptyDiff, setPtyDiff] = createSignal<string | null>(null)
+	const [ptyDiffLoading, setPtyDiffLoading] = createSignal(false)
+	const [ptyDiffError, setPtyDiffError] = createSignal<string | null>(null)
+	const [ptyDiffLineCount, setPtyDiffLineCount] = createSignal(0)
 
 	createEffect(() => {
 		setViewStyle(mainAreaWidth() >= SPLIT_VIEW_THRESHOLD ? "split" : "unified")
@@ -379,6 +383,86 @@ export function MainArea() {
 			})
 	})
 
+	let currentPtyKey: string | null = null
+	let currentPtyStream: { cancel: () => void } | null = null
+
+	createEffect(() => {
+		const commit = activeCommit()
+		const mode = renderMode()
+		const vMode = viewMode()
+		const bmMode = bookmarkViewMode()
+		const focusedPanel = focus.panel()
+		const columns = mainAreaWidth()
+
+		if (!commit || mode !== "passthrough") return
+
+		let paths: string[] | undefined
+
+		if (focusedPanel === "refs" && bmMode === "files") {
+			const file = selectedBookmarkFile()
+			if (file) {
+				paths = file.node.isDirectory
+					? getFilePaths(file.node)
+					: [file.node.path]
+			}
+		} else if (vMode === "files") {
+			const file = selectedFile()
+			if (file) {
+				paths = file.node.isDirectory
+					? getFilePaths(file.node)
+					: [file.node.path]
+			}
+		}
+
+		const revId = getRevisionId(commit)
+		const ptyKey = `${commit.commitId}:${revId}:${paths?.join(",") ?? "all"}`
+		if (ptyKey === currentPtyKey) return
+
+		currentPtyKey = ptyKey
+
+		if (currentPtyStream) {
+			currentPtyStream.cancel()
+			currentPtyStream = null
+		}
+
+		setPtyDiffLoading(true)
+		setPtyDiffError(null)
+
+		currentPtyStream = streamDiffPTY(
+			revId,
+			{
+				columns,
+				paths,
+				cols: columns,
+				rows: layout.terminalHeight(),
+			},
+			{
+				onUpdate: (content: string, lineCount: number, complete: boolean) => {
+					if (currentPtyKey !== ptyKey) return
+
+					setPtyDiff(content)
+					setPtyDiffLineCount(lineCount)
+
+					if (complete) {
+						setPtyDiffLoading(false)
+					}
+				},
+				onError: (error: Error) => {
+					if (currentPtyKey !== ptyKey) return
+					setPtyDiffError(error.message)
+					setPtyDiff(null)
+					setPtyDiffLoading(false)
+				},
+			},
+		)
+	})
+
+	onCleanup(() => {
+		if (currentPtyStream) {
+			currentPtyStream.cancel()
+		}
+	})
+
 	createEffect(() => {
 		const commit = activeCommit()
 		if (commit && commit.changeId !== currentCommitId()) {
@@ -399,8 +483,8 @@ export function MainArea() {
 		const currentScroll = scrollRef.scrollTop ?? 0
 
 		const distanceFromBottom = scrollHeight - (currentScroll + viewportHeight)
-		if (distanceFromBottom < LOAD_THRESHOLD && limit() < diffLineCount()) {
-			setLimit((l) => Math.min(l + LIMIT_INCREMENT, diffLineCount()))
+		if (distanceFromBottom < LOAD_THRESHOLD && limit() < ptyDiffLineCount()) {
+			setLimit((l) => Math.min(l + LIMIT_INCREMENT, ptyDiffLineCount()))
 		}
 	}
 
@@ -549,15 +633,24 @@ export function MainArea() {
 		},
 	])
 
+	const isLoading = () =>
+		renderMode() === "custom" ? parsedDiffLoading() : ptyDiffLoading()
+
+	const hasError = () =>
+		renderMode() === "custom" ? parsedDiffError() : ptyDiffError()
+
+	const hasContent = () =>
+		renderMode() === "custom" ? parsedFiles().length > 0 : !!ptyDiff()
+
 	return (
 		<Panel title="Detail" hotkey="3" panelId="detail" focused={isFocused()}>
-			<Show when={diffLoading() && !diff()}>
+			<Show when={isLoading() && !hasContent()}>
 				<text>Loading diff...</text>
 			</Show>
-			<Show when={diffError()}>
-				<text>Error: {diffError()}</text>
+			<Show when={hasError()}>
+				<text>Error: {hasError()}</text>
 			</Show>
-			<Show when={diff() || (!diffLoading() && !diffError())}>
+			<Show when={hasContent() || (!isLoading() && !hasError())}>
 				<scrollbox
 					ref={scrollRef}
 					focused={isFocused()}
@@ -579,14 +672,14 @@ export function MainArea() {
 						)}
 					</Show>
 					<Show when={renderMode() === "passthrough"}>
-						<Show when={diff()}>
+						<Show when={ptyDiff()}>
 							<ghostty-terminal
-								ansi={diff() ?? ""}
+								ansi={ptyDiff() ?? ""}
 								cols={mainAreaWidth()}
 								limit={limit()}
 							/>
 						</Show>
-						<Show when={!diff()}>
+						<Show when={!ptyDiff() && !ptyDiffLoading()}>
 							<text>No changes in this commit.</text>
 						</Show>
 					</Show>
@@ -623,7 +716,7 @@ export function MainArea() {
 									/>
 								</Show>
 							</Show>
-							<Show when={parsedFiles().length === 0 && !diffLoading()}>
+							<Show when={parsedFiles().length === 0 && !parsedDiffLoading()}>
 								<text>No changes in this commit.</text>
 							</Show>
 						</Show>

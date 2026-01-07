@@ -10,7 +10,6 @@ import {
 	useContext,
 } from "solid-js"
 import { type Bookmark, fetchBookmarks } from "../commander/bookmarks"
-import { streamDiffPTY } from "../commander/diff"
 
 import { fetchFiles } from "../commander/files"
 import { fetchLog } from "../commander/log"
@@ -24,13 +23,12 @@ import {
 	jjNew,
 	jjSquash,
 } from "../commander/operations"
-import { type Commit, type FileChange, getRevisionId } from "../commander/types"
+import type { Commit, FileChange } from "../commander/types"
 import {
 	type FileTreeNode,
 	type FlatFileNode,
 	buildFileTree,
 	flattenTree,
-	getFilePaths,
 } from "../utils/file-tree"
 import { useFocus } from "./focus"
 import { useLayout } from "./layout"
@@ -68,10 +66,6 @@ interface SyncContextValue {
 	loadLog: () => Promise<void>
 	loading: () => boolean
 	error: () => string | null
-	diff: () => string | null
-	diffLoading: () => boolean
-	diffError: () => string | null
-	diffLineCount: () => number
 
 	viewMode: () => ViewMode
 	fileTree: () => FileTreeNode | null
@@ -145,10 +139,6 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	const [selectedIndex, setSelectedIndex] = createSignal(0)
 	const [loading, setLoading] = createSignal(false)
 	const [error, setError] = createSignal<string | null>(null)
-	const [diff, setDiff] = createSignal<string | null>(null)
-	const [diffLoading, setDiffLoading] = createSignal(false)
-	const [diffError, setDiffError] = createSignal<string | null>(null)
-	const [diffLineCount, setDiffLineCount] = createSignal(0)
 
 	const [viewMode, setViewMode] = createSignal<ViewMode>("log")
 	const [files, setFiles] = createSignal<FileChange[]>([])
@@ -628,104 +618,6 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		return null
 	}
 
-	let currentDiffKey: string | null = null
-	let currentDiffStream: { cancel: () => void } | null = null
-
-	const loadDiff = (changeId: string, columns: number, paths?: string[]) => {
-		const endTotal = profile(`loadDiff(${changeId.slice(0, 8)})`)
-		const requestKey = currentDiffKey
-
-		if (currentDiffStream) {
-			currentDiffStream.cancel()
-			currentDiffStream = null
-		}
-
-		setDiffLoading(true)
-		setDiffError(null)
-
-		let firstUpdate = true
-
-		currentDiffStream = streamDiffPTY(
-			changeId,
-			{
-				columns,
-				paths,
-				cols: columns,
-				rows: layout.terminalHeight(),
-			},
-			{
-				onUpdate: (content: string, lineCount: number, complete: boolean) => {
-					if (currentDiffKey !== requestKey) return
-
-					if (firstUpdate) {
-						profile("  first render trigger")()
-						firstUpdate = false
-					}
-
-					setDiff(content)
-					setDiffLineCount(lineCount)
-
-					if (complete) {
-						setDiffLoading(false)
-						endTotal()
-					}
-				},
-				onError: (error: Error) => {
-					if (currentDiffKey !== requestKey) return
-					setDiffError(error.message)
-					setDiff(null)
-					setDiffLoading(false)
-					endTotal()
-				},
-			},
-		)
-	}
-
-	const computeDiffKey = (
-		commitId: string,
-		revId: string,
-		paths?: string[],
-	) => {
-		const base = `${commitId}:${revId}`
-		return paths?.length ? `${base}:${paths.join(",")}` : base
-	}
-
-	createEffect(() => {
-		const columns = layout.mainAreaWidth()
-		const mode = viewMode()
-		const bmMode = bookmarkViewMode()
-		const focusedPanel = focus.panel()
-		refreshCounter()
-
-		let commit: Commit | undefined
-		let paths: string[] | undefined
-
-		if (focusedPanel === "refs" && bmMode === "commits") {
-			commit = selectedBookmarkCommit()
-		} else if (focusedPanel === "refs" && bmMode === "files") {
-			commit = selectedBookmarkCommit()
-			const file = selectedBookmarkFile()
-			if (!file) return
-			paths = file.node.isDirectory ? getFilePaths(file.node) : [file.node.path]
-		} else if (mode === "files") {
-			commit = selectedCommit()
-			const file = selectedFile()
-			if (!file) return
-			paths = file.node.isDirectory ? getFilePaths(file.node) : [file.node.path]
-		} else {
-			commit = selectedCommit()
-		}
-
-		if (!commit) return
-
-		const revId = getRevisionId(commit)
-		const newKey = computeDiffKey(commit.commitId, revId, paths)
-		if (newKey === currentDiffKey) return
-
-		currentDiffKey = newKey
-		loadDiff(revId, columns, paths)
-	})
-
 	const loadLog = async () => {
 		const isInitialLoad = commits().length === 0
 		if (isInitialLoad) setLoading(true)
@@ -814,10 +706,6 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		loadLog,
 		loading,
 		error,
-		diff,
-		diffLoading,
-		diffError,
-		diffLineCount,
 
 		viewMode,
 		fileTree,
