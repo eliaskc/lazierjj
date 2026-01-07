@@ -19,14 +19,18 @@ import { type FlattenedFile, fetchParsedDiff, flattenDiff } from "../../diff"
 import { getFilePaths } from "../../utils/file-tree"
 import { AnsiText } from "../AnsiText"
 import { Panel } from "../Panel"
-import { FileSummary, VirtualizedSplitView, VirtualizedUnifiedView } from "../diff"
+import {
+	FileSummary,
+	VirtualizedSplitView,
+	VirtualizedUnifiedView,
+} from "../diff"
 
 type DiffRenderMode = "passthrough" | "custom"
 type DiffViewStyle = "unified" | "split"
 
 import { profileLog } from "../../utils/profiler"
 
-const INITIAL_LIMIT = 1000
+const INITIAL_LIMIT = 100
 const LIMIT_INCREMENT = 200
 const LOAD_THRESHOLD = 200
 const SPLIT_VIEW_THRESHOLD = 90
@@ -405,7 +409,10 @@ export function MainArea() {
 			if (scrollRef) {
 				const currentScroll = scrollRef.scrollTop ?? 0
 				const currentViewport = scrollRef.viewport?.height ?? 30
-				if (currentScroll !== scrollTop() || currentViewport !== viewportHeight()) {
+				if (
+					currentScroll !== scrollTop() ||
+					currentViewport !== viewportHeight()
+				) {
 					setViewportHeight(currentViewport)
 					setScrollTop(currentScroll)
 					loadMoreIfNeeded()
