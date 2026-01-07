@@ -1,131 +1,167 @@
 # Syntax Highlighting Performance Issue
 
-**STATUS: IN PROGRESS** - Navigation instant, reactivity mostly working, need worker for JIT/startup
+**STATUS: BLOCKED** - Worker implementation works, but Solid reactivity issue prevents UI updates
 
 ## Problem Summary
 
-Some commits caused 1-2 second hangs when navigating, despite having relatively small diffs. Root cause: Shiki syntax highlighting blocking the main thread.
+1. **Original issue**: Shiki JIT warmup caused 1-2s hangs on navigation
+2. **Fixed**: Worker-based architecture eliminates startup delay
+3. **Remaining**: Syntax doesn't appear until user scrolls (reactivity issue)
 
-## What We Fixed
+## What Works
 
-### 1. JIT Warmup Issue
+### Worker-Based Architecture
+- Startup is now instant (no JIT blocking main thread)
+- Tokenization happens in background worker
+- Worker warms up Shiki independently
 
-Shiki's first 2-3 calls take 500ms+ due to V8 JIT compilation:
-
+### Architecture
 ```
-Call 1: 535ms
-Call 2: 479ms  
-Call 3: 0.53ms  (JIT kicks in)
-Call 4+: 0.2-0.5ms
+Main Thread                          Worker Thread
+───────────                          ─────────────
+scheduler.prefetch() ──────────────► Worker receives tokenize request
+     │                                    │
+     │                                    ▼
+     │                               Shiki tokenizes (JIT warmup here)
+     │                                    │
+     ◄─────────────────────────────── Worker posts tokens back
+     │
+     ▼
+setTokenStore() + setVersion()
+     │
+     ▼
+createEffect should re-run... but doesn't reliably
 ```
 
-We added warmup at startup (`src/diff/syntax.ts`):
+## What Doesn't Work
 
-```typescript
-const warmupPatterns = [
-  'const x = { a: 1, b: "test" }',
-  'import { foo, bar } from "module"',
-  "export function Component(props: Props) {",
-  // ... more patterns
-]
+### Solid Reactivity Issue
+Components don't re-render when tokens arrive. Tried multiple approaches:
 
-for (const lang of ["typescript", "tsx"]) {
-  for (const pattern of warmupPatterns) {
-    highlighter.codeToTokens(pattern, { lang, theme: "ayu-dark" })
-  }
+#### Attempt 1: createMemo with store access
+```tsx
+const tokens = createMemo(() => {
+  const cached = scheduler.store[key]
+  return cached ?? defaultTokens
+})
+```
+**Result**: Memo doesn't re-run when store updates
+
+#### Attempt 2: Version signal
+```tsx
+const [version, setVersion] = createSignal(0)
+// In scheduler: setVersion(v => v + 1) after store update
+
+const tokens = createMemo(() => {
+  scheduler.version()  // Track version changes
+  const cached = scheduler.store[key]
+  return cached ?? defaultTokens
+})
+```
+**Result**: Still doesn't re-run reliably
+
+#### Attempt 3: createEffect with local signal
+```tsx
+const [tokens, setTokens] = createSignal(defaultTokens)
+
+createEffect(() => {
+  scheduler.version()
+  const cached = scheduler.store[key]
+  if (cached) setTokens(cached)
+})
+```
+**Result**: Effect runs once on mount, doesn't re-run when version changes
+
+#### Attempt 4: Queue requests until worker ready
+```tsx
+if (workerReady) {
+  doPrefetch()
+} else {
+  queuedPrefetches.push(doPrefetch)
 }
 ```
+**Result**: Requests are queued and processed, but UI still doesn't update
 
-**Result**: Post-warmup tokenization is 0.2-0.5ms instead of 500ms+.
+### Why Scroll "Fixes" It
+When user scrolls:
+1. `visibleRows()` changes
+2. Some row components are destroyed/recreated
+3. New components mount and render with already-cached tokens
+4. Pre-existing components still don't update
 
-### 2. Async Scheduler
+## Theories
 
-Created `src/diff/syntax-scheduler.ts`:
-- Time-budgeted chunks (5ms)
-- Generation counter for cancellation
-- Progressive updates via SolidJS store
+### Theory 1: Solid tracking issue with dynamic store keys
+When accessing `store[dynamicKey]` where key doesn't exist initially, Solid might not properly track for future additions.
 
-**Result**: Navigation is instant, syntax appears progressively.
+### Theory 2: Virtualization interference
+The `<For>` component with virtualization might be preventing reactive updates to existing items.
 
-## Remaining Issues
-
-### 1. 2+ Second Startup Time
-
-The warmup blocks startup:
-```
-[   0.057] spawn jj commands
-[   2.248] commands complete (2.2s waiting for highlighter)
-```
-
-**Potential fixes**:
-- Move warmup to background after first render
-- Defer warmup until first diff view
-- Use lazy initialization
-
-### 2. Syntax Doesn't Load Until Scroll
-
-Tokens don't appear until user scrolls (even slightly). The prefetch effect may not be triggering on initial render.
-
-**Potential fixes**:
-- Ensure prefetch fires on component mount
-- Check if `visibleRows()` is populated before prefetch runs
-
-## Research Findings
-
-See companion documents:
-- [research-opentui.md](./research-opentui.md) - OpenTUI uses Tree-Sitter in workers (no Shiki)
-- [research-pierre-diffs.md](./research-pierre-diffs.md) - Pierre uses Shiki with worker pools
-
-### Key Insight: OpenTUI Doesn't Use Shiki
-
-OpenTUI uses **Tree-Sitter in a Web Worker** instead of Shiki:
-- Incremental parsing (can parse diffs)
-- WASM runs in worker thread
-- No JIT warmup issues
-- True non-blocking
-
-This is fundamentally different from our Shiki approach.
-
-## Options Going Forward
-
-### Option A: Fix Current Shiki Approach
-1. Defer warmup to after first render (fix startup)
-2. Fix prefetch to trigger on mount (fix initial load)
-3. Consider worker thread for tokenization
-
-### Option B: Switch to Tree-Sitter
-Follow OpenTUI's approach:
-1. Use web-tree-sitter
-2. Run in Web Worker
-3. Incremental updates
-
-### Option C: Hybrid
-1. Show diff immediately without syntax
-2. Background-load Tree-Sitter
-3. Apply highlighting when ready
-
-## Performance Results
-
-Before:
-- wzoossku: 1310ms render
-- mowlkrmy: 308ms render
-- Startup: ~100ms
-
-After warmup fix:
-- All commits: 5-15ms render
-- Syntax appears progressively
-- Startup: ~2.2s (REGRESSION)
+### Theory 3: Batch timing
+Updates happen in `batch()` which might be deferring signals in a way that breaks the reactive chain.
 
 ## Files Changed
 
-- `src/diff/syntax.ts` - Shiki highlighter with warmup
-- `src/diff/syntax-scheduler.ts` - New async scheduler
-- `src/components/diff/VirtualizedUnifiedView.tsx` - Uses scheduler
-- `src/components/diff/VirtualizedSplitView.tsx` - Uses scheduler
+- `src/diff/syntax-worker.ts` - NEW: Worker with Shiki init and tokenization
+- `src/diff/syntax-scheduler.ts` - Uses worker, queues until ready
+- `src/diff/syntax.ts` - Stub functions (worker handles everything)
+- `src/components/diff/VirtualizedUnifiedView.tsx` - createEffect pattern
+- `src/components/diff/VirtualizedSplitView.tsx` - createEffect pattern
 
-## Profile Logs
+## Ideas to Try
 
-See `.kajji-profiles/` for timing data:
-- `2026-01-07T21-31-42_profile.log` - Latest with warmup (2.2s startup)
-- `2026-01-07T20-58-41_sync-tokenization.log` - Original 1310ms hangs
-- `2026-01-07T21-08-01_no-syntax-test.log` - Without syntax (instant)
+### Option A: Force re-render on worker message
+Instead of relying on reactive store, use a more imperative approach:
+```tsx
+worker.onmessage = () => {
+  // Directly trigger component re-render somehow
+  // Maybe invalidate the entire diff view?
+}
+```
+
+### Option B: Use createResource
+Solid's `createResource` is designed for async data. Might handle this better:
+```tsx
+const [tokens] = createResource(key, async (k) => {
+  await waitForTokens(k)
+  return scheduler.store[k]
+})
+```
+
+### Option C: Abandon fine-grained reactivity
+Tokenize entire visible viewport at once, re-render whole diff when done:
+```tsx
+const [allTokens, setAllTokens] = createSignal<Map<string, Token[]>>()
+
+worker.onmessage = (batch) => {
+  setAllTokens(new Map([...allTokens(), ...batch]))
+}
+```
+
+### Option D: Switch to Tree-Sitter
+OpenTUI uses Tree-Sitter in a worker with explicit re-render triggers. Different architecture that might avoid these issues entirely.
+
+### Option E: Investigate OpenTUI's pattern more deeply
+They use snapshot IDs and explicit `requestRebuild()` calls. Not pure reactivity.
+
+## Performance Results
+
+| Metric | Before | After Worker |
+|--------|--------|--------------|
+| Startup | ~2.2s | ~100ms |
+| Navigation | 5-15ms | 5-15ms |
+| Syntax appears | On scroll only | On scroll only |
+
+## Debug Observations
+
+When logging was enabled:
+- `[Scheduler] batch done` logs appear correctly - tokens ARE being processed
+- `[DiffLineRow] effect` logs only appear on initial mount, not on version changes
+- Version signal IS incrementing (0 → 1 → 2 → ...)
+- Store IS being updated with tokens
+- But effects don't re-run
+
+## Related Research
+
+- [research-opentui.md](./research-opentui.md) - Tree-Sitter in workers, explicit rebuilds
+- [research-pierre-diffs.md](./research-pierre-diffs.md) - Shiki with worker pools

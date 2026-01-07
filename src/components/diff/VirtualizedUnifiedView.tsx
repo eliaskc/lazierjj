@@ -309,25 +309,19 @@ function DiffLineRow(props: DiffLineRowProps) {
 		{ content: props.row.content, color: colors().text },
 	])
 
-	const rowId = props.row.content.slice(0, 20).replace(/\s+/g, "_")
-
 	createEffect(() => {
 		const content = props.row.content
 		const defaultColor = colors().text
 		const lang = language()
-
-		console.log(`[DiffLineRow:${rowId}] effect START, scheduler=${!!scheduler}`)
 
 		if (!scheduler) {
 			setTokens([{ content, color: defaultColor }])
 			return
 		}
 
-		const v = scheduler.version()
+		scheduler.version()
 		const key = scheduler.makeKey(content, lang)
 		const cached = scheduler.store[key]
-
-		console.log(`[DiffLineRow:${rowId}] v=${v} cached=${!!cached}`)
 
 		if (cached) {
 			setTokens(
