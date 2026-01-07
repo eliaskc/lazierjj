@@ -243,7 +243,7 @@ export function VirtualizedSplitView(props: VirtualizedSplitViewProps) {
 				<text fg={colors().textMuted}>No changes</text>
 			</Show>
 			<Show when={rows().length > 0}>
-				<box height={visibleRange().start} />
+				<box height={visibleRange().start} flexShrink={0} />
 				<For each={visibleRows()}>
 					{(row) => (
 						<VirtualizedSplitRow
@@ -254,7 +254,7 @@ export function VirtualizedSplitView(props: VirtualizedSplitViewProps) {
 						/>
 					)}
 				</For>
-				<box height={rows().length - visibleRange().end} />
+				<box height={rows().length - visibleRange().end} flexShrink={0} />
 			</Show>
 		</box>
 	)
@@ -278,8 +278,26 @@ function VirtualizedSplitRow(props: VirtualizedSplitRowProps) {
 		return (
 			<box backgroundColor={FILE_HEADER_BG} paddingLeft={1} paddingRight={1}>
 				<text>
-					<span style={{ fg: getFileStatusColor((stats?.type ?? "change") as "change" | "rename-pure" | "rename-changed" | "new" | "deleted") }}>
-						{getFileStatusIndicator((stats?.type ?? "change") as "change" | "rename-pure" | "rename-changed" | "new" | "deleted")}
+					<span
+						style={{
+							fg: getFileStatusColor(
+								(stats?.type ?? "change") as
+									| "change"
+									| "rename-pure"
+									| "rename-changed"
+									| "new"
+									| "deleted",
+							),
+						}}
+					>
+						{getFileStatusIndicator(
+							(stats?.type ?? "change") as
+								| "change"
+								| "rename-pure"
+								| "rename-changed"
+								| "new"
+								| "deleted",
+						)}
 					</span>
 					<span style={{ fg: colors().text }}> {props.row.fileName}</span>
 					<Show when={stats?.prevName}>
@@ -320,12 +338,7 @@ function VirtualizedSplitRow(props: VirtualizedSplitRowProps) {
 		)
 	}
 
-	return (
-		<SplitContentRow
-			row={props.row}
-			lineNumWidth={props.lineNumWidth}
-		/>
-	)
+	return <SplitContentRow row={props.row} lineNumWidth={props.lineNumWidth} />
 }
 
 interface SplitContentRowProps {

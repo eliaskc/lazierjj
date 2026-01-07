@@ -1,4 +1,5 @@
-import { For, Show, createMemo } from "solid-js"
+import { For, Show, createMemo, createEffect } from "solid-js"
+import { profileLog } from "../../utils/profiler"
 import { useTheme } from "../../context/theme"
 import {
 	type DiffRow,
@@ -86,6 +87,20 @@ export function VirtualizedUnifiedView(props: VirtualizedUnifiedViewProps) {
 		return rows().slice(start, end)
 	})
 
+	createEffect(() => {
+		const totalRows = rows().length
+		const visible = visibleRows().length
+		const range = visibleRange()
+		profileLog("unified-virtualization", {
+			totalRows,
+			visibleRows: visible,
+			start: range.start,
+			end: range.end,
+			scrollTop: props.scrollTop,
+			viewportHeight: props.viewportHeight,
+		})
+	})
+
 	const fileStats = createMemo(() => {
 		const stats = new Map<
 			FileId,
@@ -108,7 +123,7 @@ export function VirtualizedUnifiedView(props: VirtualizedUnifiedViewProps) {
 				<text fg={colors().textMuted}>No changes</text>
 			</Show>
 			<Show when={rows().length > 0}>
-				<box height={visibleRange().start} />
+				<box height={visibleRange().start} flexShrink={0} />
 				<For each={visibleRows()}>
 					{(row) => (
 						<VirtualizedRow
@@ -119,7 +134,7 @@ export function VirtualizedUnifiedView(props: VirtualizedUnifiedViewProps) {
 						/>
 					)}
 				</For>
-				<box height={rows().length - visibleRange().end} />
+				<box height={rows().length - visibleRange().end} flexShrink={0} />
 			</Show>
 		</box>
 	)
@@ -143,8 +158,26 @@ function VirtualizedRow(props: VirtualizedRowProps) {
 		return (
 			<box backgroundColor={FILE_HEADER_BG} paddingLeft={1} paddingRight={1}>
 				<text>
-					<span style={{ fg: getFileStatusColor((stats?.type ?? "change") as "change" | "rename-pure" | "rename-changed" | "new" | "deleted") }}>
-						{getFileStatusIndicator((stats?.type ?? "change") as "change" | "rename-pure" | "rename-changed" | "new" | "deleted")}
+					<span
+						style={{
+							fg: getFileStatusColor(
+								(stats?.type ?? "change") as
+									| "change"
+									| "rename-pure"
+									| "rename-changed"
+									| "new"
+									| "deleted",
+							),
+						}}
+					>
+						{getFileStatusIndicator(
+							(stats?.type ?? "change") as
+								| "change"
+								| "rename-pure"
+								| "rename-changed"
+								| "new"
+								| "deleted",
+						)}
 					</span>
 					<span style={{ fg: colors().text }}> {props.row.content}</span>
 					<Show when={stats?.prevName}>
@@ -189,12 +222,7 @@ function VirtualizedRow(props: VirtualizedRowProps) {
 		)
 	}
 
-	return (
-		<DiffLineRow
-			row={props.row}
-			lineNumWidth={props.lineNumWidth}
-		/>
-	)
+	return <DiffLineRow row={props.row} lineNumWidth={props.lineNumWidth} />
 }
 
 interface DiffLineRowProps {
@@ -268,9 +296,7 @@ function DiffLineRow(props: DiffLineRowProps) {
 				<span style={{ fg: SEPARATOR_COLOR }}>│</span>
 				<span> </span>
 				<For each={tokens()}>
-					{(token) => (
-						<span style={{ fg: token.color }}>{token.content}</span>
-					)}
+					{(token) => <span style={{ fg: token.color }}>{token.content}</span>}
 				</For>
 			</text>
 		</box>
