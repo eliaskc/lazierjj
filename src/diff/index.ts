@@ -73,6 +73,8 @@ export {
 export {
 	clearSyntaxCache,
 	getSyntaxCacheSize,
+	getSyntaxStats,
+	resetSyntaxStats,
 	tokenizeWithCache,
 } from "./syntax-cache"
 

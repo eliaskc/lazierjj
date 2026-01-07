@@ -14,7 +14,9 @@ import {
 	getLanguage,
 	getLineNumWidth,
 	getMaxLineNumber,
+	getSyntaxStats,
 	getVisibleRange,
+	resetSyntaxStats,
 	tokenizeWithCache,
 	type SyntaxToken,
 } from "../../diff"
@@ -88,9 +90,15 @@ export function VirtualizedUnifiedView(props: VirtualizedUnifiedViewProps) {
 	})
 
 	createEffect(() => {
+		props.files
+		resetSyntaxStats()
+	})
+
+	createEffect(() => {
 		const totalRows = rows().length
 		const visible = visibleRows().length
 		const range = visibleRange()
+		const syntaxStats = getSyntaxStats()
 		profileLog("unified-virtualization", {
 			totalRows,
 			visibleRows: visible,
@@ -98,6 +106,11 @@ export function VirtualizedUnifiedView(props: VirtualizedUnifiedViewProps) {
 			end: range.end,
 			scrollTop: props.scrollTop,
 			viewportHeight: props.viewportHeight,
+			syntaxHits: syntaxStats.hits,
+			syntaxMisses: syntaxStats.misses,
+			syntaxMs: Math.round(syntaxStats.totalMs * 100) / 100,
+			slowestMs: Math.round(syntaxStats.slowestMs * 100) / 100,
+			slowestLang: syntaxStats.slowestLang || undefined,
 		})
 	})
 

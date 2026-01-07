@@ -413,6 +413,7 @@ jj commands that modify history require confirmation flags. We handle `--ignore-
 
 ### Bugs
 
+- Spacer boxes showing at top when scrolling diff view (virtualization issue)
 - Commit header (subject, body, file stats) doesn't update on auto-refresh — only updates when navigating to a different commit
 - Help modal has small visual gap between border and outer edge (OpenTUI quirk)
 - Search input in help modal doesn't render visually (filtering works though)

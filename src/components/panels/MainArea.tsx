@@ -359,21 +359,38 @@ export function MainArea() {
 		const fetchStart = performance.now()
 		fetchParsedDiff(commit.changeId, { paths })
 			.then((files) => {
-				// Only update if this is still the current fetch
-				if (currentFetchKey === fetchKey) {
-					const flattened = flattenDiff(files)
-					const lineCount = flattened.reduce(
-						(sum, f) => sum + f.hunks.reduce((s, h) => s + h.lines.length, 0),
-						0,
-					)
-					profileLog("diff-fetch-complete", {
-						fetchMs: Math.round(performance.now() - fetchStart),
-						files: flattened.length,
-						lines: lineCount,
+				if (currentFetchKey !== fetchKey) return
+
+				const fetchMs = performance.now() - fetchStart
+
+				const flattenStart = performance.now()
+				const flattened = flattenDiff(files)
+				const flattenMs = performance.now() - flattenStart
+
+				const lineCount = flattened.reduce(
+					(sum, f) => sum + f.hunks.reduce((s, h) => s + h.lines.length, 0),
+					0,
+				)
+
+				profileLog("diff-fetch-complete", {
+					fetchMs: Math.round(fetchMs),
+					flattenMs: Math.round(flattenMs * 100) / 100,
+					files: flattened.length,
+					lines: lineCount,
+				})
+
+				const renderStart = performance.now()
+				setParsedFiles(flattened)
+				setParsedDiffLoading(false)
+				const signalMs = performance.now() - renderStart
+
+				queueMicrotask(() => {
+					const totalRenderMs = performance.now() - renderStart
+					profileLog("diff-render-complete", {
+						signalMs: Math.round(signalMs * 100) / 100,
+						totalRenderMs: Math.round(totalRenderMs * 100) / 100,
 					})
-					setParsedFiles(flattened)
-					setParsedDiffLoading(false)
-				}
+				})
 			})
 			.catch((err) => {
 				if (currentFetchKey === fetchKey) {
