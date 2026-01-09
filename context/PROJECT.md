@@ -78,11 +78,6 @@ All operations work in both Log panel and Bookmarks commits view.
 - [x] Theme system — dual-theme support (lazygit, opencode)
 - [x] Status bar — context commands (left, truncates on narrow terminals) + global commands (right, fixed)
 - [x] Command palette (`?`) — semantic grouping (revisions, files, bookmarks), fuzzy search, Enter executes
-- [ ] Command palette improvements:
-  - Single column layout (more like a real command palette)
-  - Sort sections by relevance — show sections with highest % of active commands first
-  - Show all commands (not just active), active/dimmed styling as now
-  - Search shows all matches across sections
 - [ ] Configuration — user config file, theme selection, custom keybinds → [plan](./plans/configuration.md)
   - [ ] "Open config" command (`help-only` visibility, opens `$EDITOR`, creates default if missing)
 - [ ] Startup: detect no jj repo — suggest `jj git init` (if .git found) or show recent jj repos
@@ -209,15 +204,16 @@ Each corner prop accepts `JSX.Element | string`. Internally wraps content in `po
 ## Diff Viewing
 
 - [x] Basic diff display with ANSI colors
-- [ ] Hide commit header when browsing files (log.files, bookmarks.files) — maximize diff space
+- [x] Split/unified view with width-based default (split if mainAreaWidth >= 90)
+- [x] Dynamic line number width — adapts to max line number across all files
+- [x] Unified view single-column gutter with colored numbers (deletion=red, addition=green)
+- [x] Syntax highlighting via Shiki (`ayu-dark` theme)
+- [ ] Synchronized horizontal scroll — both sides of split diff scroll together (like @pierre/diffs)
 - [ ] Layout modes — half-width, full-width, unified
 - [ ] Auto-switch based on terminal width
 - [ ] Manual toggle keybind (`v` or `+`/`-`)
 - [ ] Difftastic integration with correct width
-- [ ] **Focus modes** — replace auto-layout-switch with explicit mode toggle (`Ctrl+X`):
-  - Log mode: left panel primary (default)
-  - Diff mode: diff panel expands, log secondary
-  - Scales to PR mode later (full-screen PR view as another mode)
+- [ ] Diff theming — refactor hardcoded diff colors to `src/theme/` → [plan](./plans/custom-diff-renderer.md#theming)
 
 → [Detailed plan](./plans/diff-viewing.md)
 
@@ -417,7 +413,7 @@ jj commands that modify history require confirmation flags. We handle `--ignore-
 
 ### Bugs
 
-- Divergent commits still broken — we parse `divergent` flag and use commit ID instead of change ID, but operations still fail. Needs investigation.
+- Spacer boxes showing at top when scrolling diff view (virtualization issue) — likely related to commit header height varying with message length and file stats; the spacer box doesn't account for dynamic header height
 - Commit header (subject, body, file stats) doesn't update on auto-refresh — only updates when navigating to a different commit
 - Help modal has small visual gap between border and outer edge (OpenTUI quirk)
 - Search input in help modal doesn't render visually (filtering works though)
@@ -428,17 +424,7 @@ jj commands that modify history require confirmation flags. We handle `--ignore-
 
 ### Performance
 
-**Large repo performance (as of v0.2.0):**
-- [ ] Slow startup with many bookmarks — `jj bookmark list` blocks UI on repos with 100+ bookmarks
-- [ ] Slow startup with large log — initial `jj log` can be slow on repos with deep history
-- [ ] Post-operation lag — operation completes (loader gone, command log updated) but UI takes seconds to refresh
-  - Observed on: fetch, rebase (likely all operations that trigger log refresh)
-- [ ] Investigate: lazy load bookmarks (show panel immediately, populate async)
-- [ ] Investigate: limit initial log fetch, load more on scroll (like oplog)
-- [ ] Investigate: parallel fetching of log + bookmarks on startup
-- [ ] Investigate: debounce/optimize post-operation refresh (operations trigger full log re-parse)
-
-**Resolved:**
+All major performance issues have been resolved:
 
 - **Fixed:** Large diff rendering (50k+ lines) — PTY streaming + lazy loading → [details](./plans/diff-virtualization.md)
 - **Fixed:** Oplog lazy loading (initial 50, loads more on scroll near bottom)
@@ -464,7 +450,6 @@ jj commands that modify history require confirmation flags. We handle `--ignore-
 - [ ] Command execution feedback — make command state and output more visible
   - Show running state prominently for async operations (spinner, status text)
   - Always show raw jj output in command log (not just errors) — e.g., "moved bookmark sideways", what was pushed, rebase results
-  - Remove synthetic "Done" message — just show the actual command output (or nothing if empty)
   - Clear indicator when done + success/failure state
   - Consider: toast, modal, or highlighted command log entry for important results
 - [ ] Change edit keybind from `e` to `Space` for revisions (more ergonomic)
@@ -497,6 +482,7 @@ Longer-term possibilities, not actively planned:
 - Conflict visualization
 - Revset filtering
 - Interactive rebase UI
+- Large repo optimization (10k+ commits)
 
 ### Exploratory: PR Management
 
