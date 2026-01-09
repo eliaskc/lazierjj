@@ -80,7 +80,6 @@ All operations work in both Log panel and Bookmarks commits view.
 - [x] Command palette (`?`) — semantic grouping (revisions, files, bookmarks), fuzzy search, Enter executes
 - [ ] Configuration — user config file, theme selection, custom keybinds → [plan](./plans/configuration.md)
   - [ ] "Open config" command (`help-only` visibility, opens `$EDITOR`, creates default if missing)
-- [ ] Startup: detect no jj repo — suggest `jj git init` (if .git found) or show recent jj repos
 
 ## Utilities
 
@@ -119,19 +118,31 @@ Solved by replacing `<input>` with `<textarea>` using single-line keybindings (E
 
 ## Next Up
 
-Priority queue after pre-release polish:
+1. **Startup: non-jj repo detection**
+   - [ ] Detect when not in a jj repo
+   - [ ] If `.git` found: suggest `jj git init`
+   - [ ] Otherwise: show recent jj repos or helpful message
 
-1. **Fix HIGH bugs** (see Known Issues below)
-   - [x] Divergent change IDs break operations
-   - [x] Diff doesn't re-render on refresh
-2. [x] **Basic rebase** — `r` to rebase selected commit onto target (revset picker)
-3. [x] **Basic split** — `S` to invoke `jj split` on selected commit (opens in `$EDITOR`)
-4. **Picker & list improvements**
-   - [ ] Bookmark picker: fuzzy search/filtering
-   - [ ] Bookmark picker: mouse click to select
-   - [ ] Bookmark sorting: by recently changed (not alphabetical) — in picker and bookmarks tab
-   - [ ] Bookmark grouping: user-modified first, remote-only second (approximates local/remote in git; assumes tracked bookmarks)
-   - [ ] Revset picker: same filtering/mouse support
+2. **Diff virtualization fix** — spacer boxes at top when scrolling
+   - [ ] Root cause: commit header height varies (message length, file stats)
+   - [ ] Spacer calculation doesn't account for dynamic header height
+
+3. **Large repo optimization**
+   - [ ] Lazy/paginated revision loading (don't load 1000+ commits upfront)
+   - [ ] Lazy bookmark loading (repos with 100+ bookmarks)
+   - [ ] Smarter bookmark sorting: recently modified first (not alphabetical)
+   - [ ] Bookmark grouping: local/modified first, remote-only second
+
+4. **Fuzzy search infrastructure** — shared across lists
+   - [ ] Bookmark picker: fuzzy filtering
+   - [ ] Commits list: fuzzy search by description/author
+   - [ ] Bookmarks tab: fuzzy filtering
+   - [ ] Oplog: fuzzy search
+   - [ ] Shared component/hook for consistent UX
+
+5. **Picker improvements**
+   - [ ] Mouse click to select in pickers
+   - [ ] Revset picker: same filtering support
 
 ## Workspaces
 
@@ -411,7 +422,7 @@ jj commands that modify history require confirmation flags. We handle `--ignore-
 
 ### Bugs
 
-- Spacer boxes showing at top when scrolling diff view (virtualization issue) — likely related to commit header height varying with message length and file stats; the spacer box doesn't account for dynamic header height
+- Spacer boxes showing at top when scrolling diff view — **prioritized in Next Up #2**
 - Commit header (subject, body, file stats) doesn't update on auto-refresh — only updates when navigating to a different commit
 - Help modal has small visual gap between border and outer edge (OpenTUI quirk)
 - Search input in help modal doesn't render visually (filtering works though)
@@ -480,7 +491,6 @@ Longer-term possibilities, not actively planned:
 - Conflict visualization
 - Revset filtering
 - Interactive rebase UI
-- Large repo optimization (10k+ commits)
 
 ### Exploratory: PR Management
 

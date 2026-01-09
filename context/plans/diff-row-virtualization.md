@@ -338,6 +338,21 @@ For "full commit diff" mode, virtualization handles the full array.
 
 ---
 
+## Open Questions
+
+### Spacer Box Bug (Priority)
+
+The current implementation has a bug: spacer boxes appear at the top when scrolling. Root cause:
+
+- **Commit header height is dynamic** — varies with description length and file stats count
+- **Spacer calculation assumes fixed row heights** — doesn't account for variable header
+- Need to either:
+  1. Calculate actual header height and offset spacer accordingly
+  2. Move commit header outside the virtualized scroll area
+  3. Use a different virtualization approach for mixed-height content
+
+---
+
 ## References
 
 - Oracle recommendation (session 2026-01-07)
