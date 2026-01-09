@@ -352,14 +352,8 @@ export const tracer = {
 	/**
 	 * Get a summary of recent traces grouped by name
 	 */
-	getSummary(): Record<
-		string,
-		{ count: number; avgMs: number; maxMs: number; minMs: number }
-	> {
-		const summary: Record<
-			string,
-			{ count: number; totalMs: number; maxMs: number; minMs: number }
-		> = {}
+	getSummary(): Record<string, { count: number; avgMs: number; maxMs: number; minMs: number }> {
+		const summary: Record<string, { count: number; totalMs: number; maxMs: number; minMs: number }> = {}
 
 		for (const trace of traceHistory) {
 			if (!summary[trace.name]) {
@@ -370,19 +364,14 @@ export const tracer = {
 					minMs: Infinity,
 				}
 			}
-			const s = summary[trace.name]
-			if (s) {
-				s.count++
-				s.totalMs += trace.duration
-				s.maxMs = Math.max(s.maxMs, trace.duration)
-				s.minMs = Math.min(s.minMs, trace.duration)
-			}
+			const s = summary[trace.name]!
+			s.count++
+			s.totalMs += trace.duration
+			s.maxMs = Math.max(s.maxMs, trace.duration)
+			s.minMs = Math.min(s.minMs, trace.duration)
 		}
 
-		const result: Record<
-			string,
-			{ count: number; avgMs: number; maxMs: number; minMs: number }
-		> = {}
+		const result: Record<string, { count: number; avgMs: number; maxMs: number; minMs: number }> = {}
 		for (const [name, data] of Object.entries(summary)) {
 			result[name] = {
 				count: data.count,
@@ -406,18 +395,8 @@ export const tracer = {
 
 		if (entries.length === 0) return "No traces recorded"
 
-		const header =
-			"Trace Name                    │ Count │   Avg   │   Max   │   Min"
-		const separator =
-			"─".repeat(30) +
-			"┼" +
-			"─".repeat(7) +
-			"┼" +
-			"─".repeat(9) +
-			"┼" +
-			"─".repeat(9) +
-			"┼" +
-			"─".repeat(9)
+		const header = "Trace Name                    │ Count │   Avg   │   Max   │   Min"
+		const separator = "─".repeat(30) + "┼" + "─".repeat(7) + "┼" + "─".repeat(9) + "┼" + "─".repeat(9) + "┼" + "─".repeat(9)
 
 		const rows = entries.map(([name, data]) => {
 			const padName = name.slice(0, 28).padEnd(30)

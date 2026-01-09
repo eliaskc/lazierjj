@@ -1,3 +1,5 @@
+declare const self: Worker
+
 import {
 	type DiffsHighlighter,
 	type SupportedLanguages,

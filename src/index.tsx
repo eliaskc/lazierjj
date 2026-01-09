@@ -6,8 +6,6 @@ import { initHighlighter } from "./diff"
 
 extend({ "ghostty-terminal": GhosttyTerminalRenderable })
 
-// Start syntax highlighting worker immediately
-// Worker loads shiki in background, main thread stays responsive
 initHighlighter()
 
 render(() => <App />, {

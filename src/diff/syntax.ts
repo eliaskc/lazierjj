@@ -181,7 +181,7 @@ export async function tokenizeLine(
 		// Temporarily add listener
 		const originalHandler = worker!.onmessage
 		worker!.onmessage = (event) => {
-			originalHandler?.call(worker, event)
+			originalHandler?.call(worker!, event)
 			handler(event)
 		}
 
