@@ -217,25 +217,23 @@ Each corner prop accepts `JSX.Element | string`. Internally wraps content in `po
 
 → [Detailed plan](./plans/diff-viewing.md)
 
-## Custom Diff Renderer (Future)
+## Custom Diff Renderer
 
-> Post-CLI milestone. Configurable — users can opt out and use jj's native diff output.
+Custom diff rendering using @pierre/diffs for parsing, Shiki for syntax highlighting, and custom OpenTUI components.
 
-**Why custom rendering:**
-- jj-specific context (revision metadata, parent relationships, "this will squash into X" hints)
-- Deep keybind integration (navigate hunks, stage/unstage at hunk level)
-- Theme consistency with kajji's lazygit/opencode themes
-- Foundation for PR review features (inline comments, approval workflows)
+**Implemented:**
+- [x] Side-by-side diff with aligned old/new panels
+- [x] Word-level change highlighting (inline emphasis for modifications)
+- [x] Syntax highlighting per filetype (Shiki, `ayu-dark` theme)
+- [x] Virtualized rendering (handles 50k+ line diffs)
+- [x] Non-blocking syntax init (Web Worker, ~100ms startup)
 
-**Features:**
-- [ ] Side-by-side diff with aligned old/new panels
+**Planned:**
 - [ ] Hunk navigation with keyboard shortcuts (`[`/`]` or `n`/`N`)
-- [ ] Word-level change highlighting
-- [ ] Syntax highlighting per filetype
 - [ ] Inline action hints (what operations will affect this code)
 - [ ] PR review: inline comments (future, when PR management lands)
 
-**Escape hatch (critical):**
+**Escape hatch (not yet implemented):**
 - [ ] Config option: `diff.renderer = "native" | "kajji"`
 - [ ] Native mode: use `jj diff --color always` output directly
 - [ ] Respects user's jj config (difftastic, delta, etc.)
@@ -426,7 +424,7 @@ jj commands that modify history require confirmation flags. We handle `--ignore-
 
 All major performance issues have been resolved:
 
-- **Fixed:** Large diff rendering (50k+ lines) — PTY streaming + lazy loading → [details](./plans/diff-virtualization.md)
+- **Fixed:** Large diff rendering (50k+ lines) — PTY streaming + lazy loading → [details](./archive/diff-virtualization-pty-streaming.md)
 - **Fixed:** Oplog lazy loading (initial 50, loads more on scroll near bottom)
 - **Fixed:** Diff reload flash, log/bookmarks flash, spinner flash
 - **Fixed:** Large diff lazy loading (initial 500 lines, loads 500 more when scrolling near bottom)
