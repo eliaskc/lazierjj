@@ -161,6 +161,13 @@ Solved by replacing `<input>` with `<textarea>` using single-line keybindings (E
    - [ ] Mouse click to select in pickers
    - [ ] Revset picker: same filtering support
 
+7. **Better rebase & squash**
+   - [ ] Rebase: select range of commits (visual mode or shift+j/k)
+   - [ ] Rebase: improved target picker with fuzzy search
+   - [ ] Squash: target picker (currently only squashes to parent)
+   - [ ] Squash: select range to squash together
+   - [ ] Preview of what will happen before confirming
+
 ## Workspaces
 
 > kajji is a jj power tool, not an agent orchestrator. Agents are just another way commits appear.

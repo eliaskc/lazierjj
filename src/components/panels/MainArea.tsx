@@ -8,9 +8,9 @@ import {
 	onCleanup,
 	onMount,
 } from "solid-js"
-import { streamDiffPTY } from "../../commander/diff"
+
 import type { DiffStats } from "../../commander/operations"
-import { type Commit, getRevisionId } from "../../commander/types"
+import type { Commit } from "../../commander/types"
 import { useCommand } from "../../context/command"
 import { useFocus } from "../../context/focus"
 import { useLayout } from "../../context/layout"
@@ -26,14 +26,10 @@ import {
 	VirtualizedUnifiedView,
 } from "../diff"
 
-type DiffRenderMode = "passthrough" | "custom"
 type DiffViewStyle = "unified" | "split"
 
 import { profileLog } from "../../utils/profiler"
 
-const INITIAL_LIMIT = 100
-const LIMIT_INCREMENT = 200
-const LOAD_THRESHOLD = 200
 const SPLIT_VIEW_THRESHOLD = 90
 
 function FileStats(props: { stats: DiffStats; maxWidth: number }) {
@@ -271,20 +267,11 @@ export function MainArea() {
 	const [scrollTop, setScrollTop] = createSignal(0)
 	const [viewportHeight, setViewportHeight] = createSignal(30)
 	const [headerHeight, setHeaderHeight] = createSignal(0)
-	const [limit, setLimit] = createSignal(INITIAL_LIMIT)
 	const [currentCommitId, setCurrentCommitId] = createSignal<string | null>(
 		null,
 	)
 
-	// Render mode state
-	const [renderMode, setRenderMode] = createSignal<DiffRenderMode>("custom")
 	const [viewStyle, setViewStyle] = createSignal<DiffViewStyle>("unified")
-
-	// PTY passthrough state (only used when renderMode === "passthrough")
-	const [ptyDiff, setPtyDiff] = createSignal<string | null>(null)
-	const [ptyDiffLoading, setPtyDiffLoading] = createSignal(false)
-	const [ptyDiffError, setPtyDiffError] = createSignal<string | null>(null)
-	const [ptyDiffLineCount, setPtyDiffLineCount] = createSignal(0)
 
 	createEffect(() => {
 		setViewStyle(mainAreaWidth() >= SPLIT_VIEW_THRESHOLD ? "split" : "unified")
@@ -381,15 +368,14 @@ export function MainArea() {
 	// Track current fetch to prevent stale updates
 	let currentFetchKey: string | null = null
 
-	// Fetch parsed diff when commit/file changes and we're in custom mode
+	// Fetch parsed diff when commit/file changes
 	createEffect(() => {
 		const commit = activeCommit()
-		const mode = renderMode()
 		const vMode = viewMode()
 		const bmMode = bookmarkViewMode()
 		const focusedPanel = focus.panel()
 
-		if (!commit || mode !== "custom") return
+		if (!commit) return
 
 		let paths: string[] | undefined
 
@@ -461,110 +447,17 @@ export function MainArea() {
 			})
 	})
 
-	let currentPtyKey: string | null = null
-	let currentPtyStream: { cancel: () => void } | null = null
-
-	createEffect(() => {
-		const commit = activeCommit()
-		const mode = renderMode()
-		const vMode = viewMode()
-		const bmMode = bookmarkViewMode()
-		const focusedPanel = focus.panel()
-		const columns = mainAreaWidth()
-
-		if (!commit || mode !== "passthrough") return
-
-		let paths: string[] | undefined
-
-		if (focusedPanel === "refs" && bmMode === "files") {
-			const file = selectedBookmarkFile()
-			if (file) {
-				paths = file.node.isDirectory
-					? getFilePaths(file.node)
-					: [file.node.path]
-			}
-		} else if (vMode === "files") {
-			const file = selectedFile()
-			if (file) {
-				paths = file.node.isDirectory
-					? getFilePaths(file.node)
-					: [file.node.path]
-			}
-		}
-
-		const revId = getRevisionId(commit)
-		const ptyKey = `${commit.commitId}:${revId}:${paths?.join(",") ?? "all"}`
-		if (ptyKey === currentPtyKey) return
-
-		currentPtyKey = ptyKey
-
-		if (currentPtyStream) {
-			currentPtyStream.cancel()
-			currentPtyStream = null
-		}
-
-		setPtyDiffLoading(true)
-		setPtyDiffError(null)
-
-		currentPtyStream = streamDiffPTY(
-			revId,
-			{
-				columns,
-				paths,
-				cols: columns,
-				rows: layout.terminalHeight(),
-			},
-			{
-				onUpdate: (content: string, lineCount: number, complete: boolean) => {
-					if (currentPtyKey !== ptyKey) return
-
-					setPtyDiff(content)
-					setPtyDiffLineCount(lineCount)
-
-					if (complete) {
-						setPtyDiffLoading(false)
-					}
-				},
-				onError: (error: Error) => {
-					if (currentPtyKey !== ptyKey) return
-					setPtyDiffError(error.message)
-					setPtyDiff(null)
-					setPtyDiffLoading(false)
-				},
-			},
-		)
-	})
-
-	onCleanup(() => {
-		if (currentPtyStream) {
-			currentPtyStream.cancel()
-		}
-	})
-
 	createEffect(() => {
 		const commit = activeCommit()
 		if (commit && commit.changeId !== currentCommitId()) {
 			setCurrentCommitId(commit.changeId)
 			setScrollTop(0)
-			setLimit(INITIAL_LIMIT)
 			scrollRef?.scrollTo(0)
 			// Reset navigation when switching commits (keep stale content for SWR)
 			setActiveFileIndex(0)
 			setActiveHunkIndex(0)
 		}
 	})
-
-	const loadMoreIfNeeded = () => {
-		if (!scrollRef) return
-		const viewportHeight = scrollRef.viewport?.height ?? 30
-		const scrollHeight = scrollRef.scrollHeight ?? 0
-		const currentScroll = scrollRef.scrollTop ?? 0
-
-		const distanceFromBottom = scrollHeight - (currentScroll + viewportHeight)
-		if (distanceFromBottom < LOAD_THRESHOLD && limit() < ptyDiffLineCount()) {
-			setLimit((l) => Math.min(l + LIMIT_INCREMENT, ptyDiffLineCount()))
-		}
-	}
 
 	onMount(() => {
 		const pollInterval = setInterval(() => {
@@ -580,7 +473,6 @@ export function MainArea() {
 					setViewportHeight(currentViewport)
 					setScrollTop(currentScroll)
 					setHeaderHeight(currentHeaderHeight)
-					loadMoreIfNeeded()
 				}
 			}
 		}, 100)
@@ -616,7 +508,6 @@ export function MainArea() {
 			onSelect: () => {
 				scrollRef?.scrollBy(0.5, "viewport")
 				if (scrollRef) setScrollTop(scrollRef.scrollTop)
-				loadMoreIfNeeded()
 			},
 		},
 		{
@@ -629,7 +520,6 @@ export function MainArea() {
 			onSelect: () => {
 				scrollRef?.scrollTo((scrollTop() || 0) + 1)
 				setScrollTop((scrollTop() || 0) + 1)
-				loadMoreIfNeeded()
 			},
 		},
 		{
@@ -646,17 +536,6 @@ export function MainArea() {
 			},
 		},
 		{
-			id: "detail.toggle_diff_renderer",
-			title: "toggle diff view",
-			keybind: "toggle_diff_view",
-			context: "detail",
-			type: "view",
-			visibility: "all",
-			onSelect: () => {
-				setRenderMode((m) => (m === "passthrough" ? "custom" : "passthrough"))
-			},
-		},
-		{
 			id: "detail.toggle_diff_style",
 			title: "toggle split/unified",
 			keybind: "toggle_diff_style",
@@ -664,12 +543,9 @@ export function MainArea() {
 			type: "view",
 			visibility: "help-only",
 			onSelect: () => {
-				if (renderMode() === "custom") {
-					setViewStyle((s) => (s === "unified" ? "split" : "unified"))
-				}
+				setViewStyle((s) => (s === "unified" ? "split" : "unified"))
 			},
 		},
-		// Navigation commands (only work in custom render mode)
 		{
 			id: "detail.prev_hunk",
 			title: "previous hunk",
@@ -678,9 +554,7 @@ export function MainArea() {
 			type: "navigation",
 			visibility: "help-only",
 			onSelect: () => {
-				if (renderMode() === "custom") {
-					navigateHunk(-1)
-				}
+				navigateHunk(-1)
 			},
 		},
 		{
@@ -691,9 +565,7 @@ export function MainArea() {
 			type: "navigation",
 			visibility: "help-only",
 			onSelect: () => {
-				if (renderMode() === "custom") {
-					navigateHunk(1)
-				}
+				navigateHunk(1)
 			},
 		},
 		{
@@ -704,9 +576,7 @@ export function MainArea() {
 			type: "navigation",
 			visibility: "help-only",
 			onSelect: () => {
-				if (renderMode() === "custom") {
-					navigateFile(-1)
-				}
+				navigateFile(-1)
 			},
 		},
 		{
@@ -717,21 +587,14 @@ export function MainArea() {
 			type: "navigation",
 			visibility: "help-only",
 			onSelect: () => {
-				if (renderMode() === "custom") {
-					navigateFile(1)
-				}
+				navigateFile(1)
 			},
 		},
 	])
 
-	const isLoading = () =>
-		renderMode() === "custom" ? parsedDiffLoading() : ptyDiffLoading()
-
-	const hasError = () =>
-		renderMode() === "custom" ? parsedDiffError() : ptyDiffError()
-
-	const hasContent = () =>
-		renderMode() === "custom" ? parsedFiles().length > 0 : !!ptyDiff()
+	const isLoading = () => parsedDiffLoading()
+	const hasError = () => parsedDiffError()
+	const hasContent = () => parsedFiles().length > 0
 
 	return (
 		<Panel title="Detail" hotkey="3" panelId="detail" focused={isFocused()}>
@@ -777,54 +640,40 @@ export function MainArea() {
 							)}
 						</Show>
 					</box>
-					<Show when={renderMode() === "passthrough"}>
-						<Show when={ptyDiff()}>
-							<ghostty-terminal
-								ansi={ptyDiff() ?? ""}
-								cols={mainAreaWidth()}
-								limit={limit()}
-							/>
-						</Show>
-						<Show when={!ptyDiff() && !ptyDiffLoading()}>
-							<text>No changes in this commit.</text>
-						</Show>
+					<Show when={parsedDiffError()}>
+						<text fg={colors().error}>Error: {parsedDiffError()}</text>
 					</Show>
-					<Show when={renderMode() === "custom"}>
-						<Show when={parsedDiffError()}>
-							<text fg={colors().error}>Error: {parsedDiffError()}</text>
+					<Show when={!parsedDiffError()}>
+						<Show when={parsedDiffLoading() && parsedFiles().length === 0}>
+							<text fg={colors().textMuted}>Parsing diff...</text>
 						</Show>
-						<Show when={!parsedDiffError()}>
-							<Show when={parsedDiffLoading() && parsedFiles().length === 0}>
-								<text fg={colors().textMuted}>Parsing diff...</text>
-							</Show>
-							<Show when={parsedFiles().length > 0}>
-								<FileSummary
+						<Show when={parsedFiles().length > 0}>
+							<FileSummary
+								files={parsedFiles()}
+								activeFileId={activeFileId()}
+							/>
+							<Show when={viewStyle() === "unified"}>
+								<VirtualizedUnifiedView
 									files={parsedFiles()}
-									activeFileId={activeFileId()}
+									activeFileId={null}
+									currentHunkId={activeHunkId()}
+									scrollTop={adjustedScrollTop()}
+									viewportHeight={viewportHeight()}
 								/>
-								<Show when={viewStyle() === "unified"}>
-									<VirtualizedUnifiedView
-										files={parsedFiles()}
-										activeFileId={null}
-										currentHunkId={activeHunkId()}
-										scrollTop={adjustedScrollTop()}
-										viewportHeight={viewportHeight()}
-									/>
-								</Show>
-								<Show when={viewStyle() === "split"}>
-									<VirtualizedSplitView
-										files={parsedFiles()}
-										activeFileId={null}
-										currentHunkId={activeHunkId()}
-										width={mainAreaWidth()}
-										scrollTop={adjustedScrollTop()}
-										viewportHeight={viewportHeight()}
-									/>
-								</Show>
 							</Show>
-							<Show when={parsedFiles().length === 0 && !parsedDiffLoading()}>
-								<text>No changes in this commit.</text>
+							<Show when={viewStyle() === "split"}>
+								<VirtualizedSplitView
+									files={parsedFiles()}
+									activeFileId={null}
+									currentHunkId={activeHunkId()}
+									width={mainAreaWidth()}
+									scrollTop={adjustedScrollTop()}
+									viewportHeight={viewportHeight()}
+								/>
 							</Show>
+						</Show>
+						<Show when={parsedFiles().length === 0 && !parsedDiffLoading()}>
+							<text>No changes in this commit.</text>
 						</Show>
 					</Show>
 				</scrollbox>
