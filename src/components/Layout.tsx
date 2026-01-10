@@ -1,18 +1,49 @@
-import { type JSX, Show } from "solid-js"
+import { Match, Switch } from "solid-js"
 import { useLayout } from "../context/layout"
 import { useTheme } from "../context/theme"
 import { StatusBar } from "./StatusBar"
+import { BookmarksPanel } from "./panels/BookmarksPanel"
 import { CommandLogPanel } from "./panels/CommandLogPanel"
+import { LogPanel } from "./panels/LogPanel"
+import { MainArea } from "./panels/MainArea"
 
-interface LayoutProps {
-	top: JSX.Element
-	bottom: JSX.Element
-	right: JSX.Element
+function NormalLayout() {
+	return (
+		<box flexDirection="row" flexGrow={1} gap={0}>
+			<box flexGrow={1} flexBasis={0} flexDirection="column" gap={0}>
+				<box flexGrow={3} flexBasis={0}>
+					<LogPanel />
+				</box>
+				<box flexGrow={1} flexBasis={0}>
+					<BookmarksPanel />
+				</box>
+			</box>
+			<box flexGrow={1} flexBasis={0} flexDirection="column">
+				<box flexGrow={1}>
+					<MainArea />
+				</box>
+				<CommandLogPanel />
+			</box>
+		</box>
+	)
 }
 
-export function Layout(props: LayoutProps) {
+function DiffLayout() {
+	return (
+		<box flexDirection="row" flexGrow={1} gap={0}>
+			<box flexGrow={1} flexBasis={0} flexDirection="column">
+				<LogPanel />
+			</box>
+			<box flexGrow={4} flexBasis={0} flexDirection="column">
+				<MainArea />
+			</box>
+		</box>
+	)
+}
+
+export function LayoutGrid() {
 	const { colors, style } = useTheme()
-	const { layoutRatio, focusMode } = useLayout()
+	const { focusMode } = useLayout()
 
 	return (
 		<box
@@ -24,35 +55,14 @@ export function Layout(props: LayoutProps) {
 			padding={style().adaptToTerminal ? 0 : 1}
 			gap={0}
 		>
-			<box flexGrow={1} flexDirection="row" width="100%" gap={0}>
-				<box
-					flexGrow={layoutRatio().left}
-					flexBasis={0}
-					height="100%"
-					flexDirection="column"
-					gap={0}
-				>
-					<box flexGrow={focusMode() === "diff" ? 1 : 3} flexBasis={0}>
-						{props.top}
-					</box>
-					<Show when={focusMode() === "normal"}>
-						<box flexGrow={1} flexBasis={0}>
-							{props.bottom}
-						</box>
-					</Show>
-				</box>
-				<box
-					flexGrow={layoutRatio().right}
-					flexBasis={0}
-					height="100%"
-					flexDirection="column"
-				>
-					<box flexGrow={1}>{props.right}</box>
-					<Show when={focusMode() === "normal"}>
-						<CommandLogPanel />
-					</Show>
-				</box>
-			</box>
+			<Switch>
+				<Match when={focusMode() === "normal"}>
+					<NormalLayout />
+				</Match>
+				<Match when={focusMode() === "diff"}>
+					<DiffLayout />
+				</Match>
+			</Switch>
 			<StatusBar />
 		</box>
 	)

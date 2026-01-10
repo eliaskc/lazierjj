@@ -9,13 +9,11 @@ import {
 	jjWorkspaceUpdateStale,
 } from "./commander/operations"
 import { ErrorScreen } from "./components/ErrorScreen"
-import { Layout } from "./components/Layout"
+import { LayoutGrid } from "./components/Layout"
 import { HelpModal } from "./components/modals/HelpModal"
 import { RecentReposModal } from "./components/modals/RecentReposModal"
 import { UndoModal } from "./components/modals/UndoModal"
-import { BookmarksPanel } from "./components/panels/BookmarksPanel"
-import { LogPanel } from "./components/panels/LogPanel"
-import { MainArea } from "./components/panels/MainArea"
+
 import { CommandProvider, useCommand } from "./context/command"
 import { CommandLogProvider, useCommandLog } from "./context/commandlog"
 import { DialogContainer, DialogProvider, useDialog } from "./context/dialog"
@@ -372,11 +370,7 @@ function AppContent() {
 
 	return (
 		<DialogContainer>
-			<Layout
-				top={<LogPanel />}
-				bottom={<BookmarksPanel />}
-				right={<MainArea />}
-			/>
+			<LayoutGrid />
 		</DialogContainer>
 	)
 }

@@ -1,18 +1,9 @@
 import { useRenderer } from "@opentui/solid"
-import {
-	type Accessor,
-	createMemo,
-	createSignal,
-	onCleanup,
-	onMount,
-} from "solid-js"
+import { createMemo, createSignal, onCleanup, onMount } from "solid-js"
 import { createSimpleContext } from "./helper"
 
 const HELP_MODAL_1_COL_THRESHOLD = 90
 const HELP_MODAL_2_COL_THRESHOLD = 130
-
-const LAYOUT_NORMAL = { left: 1, right: 1 }
-const LAYOUT_DIFF = { left: 1, right: 4 }
 
 export type FocusMode = "normal" | "diff"
 
@@ -58,14 +49,12 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
 				return 3
 			})
 
-			const layoutRatio = createMemo(() => {
-				return focusMode() === "diff" ? LAYOUT_DIFF : LAYOUT_NORMAL
-			})
-
+			// Main area width for diff panel calculations
+			// Based on diff mode ratio (1:4 split)
 			const mainAreaWidth = createMemo(() => {
 				const width = terminalWidth()
-				const { left, right } = layoutRatio()
-				const ratio = right / (left + right)
+				const mode = focusMode()
+				const ratio = mode === "diff" ? 4 / 5 : 1 / 2
 				const borderWidth = 2
 				return Math.floor(width * ratio) - borderWidth
 			})
@@ -73,7 +62,6 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
 			return {
 				terminalWidth,
 				terminalHeight,
-				layoutRatio,
 				mainAreaWidth,
 				helpModalColumns,
 				focusMode,
