@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1
+
+### removed
+- ANSI passthrough diff mode and `v` keybind — diff view now always uses custom renderer
+
 ## 0.3.0
 
 ### new
