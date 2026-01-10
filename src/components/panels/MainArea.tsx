@@ -723,7 +723,13 @@ export function MainArea() {
 					}}
 				>
 					<box ref={headerRef} flexDirection="column" flexShrink={0}>
-						<Show when={activeCommit()}>
+						<Show
+							when={
+								viewMode() !== "files" &&
+								bookmarkViewMode() !== "files" &&
+								activeCommit()
+							}
+						>
 							{(commit: () => Commit) => (
 								<CommitHeader
 									commit={commit()}
