@@ -139,12 +139,14 @@ Solved by replacing `<input>` with `<textarea>` using single-line keybindings (E
    - [ ] Smarter bookmark sorting: recently modified first (not alphabetical)
    - [ ] Bookmark grouping: local/modified first, remote-only second
 
-4. **Focus modes: log vs diff** → [plan](./plans/focus-modes.md)
-   - [ ] Log mode: 50/50 split (default)
+4. **Focus modes** → [plan](./plans/focus-modes.md)
+   - [ ] Normal mode: 50/50 split (default)
    - [ ] Diff mode: narrow log sidebar, expanded diff, command log hidden
-   - [ ] Triggers: file tree, diff focus, `Ctrl+X` toggle
-   - [ ] Mode indicator in bottom corner
-   - [ ] Remove passthrough diff mode (custom only)
+   - [ ] `ctrl+x` mode picker (toggle for MVP, picker when adding more modes)
+   - [ ] Auto-switch to Diff on file tree entry, return to previous on exit
+   - [ ] Minimal commit header when browsing file tree (changeId + subject only)
+   - [ ] Mode indicator in status bar
+   - [ ] Future: Log mode (75% log + file tree), PR mode
 
 5. **Fuzzy search infrastructure** — shared across lists
    - [ ] Bookmark picker: fuzzy filtering
@@ -438,7 +440,7 @@ jj commands that modify history require confirmation flags. We handle `--ignore-
 ### Bugs
 
 - ~~Spacer boxes showing at top when scrolling diff view~~ — **fixed in Next Up #2**
-- Commit header (subject, body, file stats) doesn't update on auto-refresh — only updates when navigating to a different commit
+- ~~Commit header (subject, body, file stats) doesn't update on auto-refresh~~ — **fixed** (cache key now includes commitId)
 - Help modal has small visual gap between border and outer edge (OpenTUI quirk)
 - Search input in help modal doesn't render visually (filtering works though)
 - Spaces not rendering in BorderBox corner overlays

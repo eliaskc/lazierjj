@@ -1,27 +1,29 @@
-# Focus Modes: Log vs Diff
+# Focus Modes
 
-**Status**: Planning
-**Priority**: High
-**Goal**: Make kajji excellent for both jj manipulation AND diff viewing
+**Status**: Planning  
+**Priority**: High  
+**Goal**: Make kajji excellent for log browsing, diff viewing, and future PR review
 
 ---
 
 ## Overview
 
-Two layout modes that shift emphasis between log operations and diff viewing:
+Four layout modes that shift emphasis based on the current task:
 
-| Mode | Log Panel | Diff Panel | Command Log |
-|------|-----------|------------|-------------|
-| **Log Mode** (default) | 50% width | 50% width | Visible |
-| **Diff Mode** | Narrow sidebar | Expanded | Hidden |
+| Mode | Layout | Command Log | Use Case |
+|------|--------|-------------|----------|
+| **Normal** | 50/50 log \| diff | Visible | Default, balanced |
+| **Diff** | narrow log \| expanded diff | Hidden | Focused code review |
+| **Log** | 75% log \| file tree | Hidden | Browsing history |
+| **PR** | TBD | TBD | PR review (future) |
 
 ---
 
-## Log Mode (Default)
+## Normal Mode (Default)
 
-The current default layout, optimized for commit manipulation:
+Current layout, optimized for commit manipulation:
 
-- **50/50 split** between log and diff panels
+- 50/50 split between log and diff panels
 - Full log view with graph, descriptions, bookmarks
 - Command log visible at bottom
 - All jj operations easily accessible
@@ -32,122 +34,185 @@ The current default layout, optimized for commit manipulation:
 
 Expanded diff view for focused code review:
 
-- **Log sidebar**: `max(20%, 30 cols)` — narrow but still full log view
+- **Log sidebar**: `max(20%, 30 cols)` — narrow but functional
 - **Diff panel**: Takes remaining width
-- **Command log**: Hidden (more vertical space for diff)
-- **Mode indicator**: Bottom corner, shows current mode + keybind
+- **Command log**: Hidden (more vertical space)
+- Same log template, just narrower (truncation acceptable)
 
-### Sidebar Details
-
-Start with narrow full log (same view, just squeezed). If this looks bad:
-- Consider condensed list view (like bookmarks commits)
-- Trade-off: loses bookmark markers and graph
+Inspired by lumen's full-screen diff with slim file tree.
 
 ---
 
-## Triggers
+## Log Mode (Future)
 
-### To Diff Mode
+Expanded log view for browsing history:
 
-| Trigger | Notes |
-|---------|-------|
-| Enter file tree | `log.files`, `bookmarks.files` |
-| Focus diff panel | Tab to diff, click on diff |
-| `Ctrl+X` | Manual toggle |
+- **Log panel**: 75% width
+- **File tree panel**: 25% on right (shows files for selected commit)
+- **Command log**: Hidden
 
-### To Log Mode
+When file tree is focused, transitions to 3-panel layout:
+- Narrow log | file tree | diff
 
-| Trigger | Notes |
-|---------|-------|
-| Focus log panel | Tab to log, click on log |
-| Exit file tree | Back to `log.revisions` |
-| `Ctrl+X` | Manual toggle |
+This gives focused file exploration without losing log context.
 
 ---
 
-## Mode Indicator
+## PR Mode (Future)
 
-Show current mode + keybind hint in bottom corner (left or right TBD).
+PR review workflow. Layout TBD, likely:
+- File picker on left (like bookmarks panel position)
+- Diff on right (file-at-a-time)
+- Inline comments rendered in diff
 
-Example: `DIFF MODE · Ctrl+X`
-
-### Styling TBD
-
-Want to tune this during implementation:
-- Show only diff mode indicator? Or both modes?
-- Prominent vs subtle styling
-- If prominent, make it a visual treat (nice styling, not just text)
-- May want different prominence for each mode
+See [PR Management](./pr-management.md) for full spec.
 
 ---
 
-## Implementation Notes
+## Mode Picker
 
-### Remove Passthrough Diff Mode
+`ctrl+x` opens an instant picker modal:
 
-- Delete passthrough/ANSI diff rendering code
-- Custom renderer only — simpler, one code path
-- Can re-add as config option if users request
-
-### Simplify Layout Logic
-
-Current `layout.tsx` has responsive breakpoints. With explicit focus modes:
-- May be able to remove auto-switching logic
-- User controls layout via focus mode, not terminal width
-- Width-based logic only for split vs unified diff view
-
-### State Management
-
-```typescript
-type FocusMode = 'log' | 'diff'
-
-// In app state or context
-const [focusMode, setFocusMode] = createSignal<FocusMode>('log')
-
-// Auto-switch logic
-createEffect(() => {
-  const mode = currentMode() // log.files, log.revisions, etc.
-  if (mode.includes('.files')) {
-    setFocusMode('diff')
-  }
-})
-
-// Or track which panel has focus
-createEffect(() => {
-  if (focusedPanel() === 'diff') {
-    setFocusMode('diff')
-  } else if (focusedPanel() === 'log') {
-    setFocusMode('log')
-  }
-})
+```
+Mode
+  [n] Normal
+  [d] Diff
+  [l] Log
+  [p] PR
 ```
 
-### Layout Calculation
+- Press letter directly to switch (n/d/l/p)
+- Or j/k + enter
+- Escape cancels
 
+Two keystrokes total. Semantic letters avoid conflicts with tmux/zellij ctrl+hjkl.
+
+**MVP**: With only Normal + Diff, `ctrl+x` toggles directly. Upgrade to picker when adding Log/PR modes.
+
+---
+
+## Auto-Switch
+
+| Trigger | Action |
+|---------|--------|
+| Enter file tree | Switch to Diff mode, remember previous |
+| Exit file tree (Escape) | Return to previous mode |
+| Manual ctrl+x | Always works, updates previous |
+
+**State:**
 ```typescript
-function getPanelWidths(focusMode: FocusMode, terminalWidth: number) {
-  if (focusMode === 'log') {
-    return { log: '50%', diff: '50%' }
-  } else {
-    const logWidth = Math.max(Math.floor(terminalWidth * 0.2), 30)
-    return { log: logWidth, diff: terminalWidth - logWidth }
-  }
+const [currentMode, setCurrentMode] = createSignal<Mode>('normal')
+const [previousMode, setPreviousMode] = createSignal<Mode>('normal')
+
+function switchMode(mode: Mode) {
+  setPreviousMode(currentMode())
+  setCurrentMode(mode)
+}
+
+function returnToPreviousMode() {
+  setCurrentMode(previousMode())
 }
 ```
 
 ---
 
+## Commit Header
+
+Header content varies by context to maximize space:
+
+| Context | Header Content |
+|---------|----------------|
+| Full commit view | changeId, commitId, author, date, subject, body, file stats |
+| File tree browsing | changeId + subject only (minimal, 1-2 lines) |
+
+File tree browsing needs diff space more than commit metadata. The minimal header keeps context without eating space.
+
+---
+
+## Mode Indicator
+
+Always visible in status bar (bottom-left or bottom-right, TBD):
+
+```
+NORMAL · ctrl+x
+```
+
+Each mode has distinct styling:
+
+| Mode | Style |
+|------|-------|
+| Normal | Muted/subtle (default state, doesn't demand attention) |
+| Diff | Accent color (e.g., cyan/blue) |
+| Log | Different accent (e.g., yellow/orange) |
+| PR | Different accent (e.g., green/magenta) |
+
+Could be text color, background color, or both. The key is:
+- Normal is visually quiet
+- Other modes are more prominent (you're in a "special" state)
+- Keybind hint always shown for discoverability
+
+---
+
+## Implementation
+
+### MVP Scope
+
+1. Normal + Diff modes only
+2. `ctrl+x` toggles between them
+3. Minimal commit header for file tree
+4. Auto-switch on file tree entry
+5. Previous mode tracking
+6. Mode indicator in status bar
+
+### State Management
+
+Add to layout context or create new mode context:
+
+```typescript
+type Mode = 'normal' | 'diff' | 'log' | 'pr'
+
+interface ModeState {
+  current: Mode
+  previous: Mode
+}
+```
+
+### Layout Calculation
+
+```typescript
+function getPanelWidths(mode: Mode, terminalWidth: number) {
+  switch (mode) {
+    case 'normal':
+      return { log: '50%', diff: '50%' }
+    case 'diff':
+      const logWidth = Math.max(Math.floor(terminalWidth * 0.2), 30)
+      return { log: logWidth, diff: terminalWidth - logWidth }
+    case 'log':
+      return { log: '75%', fileTree: '25%' }
+    case 'pr':
+      // TBD
+  }
+}
+```
+
+### Remove Passthrough Diff Mode
+
+With focus modes, simplify by removing passthrough/ANSI diff rendering:
+- Custom renderer only — one code path
+- Can re-add as config option if users request
+
+---
+
 ## Open Questions
 
-1. **Indicator placement**: Bottom-left or bottom-right? (Status bar already has content)
-2. **Indicator styling**: How prominent? What makes it a "treat"?
-3. **Transition**: Instant switch or animate width change?
-4. **Narrow log**: Does it look acceptable at 30 cols? May need testing.
+1. **Log mode file tree**: New panel or reuse refs panel position?
+2. **PR mode layout**: How much overlap with existing panels?
+3. **Indicator styling**: Prominent vs subtle? Only non-normal modes?
+4. **Transition**: Instant switch or subtle animation?
 
 ---
 
 ## Related
 
-- Diff viewing improvements (same panel, different concern)
-- Status bar layout (indicator placement)
-- Keybind system (registering Ctrl+X)
+- [Diff Viewing](./diff-viewing.md) — Split/unified views within diff panel
+- [PR Management](./pr-management.md) — PR mode details

@@ -16,6 +16,8 @@ This is exploratory territory. The goal is to evaluate whether kajji should beco
 
 **Risk**: Becoming an "everything TUI" that tries to replace GitHub's web UI entirely. kajji's value is jj-native workflows — PR management should complement that, not dominate it.
 
+**Integration**: PR management will be a [focus mode](./focus-modes.md) — accessed via `ctrl+x` mode picker alongside Normal, Diff, and Log modes. Single mental model for layout switching.
+
 ---
 
 ## Core Insight: GitHub Patch Alignment
