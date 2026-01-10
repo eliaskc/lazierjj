@@ -36,9 +36,11 @@ function ConfirmDialogContent(props: {
 	useKeyboard((evt) => {
 		if (evt.name === "y" || evt.name === "return") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			props.onResolve(true)
 		} else if (evt.name === "n" || evt.name === "escape") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			props.onResolve(false)
 		}
 	})
@@ -73,6 +75,7 @@ export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
 			useKeyboard((evt) => {
 				if (stack().length > 0 && evt.name === "escape") {
 					evt.preventDefault()
+					evt.stopPropagation()
 					close()
 				}
 			})

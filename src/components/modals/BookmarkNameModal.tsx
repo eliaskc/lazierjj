@@ -83,9 +83,11 @@ export function BookmarkNameModal(props: BookmarkNameModalProps) {
 	useKeyboard((evt) => {
 		if (evt.name === "escape") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			dialog.close()
 		} else if (evt.name === "tab" && hasRevisionPicker()) {
 			evt.preventDefault()
+			evt.stopPropagation()
 			if (focusedField() === "name") {
 				setFocusedField("picker")
 			} else {
@@ -94,6 +96,7 @@ export function BookmarkNameModal(props: BookmarkNameModalProps) {
 			}
 		} else if (evt.name === "return" && focusedField() === "picker") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			handleSave()
 		}
 	})

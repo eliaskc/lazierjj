@@ -50,6 +50,7 @@ export function DescribeModal(props: DescribeModalProps) {
 	useKeyboard((evt) => {
 		if (evt.name === "tab") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			if (focusedField() === "subject") {
 				setFocusedField("body")
 				focusTextareaAtEnd(bodyRef)

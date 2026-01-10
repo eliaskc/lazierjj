@@ -157,16 +157,20 @@ function GitRepoScreen(props: GitRepoScreenProps) {
 	useKeyboard((evt) => {
 		if (evt.name === "j" || evt.name === "down") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			setSelectedIndex((i) => Math.min(options.length - 1, i + 1))
 		} else if (evt.name === "k" || evt.name === "up") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			setSelectedIndex((i) => Math.max(0, i - 1))
 		} else if (evt.name === "return" || evt.name === "enter") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			const option = options[selectedIndex()]
 			if (option) props.onInit(option.colocate)
 		} else if (evt.name === "q") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			props.onQuit()
 		}
 	})
@@ -316,11 +320,13 @@ function NoVcsScreen(props: NoVcsScreenProps) {
 	useKeyboard((evt) => {
 		if (evt.name === "tab") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			if (props.recentRepos.length > 0) {
 				setFocusedSection((s) => (s === "repos" ? "init" : "repos"))
 			}
 		} else if (evt.name === "j" || evt.name === "down") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			if (focusedSection() === "repos") {
 				setSelectedRepoIndex((i) =>
 					Math.min(props.recentRepos.length - 1, i + 1),
@@ -328,11 +334,13 @@ function NoVcsScreen(props: NoVcsScreenProps) {
 			}
 		} else if (evt.name === "k" || evt.name === "up") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			if (focusedSection() === "repos") {
 				setSelectedRepoIndex((i) => Math.max(0, i - 1))
 			}
 		} else if (evt.name === "return" || evt.name === "enter") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			if (focusedSection() === "repos") {
 				const repo = props.recentRepos[selectedRepoIndex()]
 				if (repo) props.onSelectRepo(repo.path)
@@ -341,9 +349,11 @@ function NoVcsScreen(props: NoVcsScreenProps) {
 			}
 		} else if (evt.name === "q") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			props.onQuit()
 		} else if (evt.name && /^[1-9]$/.test(evt.name)) {
 			evt.preventDefault()
+			evt.stopPropagation()
 			const index = Number.parseInt(evt.name, 10) - 1
 			const repo = props.recentRepos[index]
 			if (repo) props.onSelectRepo(repo.path)

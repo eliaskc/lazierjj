@@ -104,9 +104,11 @@ export function BookmarkPicker(props: BookmarkPickerProps) {
 
 		if (evt.name === "j" || evt.name === "down") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			selectNext()
 		} else if (evt.name === "k" || evt.name === "up") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			selectPrev()
 		}
 	})

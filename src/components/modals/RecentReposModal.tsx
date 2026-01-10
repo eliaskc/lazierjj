@@ -84,16 +84,20 @@ export function RecentReposModal(props: RecentReposModalProps) {
 	useKeyboard((evt) => {
 		if (evt.name === "j" || evt.name === "down") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			setSelectedIndex((i) => Math.min(repos.length - 1, i + 1))
 		} else if (evt.name === "k" || evt.name === "up") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			setSelectedIndex((i) => Math.max(0, i - 1))
 		} else if (evt.name === "return" || evt.name === "enter") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			const repo = repos[selectedIndex()]
 			if (repo) selectRepo(repo.path)
 		} else if (evt.name && /^[1-9]$/.test(evt.name)) {
 			evt.preventDefault()
+			evt.stopPropagation()
 			const index = Number.parseInt(evt.name, 10) - 1
 			const repo = repos[index]
 			if (repo) selectRepo(repo.path)

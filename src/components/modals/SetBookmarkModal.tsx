@@ -76,9 +76,11 @@ export function SetBookmarkModal(props: SetBookmarkModalProps) {
 	useKeyboard((evt) => {
 		if (evt.name === "escape") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			dialog.close()
 		} else if (evt.name === "tab") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			if (focusedField() === "picker" && hasBookmarks()) {
 				setFocusedField("create")
 				focusInputAtEnd(inputRef)
@@ -87,6 +89,7 @@ export function SetBookmarkModal(props: SetBookmarkModalProps) {
 			}
 		} else if (evt.name === "return" && focusedField() === "picker") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			handleMove()
 		}
 	})

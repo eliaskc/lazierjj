@@ -45,8 +45,6 @@ export const { use: useCommand, provider: CommandProvider } =
 			})
 
 			useKeyboard((evt) => {
-				if (evt.defaultPrevented) return
-
 				const dialogOpen = dialog.isOpen()
 				const activeCtx = focus.activeContext()
 				const activePanel = focus.panel()
@@ -82,6 +80,7 @@ export const { use: useCommand, provider: CommandProvider } =
 
 				if (mostSpecificMatch) {
 					evt.preventDefault()
+					evt.stopPropagation()
 					mostSpecificMatch.onSelect()
 				}
 			})

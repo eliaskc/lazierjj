@@ -33,9 +33,11 @@ export function RevisionPickerModal(props: RevisionPickerModalProps) {
 	useKeyboard((evt) => {
 		if (evt.name === "escape") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			dialog.close()
 		} else if (evt.name === "return") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			handleConfirm()
 		}
 	})

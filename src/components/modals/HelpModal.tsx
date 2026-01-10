@@ -360,12 +360,15 @@ export function HelpModal() {
 	useKeyboard((evt) => {
 		if (evt.name === "down") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			move(1)
 		} else if (evt.name === "up") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			move(-1)
 		} else if (evt.name === "return") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			executeSelected()
 		}
 	})

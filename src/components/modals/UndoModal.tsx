@@ -29,9 +29,11 @@ export function UndoModal(props: UndoModalProps) {
 	useKeyboard((evt) => {
 		if (evt.name === "y" || evt.name === "return") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			props.onConfirm()
 		} else if (evt.name === "n" || evt.name === "escape") {
 			evt.preventDefault()
+			evt.stopPropagation()
 			props.onCancel()
 		}
 	})
