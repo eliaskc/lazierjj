@@ -339,14 +339,14 @@ Agent-friendly CLI for operations jj doesn't expose non-interactively. TUI users
 - [x] Published to npm — no Bun required at runtime
 - [ ] Homebrew tap
 
-**Version indicator + update notification:**
-- [ ] Version indicator in StatusBar (bottom-right, muted, always visible)
-- [ ] Update check on startup (GitHub API, once per day, non-blocking)
-- [ ] Package manager detection (bun/npm/yarn/pnpm/curl)
-- [ ] Toast notification with correct update command
-- [ ] State stored in `~/.config/kajji/state.json`
+**Version indicator + auto-update:**
+- [x] Version indicator in StatusBar (bottom-right, muted, always visible)
+- [x] Update check on startup (GitHub API, once per day, non-blocking)
+- [x] Package manager detection (bun/npm/yarn/pnpm/curl)
+- [x] Auto-update with toast on success/failure
+- [x] State stored in `~/.config/kajji/state.json`
 
-**Next release (v0.3.0):** Ship auto-update and proper command log output (show raw jj output, not just errors — see UX Polish) with this release. Target after focus modes (#4 in Next Up), optionally large repo optimization (#3) and fuzzy search (#5).
+**Next release (v0.3.0):** Auto-update shipped. Still need proper command log output (show raw jj output, not just errors — see UX Polish).
 
 → [Detailed plan](./plans/release-flows.md)
 

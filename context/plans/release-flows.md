@@ -1,6 +1,6 @@
 # Release & Distribution
 
-**Status**: Implemented (v0.1.1)
+**Status**: Implemented (v0.1.1), auto-update added (v0.3.0)
 
 ---
 
@@ -97,8 +97,8 @@ gh release edit v<version> --prerelease=false
 
 - [ ] Homebrew tap
 - [ ] GitHub Actions for automated releases
-- [ ] Version indicator in UI
-- [ ] Update notification
+- [x] Version indicator in UI
+- [x] Auto-update with toast notification
 
 ---
 

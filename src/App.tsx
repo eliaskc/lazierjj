@@ -1,3 +1,4 @@
+import { Toaster } from "@opentui-ui/toast/solid"
 import { useRenderer } from "@opentui/solid"
 import { Show, onMount } from "solid-js"
 import {
@@ -22,9 +23,10 @@ import { KeybindProvider } from "./context/keybind"
 import { LayoutProvider, useLayout } from "./context/layout"
 import { LoadingProvider, useLoading } from "./context/loading"
 import { SyncProvider, useSync } from "./context/sync"
-import { ThemeProvider } from "./context/theme"
+import { ThemeProvider, useTheme } from "./context/theme"
 import { setRepoPath } from "./repo"
 import { isCriticalStartupError, parseJjError } from "./utils/error-parser"
+import { checkForUpdates } from "./utils/update"
 
 function AppContent() {
 	const renderer = useRenderer()
@@ -35,8 +37,8 @@ function AppContent() {
 	const commandLog = useCommandLog()
 	const globalLoading = useLoading()
 	const layout = useLayout()
+	const { colors, style } = useTheme()
 
-	// Check if we have a critical startup error (loading done, no data, has error)
 	const hasCriticalError = () => {
 		const err = error()
 		const isLoading = loading()
@@ -70,6 +72,7 @@ function AppContent() {
 	onMount(() => {
 		loadLog()
 		loadBookmarks()
+		checkForUpdates()
 
 		renderer.console.keyBindings = [
 			{ name: "y", ctrl: true, action: "copy-selection" },
@@ -368,9 +371,35 @@ function AppContent() {
 		}
 	}
 
+	const toasterOptions = () => ({
+		position: "top-right" as const,
+		toastOptions: {
+			style: {
+				backgroundColor: colors().background,
+				foregroundColor: colors().text,
+				borderColor: colors().border,
+				borderStyle: style().panel.borderStyle,
+				mutedColor: colors().textMuted,
+			},
+			success: {
+				style: { borderColor: colors().success },
+			},
+			error: {
+				style: { borderColor: colors().error },
+			},
+			warning: {
+				style: { borderColor: colors().warning },
+			},
+			info: {
+				style: { borderColor: colors().info },
+			},
+		},
+	})
+
 	return (
 		<DialogContainer>
 			<LayoutGrid />
+			<Toaster {...toasterOptions()} />
 		</DialogContainer>
 	)
 }

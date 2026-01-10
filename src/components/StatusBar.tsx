@@ -7,6 +7,7 @@ import { useLayout } from "../context/layout"
 import { useLoading } from "../context/loading"
 import { useTheme } from "../context/theme"
 import type { Context } from "../context/types"
+import { getCurrentVersion } from "../utils/update"
 
 function contextMatches(
 	commandContext: Context,
@@ -209,6 +210,11 @@ export function StatusBar() {
 								</text>
 							</box>
 						</Show>
+						<box flexShrink={0} marginLeft={2}>
+							<text fg={colors().textMuted} wrapMode="none">
+								v{getCurrentVersion()}
+							</text>
+						</box>
 					</>
 				}
 			>

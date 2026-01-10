@@ -13,7 +13,13 @@ import { checkRepoStatus, initJjGitRepo, initJjRepo } from "./utils/repo-check"
 import { getRecentRepos } from "./utils/state"
 
 // Mock modes for testing UI screens
-type MockMode = null | "error-stale" | "startup-no-vcs" | "startup-git"
+type MockMode =
+	| null
+	| "error-stale"
+	| "startup-no-vcs"
+	| "startup-git"
+	| "update-success"
+	| "update-failed"
 
 // Parse CLI args
 const args = process.argv.slice(2)
@@ -22,13 +28,24 @@ let mockMode: MockMode = null
 for (const arg of args) {
 	if (arg.startsWith("--mock=")) {
 		const value = arg.slice(7)
-		if (["error-stale", "startup-no-vcs", "startup-git"].includes(value)) {
+		if (
+			[
+				"error-stale",
+				"startup-no-vcs",
+				"startup-git",
+				"update-success",
+				"update-failed",
+			].includes(value)
+		) {
 			mockMode = value as MockMode
 		}
 	} else if (!arg.startsWith("-")) {
 		setRepoPath(arg)
 	}
 }
+
+// Export for other modules (like update.ts)
+export { mockMode }
 
 extend({ "ghostty-terminal": GhosttyTerminalRenderable })
 
