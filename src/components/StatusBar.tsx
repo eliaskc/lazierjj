@@ -3,6 +3,7 @@ import { useCommand } from "../context/command"
 import { useDialog } from "../context/dialog"
 import { useFocus } from "../context/focus"
 import { useKeybind } from "../context/keybind"
+import { useLayout } from "../context/layout"
 import { useLoading } from "../context/loading"
 import { useTheme } from "../context/theme"
 import type { Context } from "../context/types"
@@ -22,6 +23,7 @@ export function StatusBar() {
 	const dialog = useDialog()
 	const focus = useFocus()
 	const keybind = useKeybind()
+	const layout = useLayout()
 	const loading = useLoading()
 	const { colors, style } = useTheme()
 
@@ -129,6 +131,32 @@ export function StatusBar() {
 				when={dialog.isOpen() && dialogHints().length > 0}
 				fallback={
 					<>
+						<box
+							flexShrink={0}
+							backgroundColor={
+								layout.focusMode() === "normal"
+									? undefined
+									: colors().modes[layout.focusMode()].bg
+							}
+						>
+							<text
+								wrapMode="none"
+								fg={
+									layout.focusMode() === "normal"
+										? colors().textMuted
+										: colors().modes[layout.focusMode()].text
+								}
+							>
+								{(() => {
+									const text = layout.focusMode().toUpperCase()
+									const width = "NORMAL".length
+									const leftPad = Math.floor((width - text.length) / 2)
+									const rightPad = width - text.length - leftPad
+									return " ".repeat(leftPad) + text + " ".repeat(rightPad)
+								})()}
+							</text>
+						</box>
+						<box width={1} />
 						<box flexGrow={1} overflow="hidden">
 							<text wrapMode="none">
 								<For each={contextCommands()}>

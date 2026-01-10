@@ -51,6 +51,7 @@ export type KeybindConfigKey =
 	| "nav_prev_file"
 	| "nav_next_file"
 	| "open_recent"
+	| "toggle_focus_mode"
 
 export type KeybindConfig = Record<KeybindConfigKey, string>
 
@@ -100,4 +101,5 @@ export const DEFAULT_KEYBINDS: KeybindConfig = {
 	nav_prev_file: "{",
 	nav_next_file: "}",
 	open_recent: "ctrl+o",
+	toggle_focus_mode: "ctrl+x",
 }

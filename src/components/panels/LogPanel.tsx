@@ -829,12 +829,12 @@ export function LogPanel() {
 			hotkey="1"
 			focused={isFocused()}
 		>
-			<Show when={isFilesView()}>{renderFilesContent()}</Show>
+			<Show when={isFilesView()}>{() => renderFilesContent()}</Show>
 			<Show when={!isFilesView() && activeTab() === "revisions"}>
-				{renderLogContent()}
+				{() => renderLogContent()}
 			</Show>
 			<Show when={!isFilesView() && activeTab() === "oplog"}>
-				{renderOpLogContent()}
+				{() => renderOpLogContent()}
 			</Show>
 		</Panel>
 	)

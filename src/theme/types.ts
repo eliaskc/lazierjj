@@ -1,3 +1,8 @@
+export interface ModeColors {
+	bg: string
+	text: string
+}
+
 export interface ThemeColors {
 	primary: string
 	secondary: string
@@ -25,6 +30,13 @@ export interface ThemeColors {
 
 	scrollbarTrack: string
 	scrollbarThumb: string
+
+	modes: {
+		normal: ModeColors
+		diff: ModeColors
+		log: ModeColors
+		pr: ModeColors
+	}
 }
 
 export interface ThemeStyle {

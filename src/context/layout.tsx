@@ -8,16 +8,13 @@ import {
 } from "solid-js"
 import { createSimpleContext } from "./helper"
 
-const NARROW_THRESHOLD = 100
-const MEDIUM_THRESHOLD = 150
-
 const HELP_MODAL_1_COL_THRESHOLD = 90
 const HELP_MODAL_2_COL_THRESHOLD = 130
 
-const LAYOUT_WIDE_REVISIONS = { left: 2, right: 3 }
-const LAYOUT_WIDE_FILES = { left: 3, right: 7 }
-const LAYOUT_MEDIUM_REVISIONS = { left: 1, right: 1 }
-const LAYOUT_MEDIUM_FILES = { left: 2, right: 3 }
+const LAYOUT_NORMAL = { left: 1, right: 1 }
+const LAYOUT_DIFF = { left: 1, right: 4 }
+
+export type FocusMode = "normal" | "diff"
 
 export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
 	{
@@ -27,7 +24,23 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
 
 			const [terminalWidth, setTerminalWidth] = createSignal(renderer.width)
 			const [terminalHeight, setTerminalHeight] = createSignal(renderer.height)
-			const [logPanelInFilesMode, setLogPanelInFilesMode] = createSignal(false)
+
+			const [focusMode, setFocusModeInternal] =
+				createSignal<FocusMode>("normal")
+			const [previousMode, setPreviousMode] = createSignal<FocusMode>("normal")
+
+			const setFocusMode = (mode: FocusMode) => {
+				setPreviousMode(focusMode())
+				setFocusModeInternal(mode)
+			}
+
+			const toggleFocusMode = () => {
+				setFocusMode(focusMode() === "normal" ? "diff" : "normal")
+			}
+
+			const returnToPreviousMode = () => {
+				setFocusModeInternal(previousMode())
+			}
 
 			onMount(() => {
 				const handleResize = (width: number, height: number) => {
@@ -38,10 +51,6 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
 				onCleanup(() => renderer.off("resize", handleResize))
 			})
 
-			const isNarrow = createMemo(() => terminalWidth() < NARROW_THRESHOLD)
-
-			const isMedium = createMemo(() => terminalWidth() < MEDIUM_THRESHOLD)
-
 			const helpModalColumns = createMemo(() => {
 				const width = terminalWidth()
 				if (width < HELP_MODAL_1_COL_THRESHOLD) return 1
@@ -50,12 +59,7 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
 			})
 
 			const layoutRatio = createMemo(() => {
-				if (isMedium()) {
-					return logPanelInFilesMode()
-						? LAYOUT_MEDIUM_FILES
-						: LAYOUT_MEDIUM_REVISIONS
-				}
-				return logPanelInFilesMode() ? LAYOUT_WIDE_FILES : LAYOUT_WIDE_REVISIONS
+				return focusMode() === "diff" ? LAYOUT_DIFF : LAYOUT_NORMAL
 			})
 
 			const mainAreaWidth = createMemo(() => {
@@ -71,10 +75,11 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
 				terminalHeight,
 				layoutRatio,
 				mainAreaWidth,
-				isNarrow,
-				isMedium,
 				helpModalColumns,
-				setLogPanelInFilesMode,
+				focusMode,
+				setFocusMode,
+				toggleFocusMode,
+				returnToPreviousMode,
 			}
 		},
 	},

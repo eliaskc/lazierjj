@@ -1,4 +1,4 @@
-import type { JSX } from "solid-js"
+import { type JSX, Show } from "solid-js"
 import { useLayout } from "../context/layout"
 import { useTheme } from "../context/theme"
 import { StatusBar } from "./StatusBar"
@@ -12,7 +12,7 @@ interface LayoutProps {
 
 export function Layout(props: LayoutProps) {
 	const { colors, style } = useTheme()
-	const { layoutRatio } = useLayout()
+	const { layoutRatio, focusMode } = useLayout()
 
 	return (
 		<box
@@ -32,12 +32,14 @@ export function Layout(props: LayoutProps) {
 					flexDirection="column"
 					gap={0}
 				>
-					<box flexGrow={3} flexBasis={0}>
+					<box flexGrow={focusMode() === "diff" ? 1 : 3} flexBasis={0}>
 						{props.top}
 					</box>
-					<box flexGrow={1} flexBasis={0}>
-						{props.bottom}
-					</box>
+					<Show when={focusMode() === "normal"}>
+						<box flexGrow={1} flexBasis={0}>
+							{props.bottom}
+						</box>
+					</Show>
 				</box>
 				<box
 					flexGrow={layoutRatio().right}
@@ -46,7 +48,9 @@ export function Layout(props: LayoutProps) {
 					flexDirection="column"
 				>
 					<box flexGrow={1}>{props.right}</box>
-					<CommandLogPanel />
+					<Show when={focusMode() === "normal"}>
+						<CommandLogPanel />
+					</Show>
 				</box>
 			</box>
 			<StatusBar />

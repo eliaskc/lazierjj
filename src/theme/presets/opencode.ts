@@ -29,6 +29,13 @@ export const opencodeTheme: Theme = {
 
 		scrollbarTrack: "#1e1e1e",
 		scrollbarThumb: "#484848",
+
+		modes: {
+			normal: { bg: "#303030", text: "#808080" },
+			diff: { bg: "#5c9cf5", text: "#0a0a0a" },
+			log: { bg: "#fcd53a", text: "#0a0a0a" },
+			pr: { bg: "#9d7cd8", text: "#0a0a0a" },
+		},
 	},
 	style: {
 		panel: {

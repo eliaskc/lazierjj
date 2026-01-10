@@ -1,6 +1,6 @@
 # Focus Modes
 
-**Status**: Planning  
+**Status**: MVP Complete  
 **Priority**: High  
 **Goal**: Make kajji excellent for log browsing, diff viewing, and future PR review
 
@@ -34,9 +34,10 @@ Current layout, optimized for commit manipulation:
 
 Expanded diff view for focused code review:
 
-- **Log sidebar**: `max(20%, 30 cols)` — narrow but functional
+- **Log sidebar**: `max(20%, 30 cols)` — narrow but functional, full height
 - **Diff panel**: Takes remaining width
-- **Command log**: Hidden (more vertical space)
+- **Command log**: Hidden
+- **Bookmarks panel**: Hidden (log takes full left column height)
 - Same log template, just narrower (truncation acceptable)
 
 Inspired by lumen's full-screen diff with slim file tree.
@@ -131,25 +132,25 @@ File tree browsing needs diff space more than commit metadata. The minimal heade
 
 ## Mode Indicator
 
-Always visible in status bar (bottom-left or bottom-right, TBD):
+Always visible in status bar (bottom-left):
 
 ```
-NORMAL · ctrl+x
+NORMAL
 ```
 
 Each mode has distinct styling:
 
 | Mode | Style |
 |------|-------|
-| Normal | Muted/subtle (default state, doesn't demand attention) |
-| Diff | Accent color (e.g., cyan/blue) |
+| Normal | Muted text, no background (default state, doesn't demand attention) |
+| Diff | Accent background + text color (cyan/blue) |
 | Log | Different accent (e.g., yellow/orange) |
 | PR | Different accent (e.g., green/magenta) |
 
-Could be text color, background color, or both. The key is:
-- Normal is visually quiet
-- Other modes are more prominent (you're in a "special" state)
-- Keybind hint always shown for discoverability
+Text is centered in a fixed-width box (width of "NORMAL"). The key is:
+- Normal is visually quiet (blends with status bar)
+- Other modes are more prominent with colored background (you're in a "special" state)
+- Keybind discoverable via help (`?`)
 
 ---
 
@@ -159,10 +160,35 @@ Could be text color, background color, or both. The key is:
 
 1. Normal + Diff modes only
 2. `ctrl+x` toggles between them
-3. Minimal commit header for file tree
-4. Auto-switch on file tree entry
-5. Previous mode tracking
-6. Mode indicator in status bar
+3. Diff mode: hide bookmarks panel + command log
+4. Minimal commit header for file tree
+5. Auto-switch on file tree entry
+6. Previous mode tracking
+7. Mode indicator in status bar
+
+### Post-MVP: Layout Refactor
+
+Before adding Log mode, refactor from two independent columns to a single grid component:
+
+**Current structure:**
+```
+Left column (flex)         Right column (flex)
+├── LogPanel (3)           ├── MainArea (1)
+└── BookmarksPanel (1)     └── CommandLogPanel
+```
+
+**New structure:**
+```tsx
+<LayoutGrid mode={focusMode()}>
+  // Single component controls all panel visibility and sizing
+  // Mode-specific layouts defined in one place
+</LayoutGrid>
+```
+
+**Why before Log mode:**
+- Log mode needs 3 columns: `narrow log | file tree | diff`
+- Awkward to bolt onto current two-column structure
+- Single source of truth for all panel positions/sizes
 
 ### State Management
 

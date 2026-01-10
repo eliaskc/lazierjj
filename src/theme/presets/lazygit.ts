@@ -29,6 +29,13 @@ export const lazygitTheme: Theme = {
 
 		scrollbarTrack: "#303030",
 		scrollbarThumb: "#606060",
+
+		modes: {
+			normal: { bg: "#303030", text: "#808080" },
+			diff: { bg: "#56b6c2", text: "#0a0a0a" },
+			log: { bg: "#e5c07b", text: "#0a0a0a" },
+			pr: { bg: "#c678dd", text: "#0a0a0a" },
+		},
 	},
 	style: {
 		panel: {

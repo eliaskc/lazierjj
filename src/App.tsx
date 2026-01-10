@@ -19,7 +19,7 @@ import { CommandLogProvider, useCommandLog } from "./context/commandlog"
 import { DialogContainer, DialogProvider, useDialog } from "./context/dialog"
 import { FocusProvider, useFocus } from "./context/focus"
 import { KeybindProvider } from "./context/keybind"
-import { LayoutProvider } from "./context/layout"
+import { LayoutProvider, useLayout } from "./context/layout"
 import { LoadingProvider, useLoading } from "./context/loading"
 import { SyncProvider, useSync } from "./context/sync"
 import { ThemeProvider } from "./context/theme"
@@ -33,6 +33,7 @@ function AppContent() {
 	const dialog = useDialog()
 	const commandLog = useCommandLog()
 	const globalLoading = useLoading()
+	const layout = useLayout()
 
 	onMount(() => {
 		loadLog()
@@ -171,6 +172,15 @@ function AppContent() {
 			type: "action",
 			visibility: "help-only",
 			onSelect: () => refresh(),
+		},
+		{
+			id: "global.toggle_focus_mode",
+			title: "toggle focus mode",
+			keybind: "toggle_focus_mode",
+			context: "global",
+			type: "action",
+			visibility: "help-only",
+			onSelect: () => layout.toggleFocusMode(),
 		},
 		{
 			id: "global.git_fetch",

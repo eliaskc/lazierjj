@@ -149,6 +149,27 @@ function FileStats(props: { stats: DiffStats; maxWidth: number }) {
 	)
 }
 
+function MinimalCommitHeader(props: {
+	commit: Commit
+	details: CommitDetails | null
+}) {
+	const { colors } = useTheme()
+	const subject = () => props.details?.subject || props.commit.description
+
+	return (
+		<box flexDirection="column" flexShrink={0}>
+			<box flexDirection="row">
+				<text>
+					<span style={{ fg: colors().warning }}>{props.commit.changeId}</span>
+					{"  "}
+				</text>
+				<AnsiText content={subject()} wrapMode="none" />
+			</box>
+			<text> </text>
+		</box>
+	)
+}
+
 function CommitHeader(props: {
 	commit: Commit
 	details: CommitDetails | null
@@ -722,20 +743,26 @@ export function MainArea() {
 					}}
 				>
 					<box ref={headerRef} flexDirection="column" flexShrink={0}>
-						<Show
-							when={
-								viewMode() !== "files" &&
-								bookmarkViewMode() !== "files" &&
-								activeCommit()
-							}
-						>
+						<Show when={activeCommit()}>
 							{(commit: () => Commit) => (
-								<CommitHeader
-									commit={commit()}
-									details={commitDetails()}
-									stats={diffStats()}
-									maxWidth={mainAreaWidth()}
-								/>
+								<Show
+									when={
+										viewMode() !== "files" && bookmarkViewMode() !== "files"
+									}
+									fallback={
+										<MinimalCommitHeader
+											commit={commit()}
+											details={commitDetails()}
+										/>
+									}
+								>
+									<CommitHeader
+										commit={commit()}
+										details={commitDetails()}
+										stats={diffStats()}
+										maxWidth={mainAreaWidth()}
+									/>
+								</Show>
 							)}
 						</Show>
 					</box>
