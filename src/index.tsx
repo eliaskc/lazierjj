@@ -5,6 +5,7 @@ import { Show, createSignal } from "solid-js"
 import { App } from "./App"
 import { jjWorkspaceUpdateStale } from "./commander/operations"
 import { ErrorScreen } from "./components/ErrorScreen"
+import { LogoScreen } from "./components/LogoScreen"
 import { StartupScreen } from "./components/StartupScreen"
 import { ThemeProvider } from "./context/theme"
 import { initHighlighter } from "./diff"
@@ -20,6 +21,7 @@ type MockMode =
 	| "startup-git"
 	| "update-success"
 	| "update-failed"
+	| "logo"
 
 // Parse CLI args
 const args = process.argv.slice(2)
@@ -35,6 +37,7 @@ for (const arg of args) {
 				"startup-git",
 				"update-success",
 				"update-failed",
+				"logo",
 			].includes(value)
 		) {
 			mockMode = value as MockMode
@@ -105,6 +108,15 @@ function Root() {
 	const handleQuit = () => {
 		renderer.destroy()
 		process.exit(0)
+	}
+
+	// Mock logo screen
+	if (mockMode === "logo") {
+		return (
+			<ThemeProvider>
+				<LogoScreen />
+			</ThemeProvider>
+		)
 	}
 
 	// Mock error screen
