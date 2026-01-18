@@ -557,7 +557,7 @@ export function BookmarksPanel() {
 							{
 								id: "set-bookmark",
 								hints: [
-									{ key: "tab", label: "switch" },
+									{ key: "up/down", label: "navigate" },
 									{ key: "enter", label: "confirm" },
 								],
 							},
