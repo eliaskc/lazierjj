@@ -153,7 +153,7 @@ function bufferFileWrite(trace: TraceData): void {
 async function flushFileBuffer(): Promise<void> {
 	if (fileBuffer.length === 0) return
 
-	const lines = fileBuffer.join("\n") + "\n"
+	const lines = `${fileBuffer.join("\n")}\n`
 	fileBuffer = []
 	fileFlushTimeout = null
 
@@ -362,15 +362,16 @@ export const tracer = {
 		> = {}
 
 		for (const trace of traceHistory) {
-			if (!summary[trace.name]) {
-				summary[trace.name] = {
+			let s = summary[trace.name]
+			if (!s) {
+				s = {
 					count: 0,
 					totalMs: 0,
 					maxMs: 0,
 					minMs: Number.POSITIVE_INFINITY,
 				}
+				summary[trace.name] = s
 			}
-			const s = summary[trace.name]!
 			s.count++
 			s.totalMs += trace.duration
 			s.maxMs = Math.max(s.maxMs, trace.duration)
@@ -406,16 +407,7 @@ export const tracer = {
 
 		const header =
 			"Trace Name                    │ Count │   Avg   │   Max   │   Min"
-		const separator =
-			"─".repeat(30) +
-			"┼" +
-			"─".repeat(7) +
-			"┼" +
-			"─".repeat(9) +
-			"┼" +
-			"─".repeat(9) +
-			"┼" +
-			"─".repeat(9)
+		const separator = `${"─".repeat(30)}┼${"─".repeat(7)}┼${"─".repeat(9)}┼${"─".repeat(9)}┼${"─".repeat(9)}`
 
 		const rows = entries.map(([name, data]) => {
 			const padName = name.slice(0, 28).padEnd(30)

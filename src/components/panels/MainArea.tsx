@@ -125,7 +125,6 @@ function stripEmailAndDate(
 	const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
 	// Pattern to match text with optional surrounding ANSI codes
-	// biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequences
 	const ansiWrap = (s: string) =>
 		`(?:\\x1b\\[[0-9;]*m)*${s}(?:\\x1b\\[[0-9;]*m)*\\s*`
 

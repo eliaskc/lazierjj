@@ -178,14 +178,20 @@ export async function tokenizeLine(
 			}
 		}
 
+		if (!worker) {
+			resolve([{ content }])
+			return
+		}
+		const w = worker
+
 		// Temporarily add listener
-		const originalHandler = worker!.onmessage
-		worker!.onmessage = (event) => {
-			originalHandler?.call(worker!, event)
+		const originalHandler = w.onmessage
+		w.onmessage = (event) => {
+			originalHandler?.call(w, event)
 			handler(event)
 		}
 
-		worker!.postMessage({
+		w.postMessage({
 			type: "tokenize",
 			id,
 			content,
