@@ -535,7 +535,6 @@ export function SyncProvider(props: { children: JSX.Element }) {
 			setSelectedBookmarkFileIndex(0)
 			setBookmarkCollapsedPaths(new Set<string>())
 			setBookmarkViewMode("files")
-			layout.setFocusMode("diff")
 			focus.setActiveContext("refs.files")
 		} catch (e) {
 			console.error("Failed to load bookmark files:", e)
@@ -552,7 +551,6 @@ export function SyncProvider(props: { children: JSX.Element }) {
 			setBookmarkFileTree(null)
 			setSelectedBookmarkFileIndex(0)
 			setBookmarkCollapsedPaths(new Set<string>())
-			layout.returnToPreviousMode()
 			focus.setActiveContext("refs.revisions")
 		} else if (mode === "commits") {
 			setBookmarkViewMode("list")
@@ -630,7 +628,6 @@ export function SyncProvider(props: { children: JSX.Element }) {
 			setCollapsedPaths(new Set<string>())
 			setViewMode("files")
 			focus.setActiveContext("log.files")
-			layout.setFocusMode("diff")
 		} catch (e) {
 			setFilesError(e instanceof Error ? e.message : "Failed to load files")
 		} finally {
@@ -644,7 +641,6 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		setFileTree(null)
 		setSelectedFileIndex(0)
 		setCollapsedPaths(new Set<string>())
-		layout.returnToPreviousMode()
 		focus.setActiveContext("log.revisions")
 	}
 

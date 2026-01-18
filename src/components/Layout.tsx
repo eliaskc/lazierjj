@@ -1,4 +1,5 @@
-import { Match, Switch } from "solid-js"
+import { Match, Show, Switch } from "solid-js"
+import { useFocus } from "../context/focus"
 import { useLayout } from "../context/layout"
 import { useTheme } from "../context/theme"
 import { StatusBar } from "./StatusBar"
@@ -29,13 +30,21 @@ function NormalLayout() {
 }
 
 function DiffLayout() {
+	const focus = useFocus()
+	const isRefsFocused = () => focus.isPanel("refs")
+
 	return (
 		<box flexDirection="row" flexGrow={1} gap={0}>
 			<box flexGrow={1} flexBasis={0} flexDirection="column">
-				<LogPanel />
+				<Show when={isRefsFocused()} fallback={<LogPanel />}>
+					<BookmarksPanel />
+				</Show>
 			</box>
 			<box flexGrow={4} flexBasis={0} flexDirection="column">
-				<MainArea />
+				<box flexGrow={1}>
+					<MainArea />
+				</box>
+				<CommandLogPanel />
 			</box>
 		</box>
 	)
