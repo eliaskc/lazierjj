@@ -1,9 +1,9 @@
 /**
  * Release script for kajji
  *
- * Usage: bun run script/release.ts <version>
+ * Usage: bun run script/release.ts [version]
  *
- * version: patch | minor | major | x.y.z (required)
+ * version: patch | minor | major | x.y.z (optional, defaults to package.json)
  *
  * Prerequisites:
  * - No uncommitted changes (except CHANGELOG.md)
@@ -22,7 +22,8 @@
 import { execSync } from "node:child_process"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 
-const pkg = JSON.parse(readFileSync("package.json", "utf-8"))
+const packageJson = readFileSync("package.json", "utf-8")
+const pkg = JSON.parse(packageJson)
 const currentVersion = pkg.version
 
 function run(
@@ -106,30 +107,32 @@ function bumpVersion(
 const args = process.argv.slice(2)
 const versionArg = args[0]
 
-if (!versionArg) {
-	console.error("Usage: bun run script/release.ts <version>")
-	console.error("version: patch | minor | major | x.y.z")
-	process.exit(1)
-}
+let newVersion = currentVersion
 
-let newVersion: string
-
-if (["major", "minor", "patch"].includes(versionArg)) {
-	const bumpType = versionArg as "major" | "minor" | "patch"
-	newVersion = bumpVersion(currentVersion, bumpType)
-} else if (/^\d+\.\d+\.\d+$/.test(versionArg)) {
-	newVersion = versionArg
-} else {
-	console.error(`Invalid version argument: ${versionArg}`)
-	console.error("Use: patch | minor | major | x.y.z")
-	process.exit(1)
+if (versionArg) {
+	if (["major", "minor", "patch"].includes(versionArg)) {
+		const bumpType = versionArg as "major" | "minor" | "patch"
+		newVersion = bumpVersion(currentVersion, bumpType)
+	} else if (/^\d+\.\d+\.\d+$/.test(versionArg)) {
+		newVersion = versionArg
+	} else {
+		console.error(`Invalid version argument: ${versionArg}`)
+		console.error("Use: patch | minor | major | x.y.z")
+		process.exit(1)
+	}
 }
 
 console.log(`New version: ${newVersion}\n`)
 
-console.log("Updating package.json...")
-pkg.version = newVersion
-writeFileSync("package.json", `${JSON.stringify(pkg, null, "\t")}\n`)
+if (newVersion !== currentVersion) {
+	console.log("Updating package.json...")
+	pkg.version = newVersion
+	const updatedPackageJson = packageJson.replace(
+		/"version":\s*"[^"]+"/,
+		`"version": "${newVersion}"`,
+	)
+	writeFileSync("package.json", updatedPackageJson)
+}
 
 console.log("Committing release...")
 run("git add package.json CHANGELOG.md")
