@@ -489,7 +489,7 @@ export function MainArea() {
 	command.register(() => [
 		{
 			id: "detail.page_up",
-			title: "Page up",
+			title: "page up",
 			keybind: "nav_page_up",
 			context: "detail",
 			type: "navigation",
@@ -500,7 +500,7 @@ export function MainArea() {
 		},
 		{
 			id: "detail.page_down",
-			title: "Page down",
+			title: "page down",
 			keybind: "nav_page_down",
 			context: "detail",
 			type: "navigation",
