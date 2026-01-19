@@ -195,12 +195,41 @@ export function isImmutableError(result: OperationResult): boolean {
 	)
 }
 
+export interface RebaseOptions {
+	mode?: "revision" | "descendants" | "branch"
+	targetMode?: "onto" | "insertAfter" | "insertBefore"
+	skipEmptied?: boolean
+	ignoreImmutable?: boolean
+}
+
 export async function jjRebase(
 	revision: string,
 	destination: string,
-	options?: { ignoreImmutable?: boolean },
+	options?: RebaseOptions,
 ): Promise<OperationResult> {
-	const args = ["rebase", "-r", revision, "-d", destination]
+	const args = ["rebase"]
+	const mode = options?.mode ?? "revision"
+	const targetMode = options?.targetMode ?? "onto"
+
+	if (mode === "descendants") {
+		args.push("-s", revision)
+	} else if (mode === "branch") {
+		args.push("-b", revision)
+	} else {
+		args.push("-r", revision)
+	}
+
+	if (targetMode === "insertAfter") {
+		args.push("-A", destination)
+	} else if (targetMode === "insertBefore") {
+		args.push("-B", destination)
+	} else {
+		args.push("-d", destination)
+	}
+
+	if (options?.skipEmptied) {
+		args.push("--skip-emptied")
+	}
 	if (options?.ignoreImmutable) {
 		args.push("--ignore-immutable")
 	}

@@ -18,6 +18,7 @@ import {
 	jjAbandon,
 	jjDescribe,
 	jjEdit,
+	jjRebase,
 	jjShowDescriptionStyled,
 	jjSquash,
 	parseOpLog,
@@ -368,6 +369,73 @@ describe("jjSquash", () => {
 			"def456",
 			"-u",
 			"-k",
+			"--ignore-immutable",
+		])
+	})
+})
+
+describe("jjRebase", () => {
+	test("calls execute with revision and destination", async () => {
+		mockExecute.mockResolvedValueOnce({
+			stdout: "",
+			stderr: "",
+			exitCode: 0,
+			success: true,
+		})
+
+		await jjRebase("abc123", "def456")
+
+		expect(mockExecute).toHaveBeenCalledWith([
+			"rebase",
+			"-r",
+			"abc123",
+			"-d",
+			"def456",
+		])
+	})
+
+	test("adds descendants and skip-emptied flags", async () => {
+		mockExecute.mockResolvedValueOnce({
+			stdout: "",
+			stderr: "",
+			exitCode: 0,
+			success: true,
+		})
+
+		await jjRebase("abc123", "def456", {
+			mode: "descendants",
+			skipEmptied: true,
+		})
+
+		expect(mockExecute).toHaveBeenCalledWith([
+			"rebase",
+			"-s",
+			"abc123",
+			"-d",
+			"def456",
+			"--skip-emptied",
+		])
+	})
+
+	test("uses insert-before mode and ignore immutable", async () => {
+		mockExecute.mockResolvedValueOnce({
+			stdout: "",
+			stderr: "",
+			exitCode: 0,
+			success: true,
+		})
+
+		await jjRebase("abc123", "def456", {
+			targetMode: "insertBefore",
+			ignoreImmutable: true,
+		})
+
+		expect(mockExecute).toHaveBeenCalledWith([
+			"rebase",
+			"-r",
+			"abc123",
+			"-B",
+			"def456",
 			"--ignore-immutable",
 		])
 	})

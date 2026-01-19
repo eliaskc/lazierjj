@@ -49,6 +49,7 @@ import { FilterableFileTree } from "../FilterableFileTree"
 import { Panel } from "../Panel"
 import { BookmarkNameModal } from "../modals/BookmarkNameModal"
 import { DescribeModal } from "../modals/DescribeModal"
+import { RebaseModal } from "../modals/RebaseModal"
 import { RevisionPickerModal } from "../modals/RevisionPickerModal"
 import { SetBookmarkModal } from "../modals/SetBookmarkModal"
 
@@ -595,12 +596,20 @@ export function BookmarksPanel() {
 						if (!commit) return
 						dialog.open(
 							() => (
-								<RevisionPickerModal
-									title={`Rebase ${commit.changeId.slice(0, 8)} onto`}
+								<RebaseModal
+									source={commit}
 									commits={commits()}
-									defaultRevision={commit.changeId}
-									onSelect={async (destination) => {
-										const result = await jjRebase(commit.changeId, destination)
+									defaultTarget={commit.changeId}
+									onRebase={async (destination, options) => {
+										const result = await jjRebase(
+											commit.changeId,
+											destination,
+											{
+												mode: options.mode,
+												targetMode: options.targetMode,
+												skipEmptied: options.skipEmptied,
+											},
+										)
 										if (isImmutableError(result)) {
 											const confirmed = await dialog.confirm({
 												message: "Target is immutable. Rebase anyway?",
@@ -608,6 +617,9 @@ export function BookmarksPanel() {
 											if (confirmed) {
 												await runOperation("Rebasing...", () =>
 													jjRebase(commit.changeId, destination, {
+														mode: options.mode,
+														targetMode: options.targetMode,
+														skipEmptied: options.skipEmptied,
 														ignoreImmutable: true,
 													}),
 												)
@@ -623,7 +635,14 @@ export function BookmarksPanel() {
 							),
 							{
 								id: "rebase",
-								hints: [{ key: "enter", label: "confirm" }],
+								hints: [
+									{ key: "s", label: "descendants" },
+									{ key: "b", label: "branch" },
+									{ key: "e", label: "skip emptied" },
+									{ key: "a", label: "insert after" },
+									{ key: "B", label: "insert before" },
+									{ key: "enter", label: "rebase" },
+								],
 							},
 						)
 					},
