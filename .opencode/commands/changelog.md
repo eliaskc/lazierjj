@@ -19,6 +19,21 @@ Generate release notes and update CHANGELOG.md.
 
 Only ask user if: no tags exist, or commit range is ambiguous.
 
+## Version Bumping (semver)
+
+| Bump | When | Examples |
+|------|------|----------|
+| **major** (x.0.0) | breaking changes | removed feature, changed API, renamed command |
+| **minor** (0.x.0) | new features | new command, new modal, new keybind |
+| **patch** (0.0.x) | bug fixes only | crash fix, typo fix, perf improvement |
+
+**Decision process:**
+1. Any `breaking` section entries? → major
+2. Any `new` section entries? → minor
+3. Only `improved` or `fixed`? → patch
+
+Don't default to patch — check if there are new user-facing features.
+
 ## Progressive Context Gathering
 
 Start minimal, dig deeper only when needed:
@@ -166,6 +181,7 @@ d4e5f6g fix: handle divergent commits correctly
 
 ## Common Mistakes to Avoid
 
+- Don't default to patch — new features require minor bump
 - Don't include `docs:`, `test:`, `chore:` commits
 - Don't use Title Case
 - Don't write paragraphs — one line per bullet
