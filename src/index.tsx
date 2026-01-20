@@ -64,6 +64,9 @@ For more information, see https://martinvonz.github.io/jj/latest/working-copy/`,
 function Root() {
 	const renderer = useRenderer()
 	const initialStatus = checkRepoStatus(getRepoPath())
+	if (initialStatus.repoPath !== getRepoPath()) {
+		setRepoPath(initialStatus.repoPath)
+	}
 	const [isJjRepo, setIsJjRepo] = createSignal(
 		mockMode
 			? mockMode !== "startup-no-vcs" && mockMode !== "startup-git"
@@ -80,6 +83,9 @@ function Root() {
 	const handleSelectRepo = (path: string) => {
 		setRepoPath(path)
 		const status = checkRepoStatus(path)
+		if (status.repoPath !== path) {
+			setRepoPath(status.repoPath)
+		}
 		if (status.isJjRepo) {
 			setIsJjRepo(true)
 		}
@@ -142,6 +148,9 @@ function Root() {
 
 	const handleRetryStartup = async () => {
 		const status = checkRepoStatus(getRepoPath())
+		if (status.repoPath !== getRepoPath()) {
+			setRepoPath(status.repoPath)
+		}
 		setStartupError(status.startupError)
 		if (!status.startupError) {
 			setIsJjRepo(status.isJjRepo)
