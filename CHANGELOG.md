@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.1
+
+### fixed
+- syntax highlighting not working in compiled binaries ([`2763cbd`](../../commit/2763cbd))
+
 ## 0.5.0
 
 ### new

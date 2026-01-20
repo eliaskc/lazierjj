@@ -106,7 +106,7 @@ kajji /path/to/repo      # specific directory
 | `n` / `N` | New change / new before |
 | `e` | Edit change |
 | `d` | Describe change |
-| `s` | Squash into parent |
+| `s` | Squash |
 | `a` | Abandon change |
 | `r` | Rebase |
 | `S` | Split |
