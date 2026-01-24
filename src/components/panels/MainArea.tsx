@@ -597,9 +597,6 @@ export function MainArea() {
 
 	return (
 		<Panel title="Detail" hotkey="3" panelId="detail" focused={isFocused()}>
-			<Show when={isLoading() && !hasContent()}>
-				<text>Loading diff...</text>
-			</Show>
 			<Show when={hasError()}>
 				<text>Error: {hasError()}</text>
 			</Show>
@@ -643,9 +640,6 @@ export function MainArea() {
 						<text fg={colors().error}>Error: {parsedDiffError()}</text>
 					</Show>
 					<Show when={!parsedDiffError()}>
-						<Show when={parsedDiffLoading() && parsedFiles().length === 0}>
-							<text fg={colors().textMuted}>Parsing diff...</text>
-						</Show>
 						<Show when={parsedFiles().length > 0}>
 							<FileSummary
 								files={parsedFiles()}
@@ -670,9 +664,6 @@ export function MainArea() {
 									viewportHeight={viewportHeight()}
 								/>
 							</Show>
-						</Show>
-						<Show when={parsedFiles().length === 0 && !parsedDiffLoading()}>
-							<text>No changes in this commit.</text>
 						</Show>
 					</Show>
 				</scrollbox>

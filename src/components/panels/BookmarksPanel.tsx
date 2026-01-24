@@ -154,7 +154,6 @@ export function BookmarksPanel() {
 			: visibleLocalBookmarks()
 
 	const listTotalRows = createMemo(() => currentBookmarks().length)
-	const listThreshold = createMemo(() => Math.max(0, listTotalRows() - 10))
 	const canPageBookmarks = createMemo(() => !filterMode() && bookmarksHasMore())
 
 	const currentSelectedIndex = () =>
@@ -272,6 +271,11 @@ export function BookmarksPanel() {
 	const [listViewportHeight, setListViewportHeight] = createSignal(30)
 	const [commitsScrollTop, setCommitsScrollTop] = createSignal(0)
 	const [filesScrollTop, setFilesScrollTop] = createSignal(0)
+
+	const listThreshold = createMemo(() => {
+		const buffer = Math.max(20, listViewportHeight() * 4)
+		return Math.max(0, listTotalRows() - buffer)
+	})
 
 	createEffect(
 		on(
@@ -985,9 +989,6 @@ export function BookmarksPanel() {
 		<Panel title={title()} hotkey="2" panelId="refs" focused={isFocused()}>
 			<Switch>
 				<Match when={bookmarkViewMode() === "list"}>
-					<Show when={bookmarksLoading() && localBookmarks().length === 0}>
-						<text fg={colors().textMuted}>Loading bookmarks...</text>
-					</Show>
 					<Show when={bookmarksError() && localBookmarks().length === 0}>
 						<text fg={colors().error}>Error: {bookmarksError()}</text>
 					</Show>
@@ -1079,9 +1080,6 @@ export function BookmarksPanel() {
 				</Match>
 
 				<Match when={bookmarkViewMode() === "commits"}>
-					<Show when={bookmarkCommitsLoading()}>
-						<text fg={colors().textMuted}>Loading commits...</text>
-					</Show>
 					<Show when={!bookmarkCommitsLoading()}>
 						<Show
 							when={bookmarkCommits().length > 0}
@@ -1152,9 +1150,6 @@ export function BookmarksPanel() {
 				</Match>
 
 				<Match when={bookmarkViewMode() === "files"}>
-					<Show when={bookmarkFilesLoading()}>
-						<text fg={colors().textMuted}>Loading files...</text>
-					</Show>
 					<Show when={!bookmarkFilesLoading()}>
 						<FilterableFileTree
 							files={bookmarkFlatFiles}

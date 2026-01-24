@@ -341,7 +341,8 @@ export function LogPanel() {
 			}
 
 			if (!logLoadingMore() && logHasMore()) {
-				const threshold = Math.max(0, logTotalLines() - 10)
+				const buffer = Math.max(20, logViewportHeight() * 4)
+				const threshold = Math.max(0, logTotalLines() - buffer)
 				if (currentScroll + currentViewport >= threshold) {
 					loadMoreLog()
 				}
@@ -956,7 +957,7 @@ export function LogPanel() {
 	const renderLogContent = () => (
 		<box flexDirection="column" flexGrow={1}>
 			<Show when={loading() && commits().length === 0}>
-				<text>Loading...</text>
+				<box />
 			</Show>
 			<Show when={error() && commits().length === 0}>
 				<text>Error: {error()}</text>
@@ -1069,41 +1070,34 @@ export function LogPanel() {
 	)
 
 	const renderOpLogContent = () => (
-		<>
-			<Show when={opLogLoading() && opLogEntries().length === 0}>
-				<text>Loading...</text>
-			</Show>
-			<Show when={opLogEntries().length > 0}>
-				<scrollbox
-					ref={opLogScrollRef}
-					flexGrow={1}
-					scrollbarOptions={{ visible: false }}
-				>
-					<For each={opLogEntries()}>
-						{(entry, index) => {
-							const isSelected = () => index() === opLogSelectedIndex()
-							const showSelection = () => isSelected() && isFocused()
-							return (
-								<For each={entry.lines}>
-									{(line) => (
-										<box
-											backgroundColor={
-												showSelection()
-													? colors().selectionBackground
-													: undefined
-											}
-											overflow="hidden"
-										>
-											<AnsiText content={line} wrapMode="none" />
-										</box>
-									)}
-								</For>
-							)
-						}}
-					</For>
-				</scrollbox>
-			</Show>
-		</>
+		<Show when={opLogEntries().length > 0}>
+			<scrollbox
+				ref={opLogScrollRef}
+				flexGrow={1}
+				scrollbarOptions={{ visible: false }}
+			>
+				<For each={opLogEntries()}>
+					{(entry, index) => {
+						const isSelected = () => index() === opLogSelectedIndex()
+						const showSelection = () => isSelected() && isFocused()
+						return (
+							<For each={entry.lines}>
+								{(line) => (
+									<box
+										backgroundColor={
+											showSelection() ? colors().selectionBackground : undefined
+										}
+										overflow="hidden"
+									>
+										<AnsiText content={line} wrapMode="none" />
+									</box>
+								)}
+							</For>
+						)
+					}}
+				</For>
+			</scrollbox>
+		</Show>
 	)
 
 	const renderFilesContent = () => {

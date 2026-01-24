@@ -154,7 +154,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	const [selectedIndex, setSelectedIndex] = createSignal(0)
 	const [loading, setLoading] = createSignal(false)
 	const [error, setError] = createSignal<string | null>(null)
-	const [logLimit, setLogLimit] = createSignal(100)
+	const [logLimit, setLogLimit] = createSignal(50)
 	const [logHasMore, setLogHasMore] = createSignal(true)
 	const [logLoadingMore, setLogLoadingMore] = createSignal(false)
 
@@ -172,7 +172,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	const [selectedBookmarkIndex, setSelectedBookmarkIndex] = createSignal(0)
 	const [bookmarksLoading, setBookmarksLoading] = createSignal(false)
 	const [bookmarksError, setBookmarksError] = createSignal<string | null>(null)
-	const [bookmarkLimit, setBookmarkLimit] = createSignal(200)
+	const [bookmarkLimit, setBookmarkLimit] = createSignal(100)
 	const [bookmarksHasMore, setBookmarksHasMore] = createSignal(true)
 	const [bookmarksLoadingMore, setBookmarksLoadingMore] = createSignal(false)
 	const visibleBookmarks = createMemo(() =>
@@ -215,7 +215,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 
 	const setRevsetFilter = (revset: string | null) => {
 		setRevsetFilterSignal(revset)
-		setLogLimit(100)
+		setLogLimit(50)
 		setLogHasMore(true)
 		setLogLoadingMore(false)
 	}
@@ -707,7 +707,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	const loadMoreBookmarks = async () => {
 		if (!bookmarksHasMore() || bookmarksLoadingMore()) return
 		setBookmarksLoadingMore(true)
-		const newLimit = bookmarkLimit() + 200
+		const newLimit = bookmarkLimit() + 100
 		setBookmarkLimit(newLimit)
 		try {
 			const result = bookmarks()
