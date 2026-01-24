@@ -78,7 +78,7 @@ export interface ViewportState {
 	totalRows: number
 }
 
-const DEFAULT_OVERSCAN = 25
+const DEFAULT_OVERSCAN = 50
 
 export function getVisibleRange(
 	viewport: ViewportState,
