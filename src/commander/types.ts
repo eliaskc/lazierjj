@@ -28,4 +28,5 @@ export interface FileChange {
 	status: FileStatus
 	/** Original path for renamed/copied files */
 	oldPath?: string
+	isBinary?: boolean
 }

@@ -1,3 +1,4 @@
+import { findBinaryFiles } from "../utils/diff-binary"
 import { execute } from "./executor"
 import type { FileChange, FileStatus } from "./types"
 
@@ -71,23 +72,39 @@ export async function fetchFiles(
 	changeId: string,
 	options: FetchFilesOptions = {},
 ): Promise<FileChange[]> {
-	const args = ["diff", "--summary", "-r", changeId]
+	const summaryArgs = ["diff", "--summary", "-r", changeId]
+	const binaryArgs = ["diff", "--git", "-r", changeId]
 
 	if (options.ignoreWorkingCopy) {
-		args.push("--ignore-working-copy")
+		summaryArgs.push("--ignore-working-copy")
+		binaryArgs.push("--ignore-working-copy")
 	}
 
-	const result = await execute(args)
+	const [summaryResult, binaryResult] = await Promise.all([
+		execute(summaryArgs),
+		execute(binaryArgs),
+	])
 
 	// Check for critical errors in both stdout and stderr (jj sometimes outputs errors to stdout)
-	const combinedOutput = result.stdout + result.stderr
+	const combinedOutput =
+		summaryResult.stdout +
+		summaryResult.stderr +
+		binaryResult.stdout +
+		binaryResult.stderr
 	if (/working copy is stale|stale working copy/i.test(combinedOutput)) {
 		throw new Error(`The working copy is stale\n${combinedOutput}`)
 	}
 
-	if (!result.success) {
-		throw new Error(`Failed to fetch files: ${result.stderr}`)
+	if (!summaryResult.success) {
+		throw new Error(`Failed to fetch files: ${summaryResult.stderr}`)
 	}
 
-	return parseFileSummary(result.stdout)
+	const binaryFiles = binaryResult.success
+		? findBinaryFiles(binaryResult.stdout)
+		: new Set<string>()
+
+	return parseFileSummary(summaryResult.stdout).map((file) => ({
+		...file,
+		isBinary: binaryFiles.has(file.path),
+	}))
 }

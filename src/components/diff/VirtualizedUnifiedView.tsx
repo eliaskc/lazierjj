@@ -1,4 +1,3 @@
-import type { MouseEvent } from "@opentui/core"
 import { For, Show, createMemo } from "solid-js"
 import { useTheme } from "../../context/theme"
 import {
@@ -16,6 +15,7 @@ import {
 	tokenVersion,
 	tokenizeLineSync,
 } from "../../diff"
+import { truncatePathMiddle } from "../../utils/path-truncate"
 
 const DIFF_BG = {
 	addition: "#0d2818",
@@ -41,7 +41,7 @@ const GAP_ROW_BG = "#161b22"
 const GAP_PATTERN_CHAR = "╱"
 const GAP_PATTERN_COLOR = "#2a2a2a"
 const GAP_PATTERN_REPEAT = 200
-const RIGHT_PADDING = 2
+const RIGHT_PADDING = 0
 
 const STAT_COLORS = {
 	addition: "#3fb950",
@@ -57,7 +57,6 @@ interface VirtualizedUnifiedViewProps {
 	viewportWidth: number
 	wrapEnabled: boolean
 	scrollLeft: number
-	onHorizontalScroll?: (event: MouseEvent) => void
 }
 
 type WrappedRow =
@@ -114,7 +113,13 @@ export function VirtualizedUnifiedView(props: VirtualizedUnifiedViewProps) {
 	const fileStats = createMemo(() => {
 		const stats = new Map<
 			FileId,
-			{ additions: number; deletions: number; prevName?: string; type: string }
+			{
+				additions: number
+				deletions: number
+				prevName?: string
+				type: string
+				isBinary?: boolean
+			}
 		>()
 		for (const file of filesToRender()) {
 			stats.set(file.fileId, {
@@ -122,6 +127,7 @@ export function VirtualizedUnifiedView(props: VirtualizedUnifiedViewProps) {
 				deletions: file.deletions,
 				prevName: file.prevName,
 				type: file.type,
+				isBinary: file.isBinary,
 			})
 		}
 		return stats
@@ -142,7 +148,7 @@ export function VirtualizedUnifiedView(props: VirtualizedUnifiedViewProps) {
 							currentHunkId={props.currentHunkId}
 							fileStats={fileStats()}
 							highlighterReady={highlighterReady}
-							onHorizontalScroll={props.onHorizontalScroll}
+							maxHeaderWidth={Math.max(1, props.viewportWidth - 2)}
 						/>
 					)}
 				</For>
@@ -161,10 +167,16 @@ interface VirtualizedRowProps {
 	currentHunkId?: HunkId | null
 	fileStats: Map<
 		FileId,
-		{ additions: number; deletions: number; prevName?: string; type: string }
+		{
+			additions: number
+			deletions: number
+			prevName?: string
+			type: string
+			isBinary?: boolean
+		}
 	>
 	highlighterReady: () => boolean
-	onHorizontalScroll?: (event: MouseEvent) => void
+	maxHeaderWidth: number
 }
 
 function VirtualizedRow(props: VirtualizedRowProps) {
@@ -172,19 +184,35 @@ function VirtualizedRow(props: VirtualizedRowProps) {
 
 	if (props.row.type === "file-header") {
 		const stats = props.fileStats.get(props.row.row.fileId)
+		const statsWidth = stats?.isBinary
+			? 6
+			: (stats?.additions ? `+${stats.additions}`.length : 0) +
+				(stats?.deletions ? `-${stats.deletions}`.length : 0) +
+				(stats?.additions && stats?.deletions ? 1 : 0)
+		const prevName = stats?.prevName ? ` ← ${stats.prevName}` : ""
+		const headerMax = Math.max(1, props.maxHeaderWidth - statsWidth - 1)
+		const headerText = truncatePathMiddle(
+			`${props.row.row.content}${prevName}`,
+			headerMax,
+		)
 		return (
 			<box paddingRight={1}>
 				<box flexDirection="row" justifyContent="space-between" flexGrow={1}>
-					<text>
-						<span style={{ fg: "#ffffff" }}>{props.row.row.content}</span>
-						<Show when={stats?.prevName}>
-							<span style={{ fg: colors().textMuted }}>
-								{" ← "}
-								{stats?.prevName}
-							</span>
-						</Show>
+					<text wrapMode="none">
+						<span style={{ fg: "#ffffff" }}>{headerText}</span>
 					</text>
-					<Show when={stats && (stats.additions > 0 || stats.deletions > 0)}>
+					<Show when={stats?.isBinary}>
+						<text>
+							<span style={{ fg: colors().textMuted }}>binary</span>
+						</text>
+					</Show>
+					<Show
+						when={
+							stats &&
+							!stats.isBinary &&
+							(stats.additions > 0 || stats.deletions > 0)
+						}
+					>
 						<text>
 							<Show when={stats && stats.additions > 0}>
 								<span style={{ fg: STAT_COLORS.addition }}>
@@ -243,7 +271,6 @@ function VirtualizedRow(props: VirtualizedRowProps) {
 			lineNumWidth={props.lineNumWidth}
 			highlighterReady={props.highlighterReady}
 			isWrapped={contentRow.isWrapped}
-			onHorizontalScroll={props.onHorizontalScroll}
 		/>
 	)
 }
@@ -255,7 +282,6 @@ interface DiffLineRowProps {
 	isWrapped: boolean
 	lineNumWidth: number
 	highlighterReady: () => boolean
-	onHorizontalScroll?: (event: MouseEvent) => void
 }
 
 function DiffLineRow(props: DiffLineRowProps) {
@@ -329,7 +355,7 @@ function DiffLineRow(props: DiffLineRowProps) {
 
 	return (
 		<box flexDirection="row" backgroundColor={lineBg()} flexGrow={1}>
-			<text wrapMode="none" onMouseScroll={props.onHorizontalScroll}>
+			<text wrapMode="none">
 				<span style={{ fg: bar().color }}>{bar().char}</span>
 				<span style={{ fg: lineNumColor() }}> {lineNum()} </span>
 				<span style={{ fg: SEPARATOR_COLOR }}>│</span>

@@ -33,6 +33,7 @@ export function FileTreeList(props: FileTreeListProps) {
 				const node = item.node
 				const indent = "  ".repeat(item.visualDepth)
 				const isCollapsed = props.collapsedPaths().has(node.path)
+				const isBinary = () => Boolean(node.isBinary)
 
 				const icon = node.isDirectory ? (isCollapsed ? "▶" : "▼") : " "
 
@@ -53,12 +54,13 @@ export function FileTreeList(props: FileTreeListProps) {
 
 				const handleMouseDown = (e: { stopPropagation: () => void }) => {
 					e.stopPropagation()
+					if (isBinary()) return
 					props.setSelectedIndex(index())
 					handleDoubleClick()
 				}
 
 				const showSelection = () =>
-					isSelected() && (props.isFocused?.() ?? true)
+					!isBinary() && isSelected() && (props.isFocused?.() ?? true)
 
 				return (
 					<box
@@ -82,11 +84,18 @@ export function FileTreeList(props: FileTreeListProps) {
 							</Show>
 							<span
 								style={{
-									fg: node.isDirectory ? colors().info : colors().text,
+									fg: node.isDirectory
+										? colors().info
+										: isBinary()
+											? colors().textMuted
+											: colors().text,
 								}}
 							>
 								{node.name}
 							</span>
+							<Show when={isBinary()}>
+								<span style={{ fg: colors().textMuted }}> (binary)</span>
+							</Show>
 						</text>
 					</box>
 				)

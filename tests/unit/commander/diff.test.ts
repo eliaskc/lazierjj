@@ -147,7 +147,7 @@ describe("fetchDiff", () => {
 		expect(result).toContain("\x1b[")
 	})
 
-	test("passes single path to execute", async () => {
+	test("passes single path to execute with fileset format", async () => {
 		mockExecute.mockResolvedValueOnce({
 			stdout: "diff output",
 			stderr: "",
@@ -165,13 +165,13 @@ describe("fetchDiff", () => {
 				"--color",
 				"always",
 				"--ignore-working-copy",
-				"src/file.ts",
+				'file:"src/file.ts"',
 			],
 			{ cwd: undefined, env: {} },
 		)
 	})
 
-	test("passes multiple paths to execute", async () => {
+	test("passes multiple paths to execute with fileset format", async () => {
 		mockExecute.mockResolvedValueOnce({
 			stdout: "diff output",
 			stderr: "",
@@ -189,9 +189,9 @@ describe("fetchDiff", () => {
 				"--color",
 				"always",
 				"--ignore-working-copy",
-				"src/a.ts",
-				"src/b.ts",
-				"src/c.ts",
+				'file:"src/a.ts"',
+				'file:"src/b.ts"',
+				'file:"src/c.ts"',
 			],
 			{ cwd: undefined, env: {} },
 		)

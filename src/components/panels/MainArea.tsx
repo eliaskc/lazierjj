@@ -37,7 +37,9 @@ type DiffViewStyle = "unified" | "split"
 import { profileLog } from "../../utils/profiler"
 
 const SPLIT_VIEW_THRESHOLD = 140
-const DIFF_RIGHT_PADDING = 1
+const UNIFIED_RIGHT_PADDING = 0
+const SPLIT_RIGHT_PADDING = 0
+const SCROLLBAR_GUTTER = 0
 const HORIZONTAL_SCROLL_STEP = 5
 
 function FileStats(props: { stats: DiffStats; maxWidth: number }) {
@@ -367,7 +369,9 @@ export function MainArea() {
 
 	const diffContentWidth = createMemo(() => {
 		const width = Math.max(1, viewportWidth())
-		const prefixWidth = lineNumWidth() + 5 + DIFF_RIGHT_PADDING
+		const rightPadding =
+			viewStyle() === "split" ? SPLIT_RIGHT_PADDING : UNIFIED_RIGHT_PADDING
+		const prefixWidth = lineNumWidth() + 5 + rightPadding
 		if (viewStyle() === "split") {
 			const columnWidth = Math.max(1, Math.floor((width - 1) / 2))
 			return Math.max(1, columnWidth - prefixWidth)
@@ -564,12 +568,12 @@ export function MainArea() {
 					currentScroll !== scrollTop() ||
 					currentViewport !== viewportHeight() ||
 					currentHeaderHeight !== headerHeight() ||
-					currentViewportWidth !== viewportWidth()
+					currentViewportWidth - SCROLLBAR_GUTTER !== viewportWidth()
 				) {
 					setViewportHeight(currentViewport)
 					setScrollTop(currentScroll)
 					setHeaderHeight(currentHeaderHeight)
-					setViewportWidth(currentViewportWidth)
+					setViewportWidth(Math.max(1, currentViewportWidth - SCROLLBAR_GUTTER))
 				}
 			}
 		}, 100)
@@ -740,11 +744,13 @@ export function MainArea() {
 					flexGrow={1}
 					scrollX={false}
 					scrollbarOptions={{
+						visible: true,
 						trackOptions: {
 							backgroundColor: colors().scrollbarTrack,
 							foregroundColor: colors().scrollbarThumb,
 						},
 					}}
+					horizontalScrollbarOptions={{ visible: false }}
 					onMouseScroll={handleHorizontalScroll}
 				>
 					<box ref={headerRef} flexDirection="column" flexShrink={0}>
@@ -787,7 +793,6 @@ export function MainArea() {
 										viewportWidth={viewportWidth()}
 										wrapEnabled={wrapEnabled()}
 										scrollLeft={scrollLeft()}
-										onHorizontalScroll={handleHorizontalScroll}
 									/>
 								</Show>
 								<Show when={viewStyle() === "split"}>
@@ -800,7 +805,6 @@ export function MainArea() {
 										viewportWidth={viewportWidth()}
 										wrapEnabled={wrapEnabled()}
 										scrollLeft={scrollLeft()}
-										onHorizontalScroll={handleHorizontalScroll}
 									/>
 								</Show>
 							</box>

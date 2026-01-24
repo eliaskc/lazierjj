@@ -62,19 +62,24 @@ export function FileList(props: FileListProps) {
 										{file.prevName}
 									</span>
 								</Show>
-								<span style={{ fg: SEPARATOR_COLOR }}> │ </span>
-								<Show when={file.additions > 0}>
-									<span style={{ fg: STAT_COLORS.addition }}>
-										+{file.additions}
-									</span>
+								<Show when={file.isBinary}>
+									<span style={{ fg: colors().textMuted }}> (binary)</span>
 								</Show>
-								<Show when={file.additions > 0 && file.deletions > 0}>
-									<span> </span>
-								</Show>
-								<Show when={file.deletions > 0}>
-									<span style={{ fg: STAT_COLORS.deletion }}>
-										-{file.deletions}
-									</span>
+								<Show when={!file.isBinary}>
+									<span style={{ fg: SEPARATOR_COLOR }}> │ </span>
+									<Show when={file.additions > 0}>
+										<span style={{ fg: STAT_COLORS.addition }}>
+											+{file.additions}
+										</span>
+									</Show>
+									<Show when={file.additions > 0 && file.deletions > 0}>
+										<span> </span>
+									</Show>
+									<Show when={file.deletions > 0}>
+										<span style={{ fg: STAT_COLORS.deletion }}>
+											-{file.deletions}
+										</span>
+									</Show>
 								</Show>
 							</text>
 						</box>

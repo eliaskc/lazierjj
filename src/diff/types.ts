@@ -1,5 +1,5 @@
-import type { FileDiffMetadata } from "@pierre/diffs"
 import type { FileId, HunkId, LineAnchor } from "./identifiers"
+import type { DiffFile } from "./parser"
 
 /**
  * View mode for diff renderer.
@@ -38,7 +38,7 @@ export interface DiffAnnotation {
  */
 export interface DiffState {
 	// Parsed diff data
-	files: FileDiffMetadata[]
+	files: DiffFile[]
 
 	// Mode
 	mode: DiffMode
@@ -66,7 +66,7 @@ export interface DiffState {
  * Create initial diff state.
  */
 export function createDiffState(
-	files: FileDiffMetadata[] = [],
+	files: DiffFile[] = [],
 	mode: DiffMode = "view",
 ): DiffState {
 	return {
@@ -86,7 +86,7 @@ export function createDiffState(
  * Actions for diff state updates.
  */
 export interface DiffActions {
-	setFiles: (files: FileDiffMetadata[]) => void
+	setFiles: (files: DiffFile[]) => void
 	setMode: (mode: DiffMode) => void
 	setViewStyle: (style: DiffViewStyle) => void
 	setActiveFile: (fileId: FileId | null) => void

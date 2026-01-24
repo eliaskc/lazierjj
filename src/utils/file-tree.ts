@@ -5,6 +5,7 @@ export interface FileTreeNode {
 	path: string
 	isDirectory: boolean
 	status?: FileStatus
+	isBinary?: boolean
 	children: FileTreeNode[]
 	depth: number
 }
@@ -40,6 +41,7 @@ function insertIntoTree(
 			path,
 			isDirectory: !isFile,
 			status: isFile ? file.status : undefined,
+			isBinary: isFile ? file.isBinary : undefined,
 			children: [],
 			depth: depth,
 		}

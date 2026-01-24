@@ -159,7 +159,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	const [viewMode, setViewMode] = createSignal<ViewMode>("log")
 	const [files, setFiles] = createSignal<FileChange[]>([])
 	const [fileTree, setFileTree] = createSignal<FileTreeNode | null>(null)
-	const [selectedFileIndex, setSelectedFileIndex] = createSignal(0)
+	const [selectedFileIndex, setSelectedFileIndexInternal] = createSignal(0)
 	const [collapsedPaths, setCollapsedPaths] = createSignal<Set<string>>(
 		new Set(),
 	)
@@ -194,7 +194,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	const [bookmarkFiles, setBookmarkFiles] = createSignal<FileChange[]>([])
 	const [bookmarkFileTree, setBookmarkFileTree] =
 		createSignal<FileTreeNode | null>(null)
-	const [selectedBookmarkFileIndex, setSelectedBookmarkFileIndex] =
+	const [selectedBookmarkFileIndex, setSelectedBookmarkFileIndexInternal] =
 		createSignal(0)
 	const [bookmarkCollapsedPaths, setBookmarkCollapsedPaths] = createSignal<
 		Set<string>
@@ -224,7 +224,10 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		return flattenTree(tree, collapsedPaths())
 	})
 
-	const selectedFile = () => flatFiles()[selectedFileIndex()]
+	const selectedFile = () => {
+		const file = flatFiles()[selectedFileIndex()]
+		return file?.node.isBinary ? undefined : file
+	}
 
 	const bookmarkFlatFiles = createMemo(() => {
 		const tree = bookmarkFileTree()
@@ -234,8 +237,66 @@ export function SyncProvider(props: { children: JSX.Element }) {
 
 	const selectedBookmarkCommit = () =>
 		bookmarkCommits()[selectedBookmarkCommitIndex()]
-	const selectedBookmarkFile = () =>
-		bookmarkFlatFiles()[selectedBookmarkFileIndex()]
+	const selectedBookmarkFile = () => {
+		const file = bookmarkFlatFiles()[selectedBookmarkFileIndex()]
+		return file?.node.isBinary ? undefined : file
+	}
+
+	const isSelectableFile = (file: FlatFileNode | undefined) =>
+		Boolean(file) && !file?.node.isBinary
+
+	const findFirstSelectableIndex = (files: FlatFileNode[]) => {
+		for (let i = 0; i < files.length; i += 1) {
+			if (isSelectableFile(files[i])) return i
+		}
+		return 0
+	}
+
+	const findLastSelectableIndex = (files: FlatFileNode[]) => {
+		for (let i = files.length - 1; i >= 0; i -= 1) {
+			if (isSelectableFile(files[i])) return i
+		}
+		return Math.max(0, files.length - 1)
+	}
+
+	const findSelectableIndex = (
+		startIndex: number,
+		direction: 1 | -1,
+		files: FlatFileNode[],
+	) => {
+		for (let i = startIndex; i >= 0 && i < files.length; i += direction) {
+			if (isSelectableFile(files[i])) return i
+		}
+		return null
+	}
+
+	const setSelectedFileIndex = (index: number) => {
+		const files = flatFiles()
+		if (!isSelectableFile(files[index])) return
+		setSelectedFileIndexInternal(index)
+	}
+
+	const setSelectedBookmarkFileIndex = (index: number) => {
+		const files = bookmarkFlatFiles()
+		if (!isSelectableFile(files[index])) return
+		setSelectedBookmarkFileIndexInternal(index)
+	}
+
+	createEffect(() => {
+		const files = flatFiles()
+		if (files.length === 0) return
+		const current = selectedFileIndex()
+		if (isSelectableFile(files[current])) return
+		setSelectedFileIndexInternal(findFirstSelectableIndex(files))
+	})
+
+	createEffect(() => {
+		const files = bookmarkFlatFiles()
+		if (files.length === 0) return
+		const current = selectedBookmarkFileIndex()
+		if (isSelectableFile(files[current])) return
+		setSelectedBookmarkFileIndexInternal(findFirstSelectableIndex(files))
+	})
 
 	let lastOpLogId: string | null = null
 	let isRefreshing = false
@@ -493,19 +554,27 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	const selectedCommit = () => commits()[selectedIndex()]
 
 	const selectPrevFile = () => {
-		setSelectedFileIndex((i) => Math.max(0, i - 1))
+		const files = flatFiles()
+		const nextIndex = findSelectableIndex(selectedFileIndex() - 1, -1, files)
+		if (nextIndex !== null) setSelectedFileIndexInternal(nextIndex)
 	}
 
 	const selectNextFile = () => {
-		setSelectedFileIndex((i) => Math.min(flatFiles().length - 1, i + 1))
+		const files = flatFiles()
+		const nextIndex = findSelectableIndex(selectedFileIndex() + 1, 1, files)
+		if (nextIndex !== null) setSelectedFileIndexInternal(nextIndex)
 	}
 
 	const selectFirstFile = () => {
-		setSelectedFileIndex(0)
+		const files = flatFiles()
+		if (files.length === 0) return
+		setSelectedFileIndexInternal(findFirstSelectableIndex(files))
 	}
 
 	const selectLastFile = () => {
-		setSelectedFileIndex(Math.max(0, flatFiles().length - 1))
+		const files = flatFiles()
+		if (files.length === 0) return
+		setSelectedFileIndexInternal(findLastSelectableIndex(files))
 	}
 
 	const localBookmarks = () => bookmarks().filter((b) => b.isLocal)
@@ -555,21 +624,35 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	}
 
 	const selectPrevBookmarkFile = () => {
-		setSelectedBookmarkFileIndex((i) => Math.max(0, i - 1))
+		const files = bookmarkFlatFiles()
+		const nextIndex = findSelectableIndex(
+			selectedBookmarkFileIndex() - 1,
+			-1,
+			files,
+		)
+		if (nextIndex !== null) setSelectedBookmarkFileIndexInternal(nextIndex)
 	}
 
 	const selectNextBookmarkFile = () => {
-		setSelectedBookmarkFileIndex((i) =>
-			Math.min(bookmarkFlatFiles().length - 1, i + 1),
+		const files = bookmarkFlatFiles()
+		const nextIndex = findSelectableIndex(
+			selectedBookmarkFileIndex() + 1,
+			1,
+			files,
 		)
+		if (nextIndex !== null) setSelectedBookmarkFileIndexInternal(nextIndex)
 	}
 
 	const selectFirstBookmarkFile = () => {
-		setSelectedBookmarkFileIndex(0)
+		const files = bookmarkFlatFiles()
+		if (files.length === 0) return
+		setSelectedBookmarkFileIndexInternal(findFirstSelectableIndex(files))
 	}
 
 	const selectLastBookmarkFile = () => {
-		setSelectedBookmarkFileIndex(Math.max(0, bookmarkFlatFiles().length - 1))
+		const files = bookmarkFlatFiles()
+		if (files.length === 0) return
+		setSelectedBookmarkFileIndexInternal(findLastSelectableIndex(files))
 	}
 
 	const toggleBookmarkFolder = (path: string) => {
@@ -619,8 +702,10 @@ export function SyncProvider(props: { children: JSX.Element }) {
 				ignoreWorkingCopy: true,
 			})
 			setBookmarkFiles(result)
-			setBookmarkFileTree(buildFileTree(result))
-			setSelectedBookmarkFileIndex(0)
+			const tree = buildFileTree(result)
+			setBookmarkFileTree(tree)
+			const flatList = flattenTree(tree, new Set())
+			setSelectedBookmarkFileIndexInternal(findFirstSelectableIndex(flatList))
 			setBookmarkCollapsedPaths(new Set<string>())
 			setBookmarkViewMode("files")
 			focus.setActiveContext("refs.files")
@@ -967,8 +1052,10 @@ export function SyncProvider(props: { children: JSX.Element }) {
 				ignoreWorkingCopy: true,
 			})
 			setFiles(result)
-			setFileTree(buildFileTree(result))
-			setSelectedFileIndex(0)
+			const tree = buildFileTree(result)
+			setFileTree(tree)
+			const flatList = flattenTree(tree, new Set())
+			setSelectedFileIndexInternal(findFirstSelectableIndex(flatList))
 			setCollapsedPaths(new Set<string>())
 			setViewMode("files")
 			focus.setActiveContext("log.files")

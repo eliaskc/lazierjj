@@ -22,6 +22,7 @@ export {
 	getLineNumWidth,
 	getMaxLineNumber,
 	parseDiffString,
+	type DiffFile,
 	type DiffLine,
 	type DiffLineType,
 	type FlattenedFile,

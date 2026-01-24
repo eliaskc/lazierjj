@@ -7,6 +7,7 @@ import {
 	parsePatchFiles,
 } from "@pierre/diffs"
 import { execute } from "../commander/executor"
+import { findBinaryFiles } from "../utils/diff-binary"
 import { type FileId, type HunkId, fileId, hunkId } from "./identifiers"
 
 // Re-export types for convenience
@@ -17,6 +18,8 @@ export type {
 	Hunk,
 	ParsedPatch,
 }
+
+export type DiffFile = FileDiffMetadata & { isBinary?: boolean }
 
 export interface ParseDiffOptions {
 	cwd?: string
@@ -31,7 +34,7 @@ export interface ParseDiffOptions {
 export async function fetchParsedDiff(
 	changeId: string,
 	options: ParseDiffOptions = {},
-): Promise<FileDiffMetadata[]> {
+): Promise<DiffFile[]> {
 	const args = ["diff", "-r", changeId, "--git", "--ignore-working-copy"]
 
 	// Add specific file paths if provided
@@ -51,22 +54,49 @@ export async function fetchParsedDiff(
 /**
  * Parse a git-format diff string into structured format.
  */
-export function parseDiffString(diffString: string): FileDiffMetadata[] {
+export function parseDiffString(diffString: string): DiffFile[] {
 	if (!diffString.trim()) {
 		return []
 	}
 
 	const patches = parsePatchFiles(diffString)
+	const binaryFiles = findBinaryFiles(diffString)
 
 	// parsePatchFiles returns an array of ParsedPatch (one per commit in multi-commit diffs)
 	// For jj single-revision diffs, we typically get one patch
-	return patches.flatMap((patch) => patch.files)
+	return patches.flatMap((patch) =>
+		patch.files.map((file) => ({
+			...file,
+			isBinary: binaryFiles.has(file.name),
+		})),
+	)
 }
 
 /**
  * Diff line type for rendering.
  */
 export type DiffLineType = "context" | "addition" | "deletion"
+
+const TAB_WIDTH = 4
+
+function expandTabs(value: string): string {
+	if (!value.includes("\t")) return value
+	let column = 0
+	let result = ""
+
+	for (const char of value) {
+		if (char === "\t") {
+			const pad = TAB_WIDTH - (column % TAB_WIDTH)
+			result += " ".repeat(pad)
+			column += pad
+			continue
+		}
+		result += char
+		column += 1
+	}
+
+	return result
+}
 
 /**
  * A single line in a diff, flattened for rendering.
@@ -105,6 +135,7 @@ export interface FlattenedFile {
 	hunks: FlattenedHunk[]
 	additions: number
 	deletions: number
+	isBinary?: boolean
 }
 
 /**
@@ -120,9 +151,10 @@ export function flattenHunk(file: FileDiffMetadata, hunk: Hunk): FlattenedHunk {
 		if (content.type === "context") {
 			const ctx = content as ContextContent
 			for (const line of ctx.lines) {
+				const normalized = expandTabs(line)
 				lines.push({
 					type: "context",
-					content: line,
+					content: normalized,
 					oldLineNumber: oldLine++,
 					newLineNumber: newLine++,
 					hunkId: id,
@@ -133,9 +165,10 @@ export function flattenHunk(file: FileDiffMetadata, hunk: Hunk): FlattenedHunk {
 
 			// Deletions first (old side)
 			for (const line of change.deletions) {
+				const normalized = expandTabs(line)
 				lines.push({
 					type: "deletion",
-					content: line,
+					content: normalized,
 					oldLineNumber: oldLine++,
 					hunkId: id,
 				})
@@ -143,9 +176,10 @@ export function flattenHunk(file: FileDiffMetadata, hunk: Hunk): FlattenedHunk {
 
 			// Then additions (new side)
 			for (const line of change.additions) {
+				const normalized = expandTabs(line)
 				lines.push({
 					type: "addition",
-					content: line,
+					content: normalized,
 					newLineNumber: newLine++,
 					hunkId: id,
 				})
@@ -167,7 +201,7 @@ export function flattenHunk(file: FileDiffMetadata, hunk: Hunk): FlattenedHunk {
 /**
  * Flatten a file diff for rendering.
  */
-export function flattenFile(file: FileDiffMetadata): FlattenedFile {
+export function flattenFile(file: DiffFile): FlattenedFile {
 	let additions = 0
 	let deletions = 0
 
@@ -185,13 +219,14 @@ export function flattenFile(file: FileDiffMetadata): FlattenedFile {
 		hunks,
 		additions,
 		deletions,
+		isBinary: file.isBinary,
 	}
 }
 
 /**
  * Flatten all files for rendering.
  */
-export function flattenDiff(files: FileDiffMetadata[]): FlattenedFile[] {
+export function flattenDiff(files: DiffFile[]): FlattenedFile[] {
 	return files.map(flattenFile)
 }
 
@@ -215,7 +250,7 @@ export function getFileStatusIndicator(type: FileDiffMetadata["type"]): string {
 /**
  * Get total counts across all files.
  */
-export function getDiffTotals(files: FileDiffMetadata[]): {
+export function getDiffTotals(files: DiffFile[]): {
 	files: number
 	additions: number
 	deletions: number

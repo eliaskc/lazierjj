@@ -1,4 +1,3 @@
-import type { MouseEvent } from "@opentui/core"
 import { For, Show, createMemo } from "solid-js"
 import { useTheme } from "../../context/theme"
 import type {
@@ -19,6 +18,7 @@ import {
 	tokenVersion,
 	tokenizeLineSync,
 } from "../../diff"
+import { truncatePathMiddle } from "../../utils/path-truncate"
 
 const DIFF_BG = {
 	addition: "#0d2818",
@@ -53,7 +53,7 @@ const STAT_COLORS = {
 const BAR_CHAR = "▌"
 const EMPTY_STRIPE_CHAR = "╱"
 const EMPTY_STRIPE_COLOR = "#2a2a2a"
-const RIGHT_PADDING = 3
+const RIGHT_PADDING = 0
 
 type SplitRowType = "file-header" | "file-gap" | "gap" | "content"
 
@@ -233,7 +233,6 @@ interface VirtualizedSplitViewProps {
 	viewportWidth: number
 	wrapEnabled: boolean
 	scrollLeft: number
-	onHorizontalScroll?: (event: MouseEvent) => void
 }
 
 type WrappedSplitRow =
@@ -304,7 +303,13 @@ export function VirtualizedSplitView(props: VirtualizedSplitViewProps) {
 	const fileStats = createMemo(() => {
 		const stats = new Map<
 			FileId,
-			{ additions: number; deletions: number; prevName?: string; type: string }
+			{
+				additions: number
+				deletions: number
+				prevName?: string
+				type: string
+				isBinary?: boolean
+			}
 		>()
 		for (const file of filesToRender()) {
 			stats.set(file.fileId, {
@@ -312,6 +317,7 @@ export function VirtualizedSplitView(props: VirtualizedSplitViewProps) {
 				deletions: file.deletions,
 				prevName: file.prevName,
 				type: file.type,
+				isBinary: file.isBinary,
 			})
 		}
 		return stats
@@ -333,7 +339,7 @@ export function VirtualizedSplitView(props: VirtualizedSplitViewProps) {
 							fileStats={fileStats()}
 							highlighterReady={highlighterReady}
 							columnWidth={columnWidth()}
-							onHorizontalScroll={props.onHorizontalScroll}
+							maxHeaderWidth={Math.max(1, props.viewportWidth - 2)}
 						/>
 					)}
 				</For>
@@ -352,11 +358,17 @@ interface VirtualizedSplitRowProps {
 	currentHunkId?: HunkId | null
 	fileStats: Map<
 		FileId,
-		{ additions: number; deletions: number; prevName?: string; type: string }
+		{
+			additions: number
+			deletions: number
+			prevName?: string
+			type: string
+			isBinary?: boolean
+		}
 	>
 	highlighterReady: () => boolean
 	columnWidth: number
-	onHorizontalScroll?: (event: MouseEvent) => void
+	maxHeaderWidth: number
 }
 
 function VirtualizedSplitRow(props: VirtualizedSplitRowProps) {
@@ -364,19 +376,35 @@ function VirtualizedSplitRow(props: VirtualizedSplitRowProps) {
 
 	if (props.row.type === "file-header") {
 		const stats = props.fileStats.get(props.row.row.fileId)
+		const statsWidth = stats?.isBinary
+			? 6
+			: (stats?.additions ? `+${stats.additions}`.length : 0) +
+				(stats?.deletions ? `-${stats.deletions}`.length : 0) +
+				(stats?.additions && stats?.deletions ? 1 : 0)
+		const prevName = stats?.prevName ? ` ← ${stats.prevName}` : ""
+		const headerMax = Math.max(1, props.maxHeaderWidth - statsWidth - 1)
+		const headerText = truncatePathMiddle(
+			`${props.row.row.fileName}${prevName}`,
+			headerMax,
+		)
 		return (
 			<box paddingRight={1}>
 				<box flexDirection="row" justifyContent="space-between" flexGrow={1}>
-					<text>
-						<span style={{ fg: "#ffffff" }}>{props.row.row.fileName}</span>
-						<Show when={stats?.prevName}>
-							<span style={{ fg: colors().textMuted }}>
-								{" ← "}
-								{stats?.prevName}
-							</span>
-						</Show>
+					<text wrapMode="none">
+						<span style={{ fg: "#ffffff" }}>{headerText}</span>
 					</text>
-					<Show when={stats && (stats.additions > 0 || stats.deletions > 0)}>
+					<Show when={stats?.isBinary}>
+						<text>
+							<span style={{ fg: colors().textMuted }}>binary</span>
+						</text>
+					</Show>
+					<Show
+						when={
+							stats &&
+							!stats.isBinary &&
+							(stats.additions > 0 || stats.deletions > 0)
+						}
+					>
 						<text>
 							<Show when={stats && stats.additions > 0}>
 								<span style={{ fg: STAT_COLORS.addition }}>
@@ -432,7 +460,6 @@ function VirtualizedSplitRow(props: VirtualizedSplitRowProps) {
 			lineNumWidth={props.lineNumWidth}
 			highlighterReady={props.highlighterReady}
 			columnWidth={props.columnWidth}
-			onHorizontalScroll={props.onHorizontalScroll}
 		/>
 	)
 }
@@ -442,7 +469,6 @@ interface SplitContentRowProps {
 	lineNumWidth: number
 	highlighterReady: () => boolean
 	columnWidth: number
-	onHorizontalScroll?: (event: MouseEvent) => void
 }
 
 interface TokenWithEmphasis extends SyntaxToken {
@@ -602,12 +628,12 @@ function SplitContentRow(props: SplitContentRowProps) {
 				<Show
 					when={hasLeftLine()}
 					fallback={
-						<text wrapMode="none" onMouseScroll={props.onHorizontalScroll}>
+						<text wrapMode="none">
 							<span style={{ fg: EMPTY_STRIPE_COLOR }}>{emptyFill()}</span>
 						</text>
 					}
 				>
-					<text wrapMode="none" onMouseScroll={props.onHorizontalScroll}>
+					<text wrapMode="none">
 						<span style={{ fg: leftBar()?.color }}>{leftBar()?.char}</span>
 						<span style={{ fg: leftLineNumColor() }}>
 							{" "}
@@ -646,12 +672,12 @@ function SplitContentRow(props: SplitContentRowProps) {
 				<Show
 					when={hasRightLine()}
 					fallback={
-						<text wrapMode="none" onMouseScroll={props.onHorizontalScroll}>
+						<text wrapMode="none">
 							<span style={{ fg: EMPTY_STRIPE_COLOR }}>{emptyFill()}</span>
 						</text>
 					}
 				>
-					<text wrapMode="none" onMouseScroll={props.onHorizontalScroll}>
+					<text wrapMode="none">
 						<span style={{ fg: rightBar()?.color }}>{rightBar()?.char}</span>
 						<span style={{ fg: rightLineNumColor() }}>
 							{" "}

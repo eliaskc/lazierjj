@@ -1,4 +1,4 @@
-import { diffWords } from "diff"
+import { diffWordsWithSpace } from "diff"
 
 /**
  * A segment of text with change information.
@@ -16,7 +16,7 @@ export function computeWordDiff(
 	oldLine: string,
 	newLine: string,
 ): { old: WordDiffSegment[]; new: WordDiffSegment[] } {
-	const changes = diffWords(oldLine, newLine)
+	const changes = diffWordsWithSpace(oldLine, newLine)
 
 	const oldSegments: WordDiffSegment[] = []
 	const newSegments: WordDiffSegment[] = []
