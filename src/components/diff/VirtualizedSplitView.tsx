@@ -40,7 +40,6 @@ const LINE_NUM_COLORS = {
 } as const
 
 const SEPARATOR_COLOR = "#30363d"
-const GAP_ROW_BG = "#161b22"
 const GAP_PATTERN_CHAR = "╱"
 const GAP_PATTERN_COLOR = "#2a2a2a"
 const GAP_PATTERN_REPEAT = 200
@@ -434,7 +433,7 @@ function VirtualizedSplitRow(props: VirtualizedSplitRowProps) {
 			Math.max(0, gutterWidth - ellipsis.length),
 		)
 		return (
-			<box backgroundColor={GAP_ROW_BG} overflow="hidden">
+			<box overflow="hidden">
 				<text wrapMode="none">
 					<span style={{ fg: GAP_PATTERN_COLOR }}>{gutterPattern}</span>
 					<span style={{ fg: colors().textMuted }}>{ellipsis}</span>
