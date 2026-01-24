@@ -1,4 +1,8 @@
-import type { BoxRenderable, ScrollBoxRenderable } from "@opentui/core"
+import type {
+	BoxRenderable,
+	MouseEvent,
+	ScrollBoxRenderable,
+} from "@opentui/core"
 import {
 	For,
 	Show,
@@ -16,7 +20,13 @@ import { useFocus } from "../../context/focus"
 import { useLayout } from "../../context/layout"
 import { type CommitDetails, useSync } from "../../context/sync"
 import { useTheme } from "../../context/theme"
-import { type FlattenedFile, fetchParsedDiff, flattenDiff } from "../../diff"
+import {
+	type FlattenedFile,
+	fetchParsedDiff,
+	flattenDiff,
+	getLineNumWidth,
+	getMaxLineNumber,
+} from "../../diff"
 import { getFilePaths } from "../../utils/file-tree"
 import { AnsiText } from "../AnsiText"
 import { Panel } from "../Panel"
@@ -31,6 +41,8 @@ type DiffViewStyle = "unified" | "split"
 import { profileLog } from "../../utils/profiler"
 
 const SPLIT_VIEW_THRESHOLD = 140
+const DIFF_RIGHT_PADDING = 1
+const HORIZONTAL_SCROLL_STEP = 5
 
 function FileStats(props: { stats: DiffStats; maxWidth: number }) {
 	const { colors } = useTheme()
@@ -266,6 +278,7 @@ export function MainArea() {
 	const [scrollTop, setScrollTop] = createSignal(0)
 	const [viewportHeight, setViewportHeight] = createSignal(30)
 	const [viewportWidth, setViewportWidth] = createSignal(80)
+	const [scrollLeft, setScrollLeft] = createSignal(0)
 	const [headerHeight, setHeaderHeight] = createSignal(0)
 	const [currentCommitId, setCurrentCommitId] = createSignal<string | null>(
 		null,
@@ -325,6 +338,82 @@ export function MainArea() {
 			totalDeletions,
 		}
 	})
+
+	const maxLineLengths = createMemo(() => {
+		let maxUnified = 0
+		let maxLeft = 0
+		let maxRight = 0
+		for (const file of parsedFiles()) {
+			for (const hunk of file.hunks) {
+				for (const line of hunk.lines) {
+					const length = line.content.replace(/\n$/, "").length
+					if (length > maxUnified) maxUnified = length
+					switch (line.type) {
+						case "context":
+							if (length > maxLeft) maxLeft = length
+							if (length > maxRight) maxRight = length
+							break
+						case "deletion":
+							if (length > maxLeft) maxLeft = length
+							break
+						case "addition":
+							if (length > maxRight) maxRight = length
+							break
+					}
+				}
+			}
+		}
+		return { maxUnified, maxLeft, maxRight }
+	})
+
+	const lineNumWidth = createMemo(() => {
+		const maxLine = getMaxLineNumber(parsedFiles())
+		return Math.max(1, getLineNumWidth(maxLine))
+	})
+
+	const diffContentWidth = createMemo(() => {
+		const width = Math.max(1, viewportWidth())
+		const prefixWidth = lineNumWidth() + 5 + DIFF_RIGHT_PADDING
+		if (viewStyle() === "split") {
+			const columnWidth = Math.max(1, Math.floor((width - 1) / 2))
+			return Math.max(1, columnWidth - prefixWidth)
+		}
+		return Math.max(1, width - prefixWidth)
+	})
+
+	const maxScrollableWidth = createMemo(() => {
+		if (viewStyle() === "split") {
+			const { maxLeft, maxRight } = maxLineLengths()
+			return Math.max(maxLeft, maxRight)
+		}
+		return maxLineLengths().maxUnified
+	})
+
+	const maxScrollLeft = createMemo(() => {
+		if (wrapEnabled()) return 0
+		return Math.max(0, maxScrollableWidth() - diffContentWidth())
+	})
+
+	const setScrollLeftClamped = (value: number) => {
+		const next = Math.max(0, Math.min(value, maxScrollLeft()))
+		if (next !== scrollLeft()) setScrollLeft(next)
+	}
+
+	const handleHorizontalScroll = (event: MouseEvent) => {
+		if (!event.scroll || wrapEnabled()) return
+		const delta = event.scroll.delta || 1
+		if (event.scroll.direction === "left") {
+			setScrollLeftClamped(scrollLeft() - delta)
+			event.preventDefault()
+			event.stopPropagation()
+			return
+		}
+		if (event.scroll.direction === "right") {
+			setScrollLeftClamped(scrollLeft() + delta)
+			event.preventDefault()
+			event.stopPropagation()
+		}
+	}
 
 	// Navigation functions
 	const navigateFile = (direction: 1 | -1) => {
@@ -453,11 +542,20 @@ export function MainArea() {
 		if (commit && commit.changeId !== currentCommitId()) {
 			setCurrentCommitId(commit.changeId)
 			setScrollTop(0)
+			setScrollLeft(0)
 			scrollRef?.scrollTo(0)
 			// Reset navigation when switching commits (keep stale content for SWR)
 			setActiveFileIndex(0)
 			setActiveHunkIndex(0)
 		}
+	})
+
+	createEffect(() => {
+		if (wrapEnabled()) {
+			setScrollLeft(0)
+			return
+		}
+		setScrollLeftClamped(scrollLeft())
 	})
 
 	onMount(() => {
@@ -563,6 +661,30 @@ export function MainArea() {
 			},
 		},
 		{
+			id: "detail.scroll_left",
+			title: "scroll left",
+			keybind: "diff_scroll_left",
+			context: "detail",
+			type: "navigation",
+			visibility: "help-only",
+			onSelect: () => {
+				if (wrapEnabled()) return
+				setScrollLeftClamped(scrollLeft() - HORIZONTAL_SCROLL_STEP)
+			},
+		},
+		{
+			id: "detail.scroll_right",
+			title: "scroll right",
+			keybind: "diff_scroll_right",
+			context: "detail",
+			type: "navigation",
+			visibility: "help-only",
+			onSelect: () => {
+				if (wrapEnabled()) return
+				setScrollLeftClamped(scrollLeft() + HORIZONTAL_SCROLL_STEP)
+			},
+		},
+		{
 			id: "detail.prev_hunk",
 			title: "previous hunk",
 			keybind: "nav_prev_hunk",
@@ -622,12 +744,14 @@ export function MainArea() {
 					ref={scrollRef}
 					focused={isFocused()}
 					flexGrow={1}
+					scrollX={false}
 					scrollbarOptions={{
 						trackOptions: {
 							backgroundColor: colors().scrollbarTrack,
 							foregroundColor: colors().scrollbarThumb,
 						},
 					}}
+					onMouseScroll={handleHorizontalScroll}
 				>
 					<box ref={headerRef} flexDirection="column" flexShrink={0}>
 						<Show when={activeCommit()}>
@@ -672,6 +796,8 @@ export function MainArea() {
 										viewportHeight={viewportHeight()}
 										viewportWidth={viewportWidth()}
 										wrapEnabled={wrapEnabled()}
+										scrollLeft={scrollLeft()}
+										onHorizontalScroll={handleHorizontalScroll}
 									/>
 								</Show>
 								<Show when={viewStyle() === "split"}>
@@ -683,6 +809,8 @@ export function MainArea() {
 										viewportHeight={viewportHeight()}
 										viewportWidth={viewportWidth()}
 										wrapEnabled={wrapEnabled()}
+										scrollLeft={scrollLeft()}
+										onHorizontalScroll={handleHorizontalScroll}
 									/>
 								</Show>
 							</box>

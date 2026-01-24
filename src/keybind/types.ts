@@ -47,6 +47,8 @@ export type KeybindConfigKey =
 	| "bookmark_move"
 	| "toggle_diff_style"
 	| "toggle_diff_wrap"
+	| "diff_scroll_left"
+	| "diff_scroll_right"
 	| "nav_prev_hunk"
 	| "nav_next_hunk"
 	| "nav_prev_file"
@@ -99,6 +101,8 @@ export const DEFAULT_KEYBINDS: KeybindConfig = {
 	bookmark_move: "m",
 	toggle_diff_style: "v",
 	toggle_diff_wrap: "w",
+	diff_scroll_left: "h,left",
+	diff_scroll_right: "l,right",
 	nav_prev_hunk: "[",
 	nav_next_hunk: "]",
 	nav_prev_file: "{",

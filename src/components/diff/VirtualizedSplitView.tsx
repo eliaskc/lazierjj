@@ -1,3 +1,4 @@
+import type { MouseEvent } from "@opentui/core"
 import { For, Show, createMemo } from "solid-js"
 import { useTheme } from "../../context/theme"
 import type {
@@ -191,6 +192,8 @@ interface VirtualizedSplitViewProps {
 	viewportHeight: number
 	viewportWidth: number
 	wrapEnabled: boolean
+	scrollLeft: number
+	onHorizontalScroll?: (event: MouseEvent) => void
 }
 
 type WrappedSplitRow =
@@ -202,6 +205,8 @@ type WrappedSplitRow =
 			leftLength: number
 			rightStart: number | null
 			rightLength: number
+			leftWrapped: boolean
+			rightWrapped: boolean
 	  }
 
 export function VirtualizedSplitView(props: VirtualizedSplitViewProps) {
@@ -235,7 +240,12 @@ export function VirtualizedSplitView(props: VirtualizedSplitViewProps) {
 	})
 
 	const wrappedRows = createMemo(() =>
-		buildWrappedSplitRows(rows(), wrapWidth(), props.wrapEnabled),
+		buildWrappedSplitRows(
+			rows(),
+			wrapWidth(),
+			props.wrapEnabled,
+			props.scrollLeft,
+		),
 	)
 
 	const visibleRange = createMemo(() =>
@@ -283,6 +293,7 @@ export function VirtualizedSplitView(props: VirtualizedSplitViewProps) {
 							fileStats={fileStats()}
 							highlighterReady={highlighterReady}
 							columnWidth={columnWidth()}
+							onHorizontalScroll={props.onHorizontalScroll}
 						/>
 					)}
 				</For>
@@ -305,6 +316,7 @@ interface VirtualizedSplitRowProps {
 	>
 	highlighterReady: () => boolean
 	columnWidth: number
+	onHorizontalScroll?: (event: MouseEvent) => void
 }
 
 function VirtualizedSplitRow(props: VirtualizedSplitRowProps) {
@@ -383,6 +395,7 @@ function VirtualizedSplitRow(props: VirtualizedSplitRowProps) {
 			lineNumWidth={props.lineNumWidth}
 			highlighterReady={props.highlighterReady}
 			columnWidth={props.columnWidth}
+			onHorizontalScroll={props.onHorizontalScroll}
 		/>
 	)
 }
@@ -392,6 +405,7 @@ interface SplitContentRowProps {
 	lineNumWidth: number
 	highlighterReady: () => boolean
 	columnWidth: number
+	onHorizontalScroll?: (event: MouseEvent) => void
 }
 
 interface TokenWithEmphasis extends SyntaxToken {
@@ -529,11 +543,11 @@ function SplitContentRow(props: SplitContentRowProps) {
 	})
 
 	const leftLineNum = createMemo(() =>
-		props.row.leftStart === 0 ? props.row.row.left?.oldLineNumber : undefined,
+		props.row.leftWrapped ? undefined : props.row.row.left?.oldLineNumber,
 	)
 
 	const rightLineNum = createMemo(() =>
-		props.row.rightStart === 0 ? props.row.row.right?.newLineNumber : undefined,
+		props.row.rightWrapped ? undefined : props.row.row.right?.newLineNumber,
 	)
 
 	const emptyFill = createMemo(() =>
@@ -551,12 +565,12 @@ function SplitContentRow(props: SplitContentRowProps) {
 				<Show
 					when={hasLeftLine()}
 					fallback={
-						<text wrapMode="none">
+						<text wrapMode="none" onMouseScroll={props.onHorizontalScroll}>
 							<span style={{ fg: EMPTY_STRIPE_COLOR }}>{emptyFill()}</span>
 						</text>
 					}
 				>
-					<text wrapMode="none">
+					<text wrapMode="none" onMouseScroll={props.onHorizontalScroll}>
 						<span style={{ fg: leftBar()?.color }}>{leftBar()?.char}</span>
 						<span style={{ fg: leftLineNumColor() }}>
 							{" "}
@@ -582,7 +596,6 @@ function SplitContentRow(props: SplitContentRowProps) {
 								</span>
 							)}
 						</For>
-						<span> </span>
 					</text>
 				</Show>
 			</box>
@@ -596,12 +609,12 @@ function SplitContentRow(props: SplitContentRowProps) {
 				<Show
 					when={hasRightLine()}
 					fallback={
-						<text wrapMode="none">
+						<text wrapMode="none" onMouseScroll={props.onHorizontalScroll}>
 							<span style={{ fg: EMPTY_STRIPE_COLOR }}>{emptyFill()}</span>
 						</text>
 					}
 				>
-					<text wrapMode="none">
+					<text wrapMode="none" onMouseScroll={props.onHorizontalScroll}>
 						<span style={{ fg: rightBar()?.color }}>{rightBar()?.char}</span>
 						<span style={{ fg: rightLineNumColor() }}>
 							{" "}
@@ -627,7 +640,6 @@ function SplitContentRow(props: SplitContentRowProps) {
 								</span>
 							)}
 						</For>
-						<span> </span>
 					</text>
 				</Show>
 			</box>
@@ -639,6 +651,7 @@ function buildWrappedSplitRows(
 	rows: SplitRow[],
 	wrapWidth: number,
 	wrapEnabled: boolean,
+	scrollLeft: number,
 ): WrappedSplitRow[] {
 	const result: WrappedSplitRow[] = []
 	const width = Math.max(1, wrapWidth)
@@ -655,13 +668,23 @@ function buildWrappedSplitRows(
 		const rightLength = rightContent.length
 
 		if (!wrapEnabled) {
+			const leftStart = row.left ? scrollLeft : null
+			const rightStart = row.right ? scrollLeft : null
 			result.push({
 				type: "content",
 				row,
-				leftStart: row.left ? 0 : null,
-				leftLength,
-				rightStart: row.right ? 0 : null,
-				rightLength,
+				leftStart,
+				leftLength:
+					leftStart === null
+						? 0
+						: Math.min(width - 1, Math.max(0, leftLength - leftStart)),
+				rightStart,
+				rightLength:
+					rightStart === null
+						? 0
+						: Math.min(width - 1, Math.max(0, rightLength - rightStart)),
+				leftWrapped: false,
+				rightWrapped: false,
 			})
 			continue
 		}
@@ -690,6 +713,8 @@ function buildWrappedSplitRows(
 				leftLength: leftSegmentLength,
 				rightStart,
 				rightLength: rightSegmentLength,
+				leftWrapped: leftStart !== null && i > 0,
+				rightWrapped: rightStart !== null && i > 0,
 			})
 		}
 	}

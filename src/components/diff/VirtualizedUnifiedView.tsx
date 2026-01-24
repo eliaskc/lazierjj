@@ -1,3 +1,4 @@
+import type { MouseEvent } from "@opentui/core"
 import { For, Show, createMemo } from "solid-js"
 import { useTheme } from "../../context/theme"
 import {
@@ -41,7 +42,7 @@ const BAR_CHAR = "▌"
 const SEPARATOR_COLOR = "#30363d"
 const FILE_HEADER_BG = "#1c2128"
 const HUNK_HEADER_BG = "#161b22"
-const RIGHT_PADDING = 3
+const RIGHT_PADDING = 2
 
 const STAT_COLORS = {
 	addition: "#3fb950",
@@ -56,6 +57,8 @@ interface VirtualizedUnifiedViewProps {
 	viewportHeight: number
 	viewportWidth: number
 	wrapEnabled: boolean
+	scrollLeft: number
+	onHorizontalScroll?: (event: MouseEvent) => void
 }
 
 type WrappedRow =
@@ -65,6 +68,7 @@ type WrappedRow =
 			row: DiffRow
 			lineStart: number
 			lineLength: number
+			isWrapped: boolean
 	  }
 
 export function VirtualizedUnifiedView(props: VirtualizedUnifiedViewProps) {
@@ -92,7 +96,7 @@ export function VirtualizedUnifiedView(props: VirtualizedUnifiedViewProps) {
 	})
 
 	const wrappedRows = createMemo(() =>
-		buildWrappedRows(rows(), wrapWidth(), props.wrapEnabled),
+		buildWrappedRows(rows(), wrapWidth(), props.wrapEnabled, props.scrollLeft),
 	)
 
 	const visibleRange = createMemo(() =>
@@ -139,6 +143,7 @@ export function VirtualizedUnifiedView(props: VirtualizedUnifiedViewProps) {
 							currentHunkId={props.currentHunkId}
 							fileStats={fileStats()}
 							highlighterReady={highlighterReady}
+							onHorizontalScroll={props.onHorizontalScroll}
 						/>
 					)}
 				</For>
@@ -160,6 +165,7 @@ interface VirtualizedRowProps {
 		{ additions: number; deletions: number; prevName?: string; type: string }
 	>
 	highlighterReady: () => boolean
+	onHorizontalScroll?: (event: MouseEvent) => void
 }
 
 function VirtualizedRow(props: VirtualizedRowProps) {
@@ -244,6 +250,8 @@ function VirtualizedRow(props: VirtualizedRowProps) {
 			lineLength={contentRow.lineLength}
 			lineNumWidth={props.lineNumWidth}
 			highlighterReady={props.highlighterReady}
+			isWrapped={contentRow.isWrapped}
+			onHorizontalScroll={props.onHorizontalScroll}
 		/>
 	)
 }
@@ -252,8 +260,10 @@ interface DiffLineRowProps {
 	row: DiffRow
 	lineStart: number
 	lineLength: number
+	isWrapped: boolean
 	lineNumWidth: number
 	highlighterReady: () => boolean
+	onHorizontalScroll?: (event: MouseEvent) => void
 }
 
 function DiffLineRow(props: DiffLineRowProps) {
@@ -295,7 +305,7 @@ function DiffLineRow(props: DiffLineRowProps) {
 	})
 
 	const lineNum = createMemo(() => {
-		if (props.lineStart > 0) return " ".repeat(props.lineNumWidth)
+		if (props.isWrapped) return " ".repeat(props.lineNumWidth)
 		const num =
 			props.row.type === "deletion"
 				? props.row.oldLineNumber
@@ -327,7 +337,7 @@ function DiffLineRow(props: DiffLineRowProps) {
 
 	return (
 		<box flexDirection="row" backgroundColor={lineBg()} flexGrow={1}>
-			<text wrapMode="none">
+			<text wrapMode="none" onMouseScroll={props.onHorizontalScroll}>
 				<span style={{ fg: bar().color }}>{bar().char}</span>
 				<span style={{ fg: lineNumColor() }}> {lineNum()} </span>
 				<span style={{ fg: SEPARATOR_COLOR }}>│</span>
@@ -335,7 +345,6 @@ function DiffLineRow(props: DiffLineRowProps) {
 				<For each={sliceTokens(tokens(), props.lineStart, props.lineLength)}>
 					{(token) => <span style={{ fg: token.color }}>{token.content}</span>}
 				</For>
-				<span> </span>
 			</text>
 		</box>
 	)
@@ -345,8 +354,10 @@ function buildWrappedRows(
 	rows: DiffRow[],
 	wrapWidth: number,
 	wrapEnabled: boolean,
+	scrollLeft: number,
 ): WrappedRow[] {
 	const result: WrappedRow[] = []
+	const width = Math.max(1, wrapWidth)
 
 	for (const row of rows) {
 		if (row.type === "file-header" || row.type === "hunk-header") {
@@ -357,16 +368,17 @@ function buildWrappedRows(
 		const content = row.content.replace(/\n$/, "")
 		const contentLength = content.length
 		if (!wrapEnabled) {
+			const start = scrollLeft
 			result.push({
 				type: "content",
 				row,
-				lineStart: 0,
-				lineLength: contentLength,
+				lineStart: start,
+				lineLength: Math.min(width - 1, Math.max(0, contentLength - start)),
+				isWrapped: false,
 			})
 			continue
 		}
 
-		const width = Math.max(1, wrapWidth)
 		const totalLines = Math.max(1, Math.ceil(contentLength / width))
 
 		for (let i = 0; i < totalLines; i += 1) {
@@ -377,6 +389,7 @@ function buildWrappedRows(
 				row,
 				lineStart: start,
 				lineLength,
+				isWrapped: i > 0,
 			})
 		}
 	}
