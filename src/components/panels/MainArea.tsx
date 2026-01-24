@@ -559,6 +559,14 @@ export function MainArea() {
 		setScrollLeftClamped(scrollLeft())
 	})
 
+	createEffect(() => {
+		if (parsedFiles().length > 0) return
+		if (headerHeight() > viewportHeight()) return
+		if (scrollTop() === 0) return
+		setScrollTop(0)
+		scrollRef?.scrollTo(0)
+	})
+
 	onMount(() => {
 		const pollInterval = setInterval(() => {
 			if (scrollRef) {
@@ -746,8 +754,8 @@ export function MainArea() {
 					focused={isFocused()}
 					flexGrow={1}
 					scrollX={false}
-					scrollbarOptions={{
-						visible: true,
+					verticalScrollbarOptions={{
+						visible: hasContent() || headerHeight() > viewportHeight(),
 						trackOptions: {
 							backgroundColor: colors().scrollbarTrack,
 							foregroundColor: colors().scrollbarThumb,
@@ -774,7 +782,7 @@ export function MainArea() {
 										commit={commit()}
 										details={commitDetails()}
 										stats={diffStats()}
-										maxWidth={mainAreaWidth()}
+										maxWidth={Math.max(1, viewportWidth())}
 									/>
 								</Show>
 							)}
