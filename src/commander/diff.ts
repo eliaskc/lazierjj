@@ -1,3 +1,4 @@
+import { toFilesetArgs } from "../utils/jj-fileset"
 import { profile } from "../utils/profiler"
 import { execute, executeStreaming } from "./executor"
 
@@ -29,7 +30,7 @@ export async function fetchDiff(
 	]
 
 	if (options.paths && options.paths.length > 0) {
-		args.push(...options.paths)
+		args.push(...toFilesetArgs(options.paths))
 	}
 
 	const result = await execute(args, { cwd: options.cwd, env })
@@ -70,7 +71,7 @@ export function streamDiff(
 	]
 
 	if (options.paths && options.paths.length > 0) {
-		args.push(...options.paths)
+		args.push(...toFilesetArgs(options.paths))
 	}
 
 	let firstUpdate = true

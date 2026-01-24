@@ -8,6 +8,7 @@ import {
 } from "@pierre/diffs"
 import { execute } from "../commander/executor"
 import { findBinaryFiles } from "../utils/diff-binary"
+import { toFilesetArgs } from "../utils/jj-fileset"
 import { type FileId, type HunkId, fileId, hunkId } from "./identifiers"
 
 // Re-export types for convenience
@@ -39,7 +40,7 @@ export async function fetchParsedDiff(
 
 	// Add specific file paths if provided
 	if (options.paths && options.paths.length > 0) {
-		args.push(...options.paths)
+		args.push(...toFilesetArgs(options.paths))
 	}
 
 	const result = await execute(args, { cwd: options.cwd })
