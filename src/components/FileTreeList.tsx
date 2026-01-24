@@ -63,11 +63,7 @@ export function FileTreeList(props: FileTreeListProps) {
 				const handleMouseDown = (e: { stopPropagation: () => void }) => {
 					e.stopPropagation()
 					props.setSelectedIndex(index())
-					if (node.isDirectory) {
-						props.toggleFolder(node.path)
-					} else {
-						handleDoubleClick()
-					}
+					handleDoubleClick()
 				}
 
 				const showSelection = () =>
