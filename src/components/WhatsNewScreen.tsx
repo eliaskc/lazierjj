@@ -42,7 +42,7 @@ export function WhatsNewScreen(props: WhatsNewScreenProps) {
 				justifyContent="center"
 				alignItems="center"
 			>
-				<box flexDirection="column" alignItems="center">
+				<box flexDirection="column" alignItems="center" gap={1}>
 					<BorderBox
 						border
 						borderStyle={style().panel.borderStyle}

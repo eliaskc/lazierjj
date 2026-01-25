@@ -47,6 +47,6 @@ export const opencodeTheme: Theme = {
 		dialog: {
 			overlayOpacity: 150,
 		},
-		adaptToTerminal: true,
+		adaptToTerminal: false,
 	},
 }
