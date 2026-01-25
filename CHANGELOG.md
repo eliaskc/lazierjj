@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.2
+
+### fixed
+- ux: what's new screen only appears for major/minor releases, not patches ([`c4778c14`](../../commit/c4778c14))
+- ux: changelog entries no longer show empty parentheses when links are stripped ([`c4778c14`](../../commit/c4778c14))
+
 ## 0.6.1
 
 ### fixed
