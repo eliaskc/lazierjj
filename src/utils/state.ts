@@ -1,6 +1,7 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import { existsSync, readFileSync, unlinkSync } from "node:fs"
 import { homedir } from "node:os"
-import { dirname, join } from "node:path"
+import { join } from "node:path"
+import { writeFileAtomic } from "./atomic-write"
 
 const MAX_RECENT_REPOS = 10
 
@@ -13,22 +14,84 @@ export interface AppState {
 	recentRepos: RecentRepo[]
 	lastUpdateCheck?: string
 	lastSeenVersion?: string
-	whatsNewDisabled?: boolean
 	dismissedVersion?: string | null
 }
 
-function getStatePath(): string {
-	return join(homedir(), ".config", "kajji", "state.json")
+export interface AppConfig {
+	whatsNewDisabled?: boolean
 }
 
-function ensureStateDir(): void {
-	const dir = dirname(getStatePath())
-	if (!existsSync(dir)) {
-		mkdirSync(dir, { recursive: true })
+const CONFIG_DIR = join(homedir(), ".config", "kajji")
+const STATE_DIR = join(homedir(), ".local", "state", "kajji")
+const OLD_STATE_PATH = join(CONFIG_DIR, "state.json")
+
+function getStatePath(): string {
+	return join(STATE_DIR, "state.json")
+}
+
+function getConfigPath(): string {
+	return join(CONFIG_DIR, "config.json")
+}
+
+let migrationAttempted = false
+
+function migrateStateIfNeeded(): void {
+	if (migrationAttempted) return
+	migrationAttempted = true
+
+	if (!existsSync(OLD_STATE_PATH)) return
+
+	try {
+		const oldContent = readFileSync(OLD_STATE_PATH, "utf-8")
+		const oldState = JSON.parse(oldContent) as AppState & {
+			whatsNewDisabled?: boolean
+		}
+
+		const newStatePath = getStatePath()
+		const newConfigPath = getConfigPath()
+
+		let stateWritten = false
+		let configWritten = false
+
+		if (!existsSync(newStatePath)) {
+			const nextState: AppState = {
+				recentRepos: oldState.recentRepos ?? [],
+				lastUpdateCheck: oldState.lastUpdateCheck,
+				lastSeenVersion: oldState.lastSeenVersion,
+				dismissedVersion: oldState.dismissedVersion,
+			}
+			writeFileAtomic(newStatePath, JSON.stringify(nextState, null, 2))
+			stateWritten = true
+		}
+
+		if (oldState.whatsNewDisabled !== undefined && !existsSync(newConfigPath)) {
+			const nextConfig: AppConfig = {
+				whatsNewDisabled: oldState.whatsNewDisabled,
+			}
+			writeFileAtomic(newConfigPath, JSON.stringify(nextConfig, null, 2))
+			configWritten = true
+		}
+
+		const canFinalize =
+			(existsSync(newStatePath) || stateWritten) &&
+			(oldState.whatsNewDisabled === undefined ||
+				existsSync(newConfigPath) ||
+				configWritten)
+
+		if (canFinalize) {
+			const backupPath = `${OLD_STATE_PATH}.bak`
+			if (!existsSync(backupPath)) {
+				writeFileAtomic(backupPath, oldContent)
+			}
+			unlinkSync(OLD_STATE_PATH)
+		}
+	} catch {
+		// Keep old state if migration fails
 	}
 }
 
 export function readState(): AppState {
+	migrateStateIfNeeded()
 	const statePath = getStatePath()
 	if (!existsSync(statePath)) {
 		return { recentRepos: [] }
@@ -42,9 +105,29 @@ export function readState(): AppState {
 }
 
 export function writeState(state: AppState): void {
-	ensureStateDir()
+	migrateStateIfNeeded()
 	const statePath = getStatePath()
-	writeFileSync(statePath, JSON.stringify(state, null, 2))
+	writeFileAtomic(statePath, JSON.stringify(state, null, 2))
+}
+
+export function readConfig(): AppConfig {
+	migrateStateIfNeeded()
+	const configPath = getConfigPath()
+	if (!existsSync(configPath)) {
+		return {}
+	}
+	try {
+		const content = readFileSync(configPath, "utf-8")
+		return JSON.parse(content) as AppConfig
+	} catch {
+		return {}
+	}
+}
+
+export function writeConfig(config: AppConfig): void {
+	migrateStateIfNeeded()
+	const configPath = getConfigPath()
+	writeFileAtomic(configPath, JSON.stringify(config, null, 2))
 }
 
 export function addRecentRepo(repoPath: string): void {

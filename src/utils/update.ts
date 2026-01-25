@@ -163,7 +163,7 @@ export function checkForUpdates(): void {
 	setTimeout(async () => {
 		try {
 			// Dynamic import to avoid circular dependency
-			const { mockMode } = await import("../index")
+			const { mockMode } = await import("../mock")
 			if (mockMode === "update-success") {
 				await new Promise((r) => setTimeout(r, 1000))
 				toast.success("Updated to v0.4.0", {

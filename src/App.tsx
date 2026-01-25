@@ -33,7 +33,7 @@ import {
 } from "./utils/changelog"
 import type { VersionBlock } from "./utils/changelog"
 import { isCriticalStartupError, parseJjError } from "./utils/error-parser"
-import { readState, writeState } from "./utils/state"
+import { readConfig, readState, writeConfig, writeState } from "./utils/state"
 import { checkForUpdates, getCurrentVersion } from "./utils/update"
 
 import changelogContent from "../CHANGELOG.md" with { type: "text" }
@@ -88,13 +88,14 @@ function AppContent() {
 		checkForUpdates()
 
 		const state = readState()
+		const config = readConfig()
 		const currentVersion = getCurrentVersion()
 		const allBlocks = parseChangelog(changelogContent)
 
 		if (!state.lastSeenVersion) {
 			writeState({ ...state, lastSeenVersion: currentVersion })
 		} else if (
-			!state.whatsNewDisabled &&
+			!config.whatsNewDisabled &&
 			currentVersion !== "0.0.0" &&
 			state.lastSeenVersion !== currentVersion &&
 			isMajorOrMinorUpdate(currentVersion, state.lastSeenVersion)
@@ -451,10 +452,13 @@ function AppContent() {
 				}}
 				onDisable={() => {
 					setWhatsNewChanges(null)
+					writeConfig({
+						...readConfig(),
+						whatsNewDisabled: true,
+					})
 					writeState({
 						...readState(),
 						lastSeenVersion: getCurrentVersion(),
-						whatsNewDisabled: true,
 					})
 				}}
 			/>
