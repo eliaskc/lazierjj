@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.6.0
+
+### new
+- line wrapping toggle (`w`) for diff views ([`b3751588`](../../commit/b3751588))
+- binary file detection with indicator in file tree, prevents loading binary diffs ([`47e26007`](../../commit/47e26007))
+- horizontal mouse scrolling in diff and log panels ([`a49bb5c1`](../../commit/a49bb5c1), [`06a44e53`](../../commit/06a44e53))
+- path truncation in diff file headers for long paths ([`143196c3`](../../commit/143196c3))
+- "what's new" modal shows changelog after version updates ([`67fc8e05`](../../commit/67fc8e05))
+- status bar shows diff view keybinds (`w` wrap, `v` split/unified) ([`ce220d00`](../../commit/ce220d00))
+
+### improved
+- ux: squash and rebase modals larger for better visibility ([`7297f643`](../../commit/7297f643))
+- perf: streaming log parse for faster initial render ([`65fd58b9`](../../commit/65fd58b9))
+- ux: smoother scrolling, reduced loading flicker ([`6e1961ad`](../../commit/6e1961ad))
+
+### fixed
+- file tree: single-click selects folder, double-click expands/collapses ([`d6cda93d`](../../commit/d6cda93d))
+- diff: file paths with spaces handled correctly ([`db69a08f`](../../commit/db69a08f))
+- diff: unchanged line gaps visually distinct from file whitespace ([`6ed6f730`](../../commit/6ed6f730))
+- diff: header width clamped, scroll position bounded ([`aeca9bdc`](../../commit/aeca9bdc))
+- diff: increased overscan buffer to prevent blank flashes ([`6ff93157`](../../commit/6ff93157))
+
 ## 0.5.1
 
 ### fixed

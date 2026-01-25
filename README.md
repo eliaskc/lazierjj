@@ -68,10 +68,12 @@ bun dev
 
 **TUI polish:**
 - [x] Vim-style navigation (j/k, ctrl+u/d)
-- [x] Mouse support (click, double-click, scroll)
+- [x] Mouse support (click, double-click, horizontal scroll)
 - [x] Collapsible file tree with status colors
 - [x] Help palette with fuzzy search (`?`)
 - [x] Focus modes for normal browsing vs diff viewing
+- [x] Line wrapping toggle (`w`) and split/unified view (`v`)
+- [x] Binary file detection
 - [x] Recent repository switcher
 - [x] Automatic update notifications
 - [x] Revset filtering and fuzzy search
@@ -96,6 +98,8 @@ kajji /path/to/repo      # specific directory
 | `Escape` | Back / close modal |
 | `ctrl+x` | Toggle focus mode (normal / diff) |
 | `ctrl+o` | Open recent repository |
+| `w` | Toggle line wrapping in diff |
+| `v` | Toggle split / unified diff |
 | `ctrl+p` | Show commands (or `?`) |
 | `q` | Quit |
 
