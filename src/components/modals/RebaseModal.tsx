@@ -84,15 +84,15 @@ export function RebaseModal(props: RebaseModalProps) {
 		setSelectedRevision(commit.changeId)
 	}
 
-	const pickerHeight = () => props.height ?? 12
+	const pickerHeight = () => props.height ?? 20
 
 	const title = () => `Rebase ${props.source.changeId.slice(0, 8)} onto`
 
 	return (
 		<box
 			flexDirection="column"
-			width={props.width ?? "60%"}
-			maxWidth={90}
+			width={props.width ?? "80%"}
+			maxWidth={120}
 			gap={0}
 		>
 			<BorderBox

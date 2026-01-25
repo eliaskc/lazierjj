@@ -75,15 +75,15 @@ export function SquashModal(props: SquashModalProps) {
 		setSelectedRevision(commit.changeId)
 	}
 
-	const pickerHeight = () => props.height ?? 12
+	const pickerHeight = () => props.height ?? 20
 
 	const title = () => `Squash ${props.source.changeId.slice(0, 8)} into`
 
 	return (
 		<box
 			flexDirection="column"
-			width={props.width ?? "60%"}
-			maxWidth={90}
+			width={props.width ?? "80%"}
+			maxWidth={120}
 			gap={0}
 		>
 			<BorderBox
