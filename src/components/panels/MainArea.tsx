@@ -50,6 +50,26 @@ function FileStats(props: { stats: DiffStats; maxWidth: number }) {
 	const separatorWidth = 3 // " | "
 	const barMargin = 2 // margin on right side
 
+	const fileRows = createMemo(() => {
+		const maxPathWidth = Math.max(1, Math.floor(props.maxWidth * 0.75))
+		let maxLen = 1
+		const rows = s().files.map((file) => {
+			const pathText = truncatePathMiddle(file.path, maxPathWidth)
+			maxLen = Math.max(maxLen, pathText.length)
+			return { file, pathText }
+		})
+		const pathColumnWidth = Math.min(maxPathWidth, maxLen)
+		const availableBarWidth = Math.max(
+			1,
+			props.maxWidth - pathColumnWidth - separatorWidth - barMargin,
+		)
+		return { rows, pathColumnWidth, availableBarWidth }
+	})
+
+	const rows = () => fileRows().rows
+	const pathColumnWidth = () => fileRows().pathColumnWidth
+	const availableBarWidth = () => fileRows().availableBarWidth
+
 	// Scale +/- counts to fit within available width while preserving ratio
 	const scaleBar = (
 		insertions: number,
@@ -75,24 +95,17 @@ function FileStats(props: { stats: DiffStats; maxWidth: number }) {
 	return (
 		<>
 			<text> </text>
-			<For each={s().files}>
-				{(file) => {
-					// Calculate available width for bar based on actual path length
-					const maxPathWidth = Math.max(1, Math.floor(props.maxWidth * 0.75))
-					const pathText = truncatePathMiddle(file.path, maxPathWidth)
-					const pathLen = pathText.length
-					const availableBarWidth = Math.max(
-						1,
-						props.maxWidth - pathLen - separatorWidth - barMargin,
-					)
+			<For each={rows()}>
+				{(row) => {
+					const paddedPath = row.pathText.padEnd(pathColumnWidth(), " ")
 					const bar = scaleBar(
-						file.insertions,
-						file.deletions,
-						availableBarWidth,
+						row.file.insertions,
+						row.file.deletions,
+						availableBarWidth(),
 					)
 					return (
 						<text wrapMode="none">
-							<span style={{ fg: colors().text }}>{pathText}</span>
+							<span style={{ fg: colors().text }}>{paddedPath}</span>
 							{" | "}
 							<span style={{ fg: colors().success }}>
 								{"+".repeat(bar.plus)}
