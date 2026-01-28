@@ -27,6 +27,18 @@ export interface FilterableFileTreeProps {
 	isFocused?: () => boolean
 	focusContext?: Context
 	scrollRef?: (ref: ScrollBoxRenderable) => void
+	filterApiRef?: (api: FilterableFileTreeApi) => void
+}
+
+export interface FilterableFileTreeApi {
+	activateFilter: () => void
+	applyFilter: () => void
+	cancelFilter: () => void
+	clearFilter: () => void
+	selectNext: () => void
+	selectPrev: () => void
+	hasActiveFilter: () => boolean
+	isFiltering: () => boolean
 }
 
 export function FilterableFileTree(props: FilterableFileTreeProps) {
@@ -45,14 +57,20 @@ export function FilterableFileTree(props: FilterableFileTreeProps) {
 		command.setInputMode(false)
 	})
 	const [query, setQuery] = createSignal("")
+	const [appliedQuery, setAppliedQuery] = createSignal("")
 	const [filterSelectedIndex, setFilterSelectedIndex] = createSignal(0)
 	const [scrollTop, setScrollTop] = createSignal(0)
 
 	let inputRef: TextareaRenderable | undefined
 	let scrollRef: ScrollBoxRenderable | undefined
 
+	const activeQuery = createMemo(() =>
+		filterMode() ? query() : appliedQuery(),
+	)
+	const hasActiveFilter = createMemo(() => activeQuery().trim().length > 0)
+
 	const filteredFiles = createMemo(() => {
-		const q = query().trim()
+		const q = activeQuery().trim()
 		if (!q) return props.files()
 
 		const allFiles = props.files()
@@ -77,12 +95,10 @@ export function FilterableFileTree(props: FilterableFileTreeProps) {
 	})
 
 	const currentSelectedIndex = () =>
-		filterMode() && query().trim()
-			? filterSelectedIndex()
-			: props.selectedIndex()
+		hasActiveFilter() ? filterSelectedIndex() : props.selectedIndex()
 
 	const currentFiles = () =>
-		filterMode() && query().trim() ? filteredFiles() : props.files()
+		hasActiveFilter() ? filteredFiles() : props.files()
 
 	createEffect(
 		on(
@@ -98,7 +114,7 @@ export function FilterableFileTree(props: FilterableFileTreeProps) {
 		on(
 			() => [filteredFiles().length, filterSelectedIndex()] as const,
 			([len, idx]) => {
-				if (!filterMode()) return
+				if (!hasActiveFilter() && !filterMode()) return
 				if (len > 0 && idx >= len) {
 					setFilterSelectedIndex(len - 1)
 				}
@@ -112,7 +128,7 @@ export function FilterableFileTree(props: FilterableFileTreeProps) {
 		on(
 			() => filterSelectedIndex(),
 			(idx) => {
-				if (!filterMode() || !query().trim()) return
+				if (!hasActiveFilter()) return
 				const filtered = filteredFiles()
 				const selectedFile = filtered[idx]
 				if (selectedFile) {
@@ -129,15 +145,37 @@ export function FilterableFileTree(props: FilterableFileTreeProps) {
 	)
 
 	const activateFilter = () => {
+		setQuery(appliedQuery())
 		setFilterMode(true)
-		setFilterSelectedIndex(0)
+		setFilterSelectedIndex(currentSelectedIndex())
 		queueMicrotask(() => {
 			inputRef?.requestRender?.()
 			inputRef?.focus()
+			inputRef?.gotoBufferEnd()
 		})
 	}
 
+	const cancelFilter = () => {
+		setFilterMode(false)
+		setQuery("")
+		inputRef?.clear()
+	}
+
+	const applyFilter = () => {
+		const nextQuery = query().trim()
+		if (nextQuery) {
+			setAppliedQuery(nextQuery)
+			setFilterSelectedIndex(0)
+		} else if (appliedQuery()) {
+			setAppliedQuery("")
+		}
+		setFilterMode(false)
+		setQuery("")
+		inputRef?.clear()
+	}
+
 	const clearFilter = () => {
+		setAppliedQuery("")
 		setFilterMode(false)
 		setQuery("")
 		inputRef?.clear()
@@ -156,7 +194,7 @@ export function FilterableFileTree(props: FilterableFileTreeProps) {
 	const selectNext = () => {
 		const max = currentFiles().length - 1
 		if (max < 0) return
-		if (filterMode() && query().trim()) {
+		if (hasActiveFilter()) {
 			setFilterSelectedIndex((i) => Math.min(max, i + 1))
 		} else {
 			props.setSelectedIndex(Math.min(max, props.selectedIndex() + 1))
@@ -164,15 +202,44 @@ export function FilterableFileTree(props: FilterableFileTreeProps) {
 	}
 
 	const selectPrev = () => {
-		if (filterMode() && query().trim()) {
+		if (hasActiveFilter()) {
 			setFilterSelectedIndex((i) => Math.max(0, i - 1))
 		} else {
 			props.setSelectedIndex(Math.max(0, props.selectedIndex() - 1))
 		}
 	}
 
+	props.filterApiRef?.({
+		activateFilter,
+		applyFilter,
+		cancelFilter,
+		clearFilter,
+		selectNext,
+		selectPrev,
+		hasActiveFilter,
+		isFiltering: filterMode,
+	})
+
 	useKeyboard((evt) => {
 		if (!props.isFocused?.()) return
+
+		if (!filterMode() && hasActiveFilter()) {
+			if (keybind.match("nav_down", evt)) {
+				evt.preventDefault()
+				evt.stopPropagation()
+				const max = currentFiles().length - 1
+				if (max >= 0) {
+					setFilterSelectedIndex((i) => Math.min(max, i + 1))
+				}
+				return
+			}
+			if (keybind.match("nav_up", evt)) {
+				evt.preventDefault()
+				evt.stopPropagation()
+				setFilterSelectedIndex((i) => Math.max(0, i - 1))
+				return
+			}
+		}
 
 		if (!filterMode() && keybind.match("search", evt)) {
 			evt.preventDefault()
@@ -197,13 +264,13 @@ export function FilterableFileTree(props: FilterableFileTreeProps) {
 			} else if (evt.name === "enter" || evt.name === "return") {
 				evt.preventDefault()
 				evt.stopPropagation()
-				clearFilter()
+				applyFilter()
 			}
 		}
 	})
 
 	const handleSetSelectedIndex = (index: number) => {
-		if (filterMode() && query().trim()) {
+		if (hasActiveFilter()) {
 			setFilterSelectedIndex(index)
 		} else {
 			props.setSelectedIndex(index)
@@ -212,7 +279,7 @@ export function FilterableFileTree(props: FilterableFileTreeProps) {
 
 	const hasFiles = createMemo(() => currentFiles().length > 0)
 	const noMatchesMessage = createMemo(() =>
-		filterMode() && query().trim() ? "No matching files" : "No files",
+		hasActiveFilter() ? "No matching files" : "No files",
 	)
 
 	return (
@@ -246,15 +313,33 @@ export function FilterableFileTree(props: FilterableFileTreeProps) {
 				</scrollbox>
 			</Show>
 
-			{/* Filter input at bottom */}
-			<Show when={filterMode()}>
-				<FilterInput
-					ref={(r) => {
-						inputRef = r
-					}}
-					onInput={setQuery}
-					dividerPosition="above"
-				/>
+			{/* Filter input/display at bottom */}
+			<Show when={hasActiveFilter() || filterMode()}>
+				<Show
+					when={filterMode()}
+					fallback={
+						<>
+							<box height={1} overflow="hidden">
+								<text fg={colors().textMuted} wrapMode="none">
+									{"─".repeat(200)}
+								</text>
+							</box>
+							<box paddingLeft={1} height={1}>
+								<text fg={colors().textMuted}>/</text>
+								<text fg={colors().text}>{appliedQuery()}</text>
+							</box>
+						</>
+					}
+				>
+					<FilterInput
+						ref={(r) => {
+							inputRef = r
+						}}
+						onInput={setQuery}
+						dividerPosition="above"
+						initialValue={appliedQuery()}
+					/>
+				</Show>
 			</Show>
 		</box>
 	)

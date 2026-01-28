@@ -47,7 +47,10 @@ import type { Context } from "../../context/types"
 import { createDoubleClickDetector } from "../../utils/double-click"
 import { AnsiText } from "../AnsiText"
 import { FilterInput } from "../FilterInput"
-import { FilterableFileTree } from "../FilterableFileTree"
+import {
+	FilterableFileTree,
+	type FilterableFileTreeApi,
+} from "../FilterableFileTree"
 import { Panel } from "../Panel"
 import { DescribeModal } from "../modals/DescribeModal"
 import { RebaseModal } from "../modals/RebaseModal"
@@ -267,6 +270,7 @@ export function LogPanel() {
 	const [opLogScrollTop, setOpLogScrollTop] = createSignal(0)
 	const [opLogViewportWidth, setOpLogViewportWidth] = createSignal(80)
 	const [opLogScrollLeft, setOpLogScrollLeft] = createSignal(0)
+	let filesFilterApi: FilterableFileTreeApi | undefined
 
 	const stripAnsi = (str: string) => {
 		let out = ""
@@ -1001,7 +1005,13 @@ export function LogPanel() {
 			type: "navigation",
 			panel: "log",
 			visibility: "help-only",
-			onSelect: selectNextFile,
+			onSelect: () => {
+				if (filesFilterApi) {
+					filesFilterApi.selectNext()
+				} else {
+					selectNextFile()
+				}
+			},
 		},
 		{
 			id: "log.files.prev",
@@ -1011,7 +1021,13 @@ export function LogPanel() {
 			type: "navigation",
 			panel: "log",
 			visibility: "help-only",
-			onSelect: selectPrevFile,
+			onSelect: () => {
+				if (filesFilterApi) {
+					filesFilterApi.selectPrev()
+				} else {
+					selectPrevFile()
+				}
+			},
 		},
 		{
 			id: "log.files.toggle",
@@ -1258,6 +1274,9 @@ export function LogPanel() {
 						toggleFolder={toggleFolder}
 						isFocused={isFocused}
 						focusContext="log.files"
+						filterApiRef={(api) => {
+							filesFilterApi = api
+						}}
 						scrollRef={(r) => {
 							filesScrollRef = r
 						}}

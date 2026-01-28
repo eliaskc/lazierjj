@@ -45,7 +45,10 @@ import { useTheme } from "../../context/theme"
 import { createDoubleClickDetector } from "../../utils/double-click"
 import { FUZZY_THRESHOLD, scrollIntoView } from "../../utils/scroll"
 import { FilterInput } from "../FilterInput"
-import { FilterableFileTree } from "../FilterableFileTree"
+import {
+	FilterableFileTree,
+	type FilterableFileTreeApi,
+} from "../FilterableFileTree"
 import { Panel } from "../Panel"
 import { BookmarkNameModal } from "../modals/BookmarkNameModal"
 import { DescribeModal } from "../modals/DescribeModal"
@@ -121,6 +124,7 @@ export function BookmarksPanel() {
 
 	const [filterMode, setFilterModeInternal] = createSignal(false)
 	const [filterQuery, setFilterQuery] = createSignal("")
+	const [appliedFilter, setAppliedFilter] = createSignal("")
 	const [filterSelectedIndex, setFilterSelectedIndex] = createSignal(0)
 
 	let filterInputRef: TextareaRenderable | undefined
@@ -136,8 +140,15 @@ export function BookmarksPanel() {
 		}
 	})
 
+	const activeFilterQuery = createMemo(() =>
+		filterMode() ? filterQuery() : appliedFilter(),
+	)
+	const hasActiveFilter = createMemo(
+		() => activeFilterQuery().trim().length > 0,
+	)
+
 	const filteredBookmarks = createMemo(() => {
-		const q = filterQuery().trim()
+		const q = activeFilterQuery().trim()
 		if (!q) return visibleLocalBookmarks()
 
 		const results = fuzzysort.go(q, visibleLocalBookmarks(), {
@@ -149,17 +160,15 @@ export function BookmarksPanel() {
 	})
 
 	const currentBookmarks = () =>
-		filterMode() && filterQuery().trim()
-			? filteredBookmarks()
-			: visibleLocalBookmarks()
+		hasActiveFilter() ? filteredBookmarks() : visibleLocalBookmarks()
 
 	const listTotalRows = createMemo(() => currentBookmarks().length)
-	const canPageBookmarks = createMemo(() => !filterMode() && bookmarksHasMore())
+	const canPageBookmarks = createMemo(
+		() => !hasActiveFilter() && bookmarksHasMore(),
+	)
 
 	const currentSelectedIndex = () =>
-		filterMode() && filterQuery().trim()
-			? filterSelectedIndex()
-			: selectedBookmarkIndex()
+		hasActiveFilter() ? filterSelectedIndex() : selectedBookmarkIndex()
 
 	createEffect(
 		on(
@@ -189,7 +198,7 @@ export function BookmarksPanel() {
 		on(
 			() => filterSelectedIndex(),
 			(idx) => {
-				if (!filterMode() || !filterQuery().trim()) return
+				if (!hasActiveFilter()) return
 				const filtered = filteredBookmarks()
 				const selectedBookmarkItem = filtered[idx]
 				if (selectedBookmarkItem) {
@@ -205,16 +214,56 @@ export function BookmarksPanel() {
 		),
 	)
 
+	const selectNextBookmarkInView = () => {
+		const max = currentBookmarks().length - 1
+		if (max < 0) return
+		if (hasActiveFilter()) {
+			setFilterSelectedIndex((i) => Math.min(max, i + 1))
+		} else {
+			selectNextBookmark()
+		}
+	}
+
+	const selectPrevBookmarkInView = () => {
+		if (hasActiveFilter()) {
+			setFilterSelectedIndex((i) => Math.max(0, i - 1))
+		} else {
+			selectPrevBookmark()
+		}
+	}
+
 	const activateBookmarkFilter = () => {
+		setFilterQuery(appliedFilter())
 		setFilterMode(true)
-		setFilterSelectedIndex(0)
+		setFilterSelectedIndex(currentSelectedIndex())
 		queueMicrotask(() => {
 			filterInputRef?.requestRender?.()
 			filterInputRef?.focus()
+			filterInputRef?.gotoBufferEnd()
 		})
 	}
 
+	const cancelBookmarkFilter = () => {
+		setFilterMode(false)
+		setFilterQuery("")
+		filterInputRef?.clear()
+	}
+
 	const clearBookmarkFilter = () => {
+		setAppliedFilter("")
+		setFilterMode(false)
+		setFilterQuery("")
+		filterInputRef?.clear()
+	}
+
+	const applyBookmarkFilter = () => {
+		const nextQuery = filterQuery().trim()
+		if (nextQuery) {
+			setAppliedFilter(nextQuery)
+			setFilterSelectedIndex(0)
+		} else if (appliedFilter()) {
+			setAppliedFilter("")
+		}
 		setFilterMode(false)
 		setFilterQuery("")
 		filterInputRef?.clear()
@@ -223,6 +272,13 @@ export function BookmarksPanel() {
 	useKeyboard((evt) => {
 		if (!isFocused()) return
 		if (bookmarkViewMode() !== "list") return
+
+		if (!filterMode() && hasActiveFilter() && evt.name === "escape") {
+			evt.preventDefault()
+			evt.stopPropagation()
+			clearBookmarkFilter()
+			return
+		}
 
 		if (!filterMode() && keybind.match("search", evt)) {
 			evt.preventDefault()
@@ -258,7 +314,7 @@ export function BookmarksPanel() {
 			} else if (evt.name === "enter" || evt.name === "return") {
 				evt.preventDefault()
 				evt.stopPropagation()
-				handleListEnter()
+				applyBookmarkFilter()
 			}
 		}
 	})
@@ -266,6 +322,7 @@ export function BookmarksPanel() {
 	let listScrollRef: ScrollBoxRenderable | undefined
 	let commitsScrollRef: ScrollBoxRenderable | undefined
 	let filesScrollRef: ScrollBoxRenderable | undefined
+	let filesFilterApi: FilterableFileTreeApi | undefined
 
 	const [listScrollTop, setListScrollTop] = createSignal(0)
 	const [listViewportHeight, setListViewportHeight] = createSignal(30)
@@ -356,10 +413,6 @@ export function BookmarksPanel() {
 	}
 
 	const handleListEnter = () => {
-		// Clear filter when leaving list view
-		if (filterMode()) {
-			clearBookmarkFilter()
-		}
 		enterBookmarkCommitsView()
 	}
 
@@ -397,7 +450,13 @@ export function BookmarksPanel() {
 					type: "navigation",
 					panel: "refs",
 					visibility: "help-only",
-					onSelect: selectNextBookmarkFile,
+					onSelect: () => {
+						if (filesFilterApi) {
+							filesFilterApi.selectNext()
+						} else {
+							selectNextBookmarkFile()
+						}
+					},
 				},
 				{
 					id: "refs.files.prev",
@@ -407,7 +466,13 @@ export function BookmarksPanel() {
 					type: "navigation",
 					panel: "refs",
 					visibility: "help-only",
-					onSelect: selectPrevBookmarkFile,
+					onSelect: () => {
+						if (filesFilterApi) {
+							filesFilterApi.selectPrev()
+						} else {
+							selectPrevBookmarkFile()
+						}
+					},
 				},
 				{
 					id: "refs.files.toggle",
@@ -437,9 +502,7 @@ export function BookmarksPanel() {
 					type: "view",
 					panel: "refs",
 					visibility: "help-only",
-					onSelect: () => {
-						// Handled by FilterableFileTree
-					},
+					onSelect: () => filesFilterApi?.activateFilter(),
 				},
 				{
 					id: "refs.files.restore",
@@ -819,7 +882,7 @@ export function BookmarksPanel() {
 				type: "navigation",
 				panel: "refs",
 				visibility: "help-only",
-				onSelect: selectNextBookmark,
+				onSelect: selectNextBookmarkInView,
 			},
 			{
 				id: "refs.bookmarks.prev",
@@ -829,7 +892,7 @@ export function BookmarksPanel() {
 				type: "navigation",
 				panel: "refs",
 				visibility: "help-only",
-				onSelect: selectPrevBookmark,
+				onSelect: selectPrevBookmarkInView,
 			},
 			{
 				id: "refs.bookmarks.view_revisions",
@@ -1010,13 +1073,7 @@ export function BookmarksPanel() {
 					>
 						<box flexDirection="column" flexGrow={1}>
 							{/* Empty state - outside scrollbox */}
-							<Show
-								when={
-									currentBookmarks().length === 0 &&
-									filterMode() &&
-									filterQuery().trim()
-								}
-							>
+							<Show when={currentBookmarks().length === 0 && hasActiveFilter()}>
 								<box paddingLeft={1} flexGrow={1}>
 									<text fg={colors().textMuted}>No matching bookmarks</text>
 								</box>
@@ -1040,7 +1097,7 @@ export function BookmarksPanel() {
 												},
 											)
 											const handleMouseDown = () => {
-												if (filterMode() && filterQuery().trim()) {
+												if (hasActiveFilter()) {
 													setFilterSelectedIndex(index())
 												} else {
 													setSelectedBookmarkIndex(index())
@@ -1073,15 +1130,33 @@ export function BookmarksPanel() {
 								</scrollbox>
 							</Show>
 
-							{/* Filter input at bottom */}
-							<Show when={filterMode()}>
-								<FilterInput
-									ref={(r) => {
-										filterInputRef = r
-									}}
-									onInput={setFilterQuery}
-									dividerPosition="above"
-								/>
+							{/* Filter input/display at bottom */}
+							<Show when={hasActiveFilter() || filterMode()}>
+								<Show
+									when={filterMode()}
+									fallback={
+										<>
+											<box height={1} overflow="hidden">
+												<text fg={colors().textMuted} wrapMode="none">
+													{"─".repeat(200)}
+												</text>
+											</box>
+											<box paddingLeft={1} height={1}>
+												<text fg={colors().textMuted}>/</text>
+												<text fg={colors().text}>{appliedFilter()}</text>
+											</box>
+										</>
+									}
+								>
+									<FilterInput
+										ref={(r) => {
+											filterInputRef = r
+										}}
+										onInput={setFilterQuery}
+										dividerPosition="above"
+										initialValue={appliedFilter()}
+									/>
+								</Show>
 							</Show>
 						</box>
 					</Show>
@@ -1167,6 +1242,9 @@ export function BookmarksPanel() {
 							toggleFolder={toggleBookmarkFolder}
 							isFocused={isFocused}
 							focusContext="refs.files"
+							filterApiRef={(api) => {
+								filesFilterApi = api
+							}}
 							scrollRef={(r) => {
 								filesScrollRef = r
 							}}
