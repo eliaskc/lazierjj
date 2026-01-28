@@ -1,14 +1,13 @@
-import { RGBA, type TextareaRenderable } from "@opentui/core"
+import {
+	type InputRenderable,
+	RGBA,
+	type TextareaRenderable,
+} from "@opentui/core"
 import { useKeyboard } from "@opentui/solid"
 import { createSignal, onMount } from "solid-js"
 import { useDialog } from "../../context/dialog"
 import { useTheme } from "../../context/theme"
 import { BorderBox } from "../BorderBox"
-
-const SINGLE_LINE_KEYBINDINGS = [
-	{ name: "return", action: "submit" as const },
-	{ name: "enter", action: "submit" as const },
-]
 
 interface DescribeModalProps {
 	initialSubject: string
@@ -26,10 +25,12 @@ export function DescribeModal(props: DescribeModalProps) {
 		"subject",
 	)
 
-	let subjectRef: TextareaRenderable | undefined
+	let subjectRef: InputRenderable | undefined
 	let bodyRef: TextareaRenderable | undefined
 
-	const focusTextareaAtEnd = (ref: TextareaRenderable | undefined) => {
+	const focusAtEnd = (
+		ref: { focus(): void; gotoBufferEnd(): void } | undefined,
+	) => {
 		if (!ref) return
 		ref.focus()
 		ref.gotoBufferEnd()
@@ -38,7 +39,7 @@ export function DescribeModal(props: DescribeModalProps) {
 	onMount(() => {
 		setTimeout(() => {
 			subjectRef?.requestRender?.()
-			focusTextareaAtEnd(subjectRef)
+			focusAtEnd(subjectRef)
 		}, 1)
 	})
 
@@ -53,10 +54,10 @@ export function DescribeModal(props: DescribeModalProps) {
 			evt.stopPropagation()
 			if (focusedField() === "subject") {
 				setFocusedField("body")
-				focusTextareaAtEnd(bodyRef)
+				focusAtEnd(bodyRef)
 			} else {
 				setFocusedField("subject")
-				focusTextareaAtEnd(subjectRef)
+				focusAtEnd(subjectRef)
 			}
 		}
 	})
@@ -84,18 +85,15 @@ export function DescribeModal(props: DescribeModalProps) {
 					<text fg={subjectTitleColor()}>{`Subject─[${charCount()}]`}</text>
 				}
 			>
-				<textarea
+				<input
 					ref={(r) => {
 						subjectRef = r
 					}}
-					initialValue={props.initialSubject}
+					value={props.initialSubject}
 					onContentChange={() => {
 						if (subjectRef) setSubject(subjectRef.plainText)
 					}}
 					onSubmit={handleSave}
-					keyBindings={SINGLE_LINE_KEYBINDINGS}
-					wrapMode="none"
-					scrollMargin={0}
 					cursorColor={colors().primary}
 					textColor={colors().text}
 					focusedTextColor={colors().text}
