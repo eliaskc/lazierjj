@@ -44,7 +44,6 @@ function DiffLayout() {
 				<box flexGrow={1}>
 					<MainArea />
 				</box>
-				<CommandLogPanel />
 			</box>
 		</box>
 	)

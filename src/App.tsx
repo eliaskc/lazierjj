@@ -1,6 +1,6 @@
 import { Toaster } from "@opentui-ui/toast/solid"
 import { useRenderer } from "@opentui/solid"
-import { Show, createSignal, onMount } from "solid-js"
+import { Show, createEffect, createMemo, createSignal, onMount } from "solid-js"
 import {
 	fetchOpLog,
 	jjGitFetch,
@@ -19,7 +19,7 @@ import { UndoModal } from "./components/modals/UndoModal"
 import { CommandProvider, useCommand } from "./context/command"
 import { CommandLogProvider, useCommandLog } from "./context/commandlog"
 import { DialogContainer, DialogProvider, useDialog } from "./context/dialog"
-import { FocusProvider, useFocus } from "./context/focus"
+import { FocusProvider, type Panel, useFocus } from "./context/focus"
 import { KeybindProvider } from "./context/keybind"
 import { LayoutProvider, useLayout } from "./context/layout"
 import { LoadingProvider, useLoading } from "./context/loading"
@@ -51,6 +51,37 @@ function AppContent() {
 	const [whatsNewChanges, setWhatsNewChanges] = createSignal<
 		VersionBlock[] | null
 	>(null)
+
+	const visiblePanels = createMemo<Panel[]>(() => {
+		if (layout.focusMode() === "diff") {
+			const leftPanel = focus.panel() === "refs" ? "refs" : "log"
+			return [leftPanel, "detail"]
+		}
+		return ["log", "refs", "detail", "commandlog"]
+	})
+
+	const focusPanel = (panel: Panel) => {
+		if (!visiblePanels().includes(panel)) return
+		focus.setPanel(panel)
+	}
+
+	const cyclePanel = (direction: 1 | -1) => {
+		const panels = visiblePanels()
+		if (panels.length === 0) return
+		const current = focus.panel()
+		const idx = panels.indexOf(current)
+		const next = panels[(idx + direction + panels.length) % panels.length]
+		if (next) focus.setPanel(next)
+	}
+
+	createEffect(() => {
+		const panels = visiblePanels()
+		const current = focus.panel()
+		if (!panels.includes(current)) {
+			const next = panels[0]
+			if (next) focus.setPanel(next)
+		}
+	})
 
 	const hasCriticalError = () => {
 		const err = error()
@@ -151,7 +182,7 @@ function AppContent() {
 			context: "global",
 			type: "navigation",
 			visibility: "help-only",
-			onSelect: () => focus.cycleNext(),
+			onSelect: () => cyclePanel(1),
 		},
 		{
 			id: "global.focus_prev",
@@ -160,7 +191,7 @@ function AppContent() {
 			context: "global",
 			type: "navigation",
 			visibility: "help-only",
-			onSelect: () => focus.cyclePrev(),
+			onSelect: () => cyclePanel(-1),
 		},
 		{
 			id: "global.focus_panel_1",
@@ -169,7 +200,7 @@ function AppContent() {
 			context: "global",
 			type: "navigation",
 			visibility: "help-only",
-			onSelect: () => focus.setPanel("log"),
+			onSelect: () => focusPanel("log"),
 		},
 		{
 			id: "global.focus_panel_2",
@@ -178,7 +209,7 @@ function AppContent() {
 			context: "global",
 			type: "navigation",
 			visibility: "help-only",
-			onSelect: () => focus.setPanel("refs"),
+			onSelect: () => focusPanel("refs"),
 		},
 		{
 			id: "global.focus_panel_3",
@@ -187,7 +218,7 @@ function AppContent() {
 			context: "global",
 			type: "navigation",
 			visibility: "help-only",
-			onSelect: () => focus.setPanel("detail"),
+			onSelect: () => focusPanel("detail"),
 		},
 		{
 			id: "global.focus_panel_4",
@@ -196,7 +227,7 @@ function AppContent() {
 			context: "global",
 			type: "navigation",
 			visibility: "help-only",
-			onSelect: () => focus.setPanel("commandlog"),
+			onSelect: () => focusPanel("commandlog"),
 		},
 		{
 			id: "global.help",
