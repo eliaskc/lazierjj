@@ -4,45 +4,11 @@ import { homedir } from "node:os"
 import { join } from "node:path"
 import { execute } from "../commander/executor"
 import { writeFileAtomic } from "../utils/atomic-write"
-import type {
-	CommentAnchorHunk,
-	CommentsState,
-	CommentsStateV1,
-	CommentsStateV2,
-	RevisionCommentsV1,
-} from "./types"
+import type { CommentsState } from "./types"
 
-const COMMENTS_VERSION = 2
+const COMMENTS_VERSION = 1
 const STATE_DIR = join(homedir(), ".local", "state", "kajji")
 const REPOS_DIR = join(STATE_DIR, "repos")
-
-export function migrateCommentsState(state: CommentsStateV1): CommentsStateV2 {
-	const revisions: CommentsStateV2["revisions"] = {}
-	for (const [changeId, revision] of Object.entries(state.revisions)) {
-		const anchors: CommentAnchorHunk[] = []
-		const hunks = (revision as RevisionCommentsV1).hunks
-		for (const [id, hunk] of Object.entries(hunks)) {
-			anchors.push({
-				id,
-				type: "hunk",
-				filePath: hunk.anchor.filePath,
-				lineRange: hunk.anchor.lineRange,
-				contextLines: hunk.anchor.contextLines,
-				comments: hunk.comments,
-				stale: hunk.stale,
-			})
-		}
-		revisions[changeId] = {
-			commitHash: revision.commitHash,
-			anchors,
-		}
-	}
-
-	return {
-		version: 2,
-		revisions,
-	}
-}
 
 export async function resolveRepoRoot(cwd = process.cwd()): Promise<string> {
 	const result = await execute(["root"], { cwd })
@@ -71,14 +37,9 @@ export function readComments(repoRoot: string): CommentsState {
 	}
 	try {
 		const content = readFileSync(commentsPath, "utf-8")
-		const parsed = JSON.parse(content) as CommentsStateV2 | CommentsStateV1
-		if (parsed && parsed.version === 2) {
+		const parsed = JSON.parse(content) as CommentsState
+		if (parsed && parsed.version === COMMENTS_VERSION) {
 			return parsed
-		}
-		if (parsed && parsed.version === 1) {
-			const migrated = migrateCommentsState(parsed)
-			writeFileAtomic(commentsPath, JSON.stringify(migrated, null, 2))
-			return migrated
 		}
 		return { version: COMMENTS_VERSION, revisions: {} }
 	} catch {

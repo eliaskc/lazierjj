@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { relocateRevision } from "../../../src/comments/relocate"
-import type { RevisionCommentsV2 } from "../../../src/comments/types"
+import type { RevisionComments } from "../../../src/comments/types"
 import { parseDiffString } from "../../../src/diff/parser"
 
 describe("relocateRevision", () => {
@@ -17,7 +17,7 @@ index 1111111..2222222 100644
 +line4
 `
 		const files = parseDiffString(diff)
-		const revision: RevisionCommentsV2 = {
+		const revision: RevisionComments = {
 			commitHash: "oldhash",
 			anchors: [
 				{

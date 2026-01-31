@@ -3,7 +3,7 @@ import type {
 	CommentAnchor,
 	CommentAnchorHunk,
 	CommentAnchorLine,
-	RevisionCommentsV2,
+	RevisionComments,
 } from "./types"
 
 export interface HunkIndexEntry {
@@ -244,9 +244,9 @@ function matchLineScore(
 }
 
 export function relocateRevision(
-	revision: RevisionCommentsV2,
+	revision: RevisionComments,
 	files: DiffFile[],
-): { updated: RevisionCommentsV2; changed: boolean } {
+): { updated: RevisionComments; changed: boolean } {
 	const entries = buildHunkIndex(files)
 	const byFile = new Map<string, HunkIndexEntry[]>()
 	for (const entry of entries) {

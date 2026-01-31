@@ -37,36 +37,12 @@ export interface CommentAnchorLine {
 
 export type CommentAnchor = CommentAnchorHunk | CommentAnchorLine
 
-export interface RevisionCommentsV2 {
+export interface RevisionComments {
 	commitHash: string
 	anchors: CommentAnchor[]
 }
 
-export interface CommentsStateV2 {
-	version: 2
-	revisions: Record<string, RevisionCommentsV2>
-}
-
-export interface CommentAnchorV1 {
-	filePath: string
-	lineRange: CommentLineRange
-	contextLines: string[]
-}
-
-export interface HunkCommentsV1 {
-	anchor: CommentAnchorV1
-	comments: CommentEntry[]
-	stale?: boolean
-}
-
-export interface RevisionCommentsV1 {
-	commitHash: string
-	hunks: Record<string, HunkCommentsV1>
-}
-
-export interface CommentsStateV1 {
+export interface CommentsState {
 	version: 1
-	revisions: Record<string, RevisionCommentsV1>
+	revisions: Record<string, RevisionComments>
 }
-
-export type CommentsState = CommentsStateV2
