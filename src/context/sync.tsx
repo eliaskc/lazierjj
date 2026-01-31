@@ -42,6 +42,9 @@ import { profile, profileMsg } from "../utils/profiler"
 
 export type ViewMode = "log" | "files"
 
+export const getVisibleBookmarks = (bookmarks: Bookmark[], limit: number) =>
+	bookmarks.filter((bookmark) => bookmark.isLocal).slice(0, limit)
+
 export interface CommitDetails {
 	changeId: string
 	subject: string
@@ -148,7 +151,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	const [bookmarksHasMore, setBookmarksHasMore] = createSignal(true)
 	const [bookmarksLoadingMore, setBookmarksLoadingMore] = createSignal(false)
 	const visibleBookmarks = createMemo(() =>
-		bookmarks().slice(0, bookmarkLimit()),
+		getVisibleBookmarks(bookmarks(), bookmarkLimit()),
 	)
 
 	const [commitDetails, setCommitDetails] = createSignal<CommitDetails | null>(
