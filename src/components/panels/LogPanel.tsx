@@ -93,6 +93,9 @@ export function LogPanel() {
 		setRevsetFilter,
 		revsetError,
 		clearRevsetFilter,
+		activeBookmarkFilter,
+		previousRevsetFilter,
+		clearBookmarkFilterState,
 		loadLog,
 		loadMoreLog,
 		logHasMore,
@@ -154,7 +157,15 @@ export function LogPanel() {
 
 	const applyFilter = async () => {
 		const query = filterQuery().trim()
+		const activeBookmarkRevset = activeBookmarkFilter()
+			? `::${activeBookmarkFilter()}`
+			: null
+		const shouldClearBookmarkState =
+			activeBookmarkRevset && query !== activeBookmarkRevset
 		if (query) {
+			if (shouldClearBookmarkState) {
+				clearBookmarkFilterState()
+			}
 			setRevsetFilter(query)
 			await loadLog()
 			// Stay in filter mode if there was an error so user can fix it
@@ -165,10 +176,30 @@ export function LogPanel() {
 				return
 			}
 		} else if (revsetFilter()) {
+			if (activeBookmarkFilter()) {
+				clearBookmarkFilterState()
+			}
 			// Clear filter if query is empty and there was a filter
 			clearRevsetFilter()
 		}
 		setFilterMode(false)
+	}
+
+	const handleClearFilter = async () => {
+		const activeBookmark = activeBookmarkFilter()
+		if (!activeBookmark) {
+			clearRevsetFilter()
+			return
+		}
+		const previousFilter = previousRevsetFilter()
+		clearBookmarkFilterState()
+		if (previousFilter) {
+			setRevsetFilter(previousFilter)
+			await loadLog()
+		} else {
+			clearRevsetFilter()
+		}
+		focus.setActiveContext("refs.bookmarks")
 	}
 
 	const isFocused = () => focus.isPanel("log")
@@ -959,7 +990,7 @@ export function LogPanel() {
 			panel: "log",
 			visibility: "none",
 			enabled: () => !!revsetFilter(),
-			onSelect: clearRevsetFilter,
+			onSelect: handleClearFilter,
 		},
 		{
 			id: "log.oplog.restore",

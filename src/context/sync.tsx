@@ -71,6 +71,11 @@ interface SyncContextValue {
 	setRevsetFilter: (revset: string | null) => void
 	revsetError: () => string | null
 	clearRevsetFilter: () => void
+	activeBookmarkFilter: () => string | null
+	setActiveBookmarkFilter: (bookmark: string | null) => void
+	previousRevsetFilter: () => string | null
+	setPreviousRevsetFilter: (revset: string | null) => void
+	clearBookmarkFilterState: () => void
 
 	viewMode: () => ViewMode
 	fileTree: () => FileTreeNode | null
@@ -155,6 +160,12 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		null,
 	)
 	const [revsetError, setRevsetError] = createSignal<string | null>(null)
+	const [activeBookmarkFilter, setActiveBookmarkFilterSignal] = createSignal<
+		string | null
+	>(null)
+	const [previousRevsetFilter, setPreviousRevsetFilterSignal] = createSignal<
+		string | null
+	>(null)
 	// biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequence
 	const stripAnsi = (value: string) => value.replace(/\x1b\[[0-9;]*m/g, "")
 	const cleanRevsetError = (message: string) => {
@@ -179,6 +190,11 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		setLogLimit(50)
 		setLogHasMore(true)
 		setLogLoadingMore(false)
+	}
+
+	const clearBookmarkFilterState = () => {
+		setActiveBookmarkFilterSignal(null)
+		setPreviousRevsetFilterSignal(null)
 	}
 
 	const flatFiles = createMemo(() => {
@@ -834,6 +850,11 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		setRevsetFilter,
 		revsetError,
 		clearRevsetFilter,
+		activeBookmarkFilter,
+		setActiveBookmarkFilter: setActiveBookmarkFilterSignal,
+		previousRevsetFilter,
+		setPreviousRevsetFilter: setPreviousRevsetFilterSignal,
+		clearBookmarkFilterState,
 
 		viewMode,
 		fileTree,

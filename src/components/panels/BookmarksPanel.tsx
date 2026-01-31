@@ -50,7 +50,11 @@ export function BookmarksPanel() {
 		bookmarksError,
 		selectNextBookmark,
 		selectPrevBookmark,
+		revsetFilter,
 		setRevsetFilter,
+		activeBookmarkFilter,
+		setActiveBookmarkFilter,
+		setPreviousRevsetFilter,
 		loadLog,
 	} = useSync()
 	const focus = useFocus()
@@ -341,6 +345,8 @@ export function BookmarksPanel() {
 	const handleListEnter = () => {
 		const bookmark = selectedBookmark()
 		if (!bookmark) return
+		setPreviousRevsetFilter(revsetFilter())
+		setActiveBookmarkFilter(bookmark.name)
 		setRevsetFilter(`::${bookmark.name}`)
 		loadLog()
 		focus.setActiveContext("log.revisions")
@@ -558,6 +564,8 @@ export function BookmarksPanel() {
 								{(bookmark, index) => {
 									const isSelected = () => index() === currentSelectedIndex()
 									const showSelection = () => isSelected() && isFocused()
+									const isActive = () =>
+										activeBookmarkFilter() === bookmark.name
 									const handleDoubleClick = createDoubleClickDetector(() => {
 										handleListEnter()
 									})
@@ -575,7 +583,9 @@ export function BookmarksPanel() {
 											backgroundColor={
 												showSelection()
 													? colors().selectionBackground
-													: undefined
+													: isActive()
+														? colors().backgroundElement
+														: undefined
 											}
 											overflow="hidden"
 											onMouseDown={handleMouseDown}
