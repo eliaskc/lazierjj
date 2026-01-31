@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.7.0
+
+### new
+- cli: `kajji changes` lists addressable hunks for commits ([`2cb2a92`](../../commit/2cb2a92))
+- cli: `kajji comment` for list/set/delete with line-anchor support ([`2cb2a92`](../../commit/2cb2a92), [`90b35a0`](../../commit/90b35a0))
+- bookmarks panel shows change ID, name with colors, and description ([`9f37400`](../../commit/9f37400))
+- deleted bookmarks shown with error-colored indicator, sorted to bottom ([`9f37400`](../../commit/9f37400))
+- entering a bookmark filters log to `::bookmark` revset instead of drill-down ([`1f58366`](../../commit/1f58366))
+- filter persistence in bookmarks and file tree after Enter ([`65283d6`](../../commit/65283d6))
+- repo name shown in top-right of main panel ([`65cc909`](../../commit/65cc909))
+- aligned file summary bars in commit details header ([`098f00c`](../../commit/098f00c))
+
+### improved
+- ux: bookmark revset state preserved when switching focus to log ([`f2f6496`](../../commit/f2f6496))
+
+### fixed
+- bookmarks panel missing entries when local count differs from total ([`f14ba50`](../../commit/f14ba50))
+- bookmark selection mismatch after filtering ([`fcb29f3`](../../commit/fcb29f3))
+- revset filtering errors now caught and displayed cleanly ([`ec1dfa9`](../../commit/ec1dfa9))
+- hidden panels no longer focusable ([`ae032e0`](../../commit/ae032e0))
+- log panel focuses when selecting a file ([`6f5e2a6`](../../commit/6f5e2a6))
+- layout: gap between modals in what's new screen ([`be82069`](../../commit/be82069))
+
 ## 0.6.2
 
 ### fixed
