@@ -196,18 +196,21 @@ export function BookmarksPanel() {
 	// Sync filter selection back to parent
 	createEffect(
 		on(
-			() => filterSelectedIndex(),
-			(idx) => {
-				if (!hasActiveFilter()) return
-				const filtered = filteredBookmarks()
+			() =>
+				[
+					hasActiveFilter(),
+					filteredBookmarks(),
+					filterSelectedIndex(),
+				] as const,
+			([active, filtered, idx]) => {
+				if (!active) return
 				const selectedBookmarkItem = filtered[idx]
-				if (selectedBookmarkItem) {
-					const originalIndex = localBookmarks().findIndex(
-						(b) => b.name === selectedBookmarkItem.name,
-					)
-					if (originalIndex >= 0 && originalIndex !== selectedBookmarkIndex()) {
-						setSelectedBookmarkIndex(originalIndex)
-					}
+				if (!selectedBookmarkItem) return
+				const originalIndex = localBookmarks().findIndex(
+					(b) => b.name === selectedBookmarkItem.name,
+				)
+				if (originalIndex >= 0 && originalIndex !== selectedBookmarkIndex()) {
+					setSelectedBookmarkIndex(originalIndex)
 				}
 			},
 			{ defer: true },
