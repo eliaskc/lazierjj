@@ -8,16 +8,18 @@ Check for useful updates in key TUI dependencies.
 
 | Package | Current | Releases URL |
 |---------|---------|--------------|
-| `@opentui/core` | Check package.json | https://github.com/anomalyco/opentui/releases |
-| `@opentui/solid` | Check package.json | https://github.com/anomalyco/opentui/releases |
+| `@opentui/core` | Check package.json | https://github.com/sst/opentui/releases |
+| `@opentui/solid` | Check package.json | https://github.com/sst/opentui/releases |
 | `@pierre/diffs` | Check package.json | https://github.com/pierrecomputer/pierre/releases |
+| `bun` | Run `bun --version` | https://github.com/oven-sh/bun/releases |
 
 ## Steps
 
-1. Read `package.json` to get current versions of the dependencies
-2. Fetch the releases page for each dependency
-3. Compare current version to latest available
-4. For each release between current and latest, summarize:
+1. Read `package.json` to get current versions of npm dependencies
+2. Run `bun --version` to get current Bun version
+3. Fetch the releases page for each dependency
+4. Compare current version to latest available
+5. For each release between current and latest, summarize:
    - New features or APIs that could benefit kajji
    - Bug fixes that might affect us
    - Breaking changes to watch for
@@ -46,6 +48,15 @@ Check for useful updates in key TUI dependencies.
 
 #### Recommended Action
 [upgrade/wait/investigate]
+
+### bun
+**Current:** x.y.z → **Latest:** a.b.c
+
+#### Relevant Changes
+- ...
+
+#### Recommended Action
+[upgrade/wait/investigate]
 ```
 
 ## What to Look For
@@ -62,6 +73,12 @@ Check for useful updates in key TUI dependencies.
 - Annotation/highlighting improvements
 - Performance for large diffs
 - Bug fixes in hunk parsing
+
+### Bun
+- TypeScript/bundling improvements
+- Performance improvements
+- New APIs (shell, file I/O)
+- Bug fixes affecting TUI apps
 
 ## When to Recommend Upgrade
 

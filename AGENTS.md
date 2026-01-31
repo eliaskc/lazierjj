@@ -2,8 +2,17 @@
 
 Follow the Boy Scout rule:
 - For minor things, just improve them
-- For larger improvements, lift them to the user OR add them directly to the project docs
+- For larger improvements, create a GitHub issue or lift to the user
 - If you see a lack of testing in an area, offer to add
+
+## Work Tracking
+
+All work is tracked in [GitHub Issues](https://github.com/eliaskc/kajji/issues).
+
+- Check existing issues before starting work
+- Create issues for new bugs, features, improvements
+- Use labels: `bug`, `feature`, `ui-polish`, `tech-debt`
+- Reference issues in commit messages
 
 ## Build/Test Commands
 
@@ -17,14 +26,10 @@ Follow the Boy Scout rule:
 
 ## OpenTUI Documentation
 
-Before working on TUI component tasks, check the OpenTUI repo:
-- **Docs**: https://github.com/sst/opentui/tree/main/packages/solid
+Before working on TUI component tasks, check:
+- **Local reference**: [`docs/opentui.md`](docs/opentui.md) — component API, patterns, known quirks
+- **Upstream docs**: https://github.com/sst/opentui/tree/main/packages/solid
 - **Examples**: https://github.com/sst/opentui/tree/main/packages/solid/examples
-
-Or fetch directly:
-```bash
-curl -s https://raw.githubusercontent.com/sst/opentui/refs/heads/main/packages/solid/README.md
-```
 
 ## Code Style
 
@@ -75,6 +80,7 @@ This project uses Solid.js, NOT React. Key differences:
 - **Keybind**: `src/keybind/` - Keybind registry and parser
 - **Theme**: `src/theme/` - Theme definitions and presets (lazygit, opencode)
 - **Utils**: `src/utils/` - Shared utilities (file tree, double-click detection)
+- **Docs**: `docs/` - specs, design notes, OpenTUI reference
 
 ## Testing
 
@@ -114,52 +120,30 @@ After completing an atomic change (a single logical unit of work), run `jj new` 
 - `jj describe` is optional — can be done in retrospect
 - Don't batch multiple unrelated changes into one commit
 
+## Dependency Updates
+
+Use the `check-deps` skill to stay current on key dependencies:
+- **OpenTUI** — TUI framework (breaking changes possible)
+- **@pierre/diffs** — Diff parsing library
+- **Bun** — Runtime
+
+Run periodically or when debugging unexpected behavior.
+
+## Reference Projects
+
+When unsure about jj TUI patterns, explore these repos:
+- **jjui** (Go): https://github.com/idursun/jjui
+- **lazyjj** (Rust): https://github.com/Cretezy/lazyjj
+- **lazygit** (Go): https://github.com/jesseduffield/lazygit
+
+Use the librarian agent to research specific patterns.
+
 ## OpenTUI Component Reference
 
-### Layout & Containers
-- **`<box>`**: Primary layout container (like div). Props: `flexDirection`, `flexGrow`, `padding`, `border`, `borderColor`, `backgroundColor`, `gap`
-- **`<scrollbox>`**: Scrollable container. Props: `focused`, `stickyScroll`, `stickyStart="bottom"`, `scrollbarOptions={{ visible: true }}`
-
-### Text & Styling
-- **`<text>`**: Text display. Props: `fg`, `bg`, `content`
-- **`<span>`**: Inline text styling. Props: `style={{ fg, bg, attributes }}`
-- **`<b>`, `<i>`, `<u>`**: Bold, italic, underline wrappers
-- **`TextAttributes`**: Import from `@opentui/core` for `UNDERLINE`, `BOLD`, etc.
-
-### Specialized Components
-- **`<diff>`**: Git diff rendering. Props: `diff`, `view="unified"|"split"`, `filetype`, `syntaxStyle`, `showLineNumbers`
-- **`<code>`**: Syntax highlighted code. Props: `content`, `filetype`, `syntaxStyle`
-- **`<input>`**: Text input field. Props: `focused`, `onInput`, `onSubmit`, `placeholder`, `ref`
-  - `onInput` receives `(value: string)` NOT an event object
-  - `onSubmit` fires on Enter key
-  - Use `ref` for programmatic control (e.g., `inputRef.insertText(text)`)
-
-### Hooks
-- **`useKeyboard(callback)`**: Keyboard input handling
-- **`useOnResize(callback)`**: Terminal resize handling
-
-### ANSI Rendering (ghostty-opentui)
-For rendering colored CLI output (like `jj diff --color always`):
-```tsx
-import { ptyToJson } from "ghostty-opentui"
-// Parse ANSI to JSON structure with lines/spans
-const data = ptyToJson(ansiString, { cols: 80, rows: 24 })
-// data.lines[].spans[] contains { text, fg, bg, flags }
-```
-
-### Styling Patterns
-```tsx
-// Box with background and border
-<box backgroundColor="#1a1b26" border borderColor="#4ECDC4" padding={1}>
-
-// Text with foreground color
-<text fg="#00ff00">Green text</text>
-
-// Inline styled spans
-<text>
-  Normal <span style={{ fg: "#ff0000", bg: "#000" }}>red on black</span>
-</text>
-
-// Text attributes
-<span style={{ attributes: TextAttributes.UNDERLINE, fg: "blue" }}>underlined</span>
-```
+See [`docs/opentui.md`](docs/opentui.md) for the full component API reference, including:
+- Layout components (`box`, `scrollbox`, `text`)
+- Input components (`input`, `textarea`, `select`)
+- Styling patterns (RGBA, TextAttributes, SyntaxStyle)
+- Hooks (`useKeyboard`, `onResize`, `useRenderer`)
+- Critical patterns (virtualization, spacer boxes, focus routing)
+- Known quirks and workarounds
