@@ -1,12 +1,14 @@
-![kajji ascii art](./assets/kajji.png)
+<p align="center">
+  <img alt="kajji" src="./assets/kajji.gif">
+</p>
 
-A simple [jj](https://github.com/martinvonz/jj) terminal UI with custom diff rendering. 
+A simple [jj](https://github.com/martinvonz/jj) terminal UI with custom diff rendering.
 
 ![normal mode](./assets/normal-mode.png)
 
 Reviewing local code has never been as prominent as it is today. Coding agents are writing line upon line, and your sorry eyes are the ones that need to trudge through it.
 
-Kajji makes this new reality less painful with polished jj navigation and manipulation alongside Shiki-powered diff rendering with syntax highlighting and word-level diffs. To allow for jj's log to get the real estate it deserves when you're looking at the diff, while also allowing the width required for side-by-side diff rendering, kajji has two view modes: normal and diff. Switch with ctrl+x and try it out. 
+Kajji makes this new reality less painful with polished jj navigation and manipulation alongside Shiki-powered diff rendering with syntax highlighting and word-level diffs. To allow for jj's log to get the real estate it deserves when you're looking at the diff, while also allowing the width required for side-by-side diff rendering, kajji has two view modes: normal and diff. Switch with ctrl+x and try it out.
 
 ![diff mode](./assets/diff-mode.png)
 
@@ -53,6 +55,7 @@ bun dev
 ## Features
 
 **Core jj operations:**
+
 - [x] View commit log with graph
 - [x] View diffs with syntax highlighting and word-level emphasis
 - [x] New / edit / describe / squash / abandon
@@ -65,6 +68,7 @@ bun dev
 - [ ] Conflict resolution
 
 **TUI polish:**
+
 - [x] Vim-style navigation (j/k, ctrl+u/d)
 - [x] Mouse support (click, double-click, horizontal scroll)
 - [x] Collapsible file tree with status colors
@@ -106,43 +110,43 @@ kajji comment delete -r @ --all -y
 
 ### Keybindings
 
-| Key | Action |
-| --- | ------ |
-| `j` / `k` | Move down / up |
-| `Tab` | Cycle focus between panels |
-| `Enter` | Drill into commit / file |
-| `Escape` | Back / close modal |
-| `ctrl+x` | Toggle focus mode (normal / diff) |
-| `ctrl+o` | Open recent repository |
-| `w` | Toggle line wrapping in diff |
-| `v` | Toggle split / unified diff |
-| `ctrl+p` | Show commands (or `?`) |
-| `q` | Quit |
+| Key       | Action                            |
+| --------- | --------------------------------- |
+| `j` / `k` | Move down / up                    |
+| `Tab`     | Cycle focus between panels        |
+| `Enter`   | Drill into commit / file          |
+| `Escape`  | Back / close modal                |
+| `ctrl+x`  | Toggle focus mode (normal / diff) |
+| `ctrl+o`  | Open recent repository            |
+| `w`       | Toggle line wrapping in diff      |
+| `v`       | Toggle split / unified diff       |
+| `ctrl+p`  | Show commands (or `?`)            |
+| `q`       | Quit                              |
 
 ### Operations
 
-| Key | Action |
-| --- | ------ |
+| Key       | Action                  |
+| --------- | ----------------------- |
 | `n` / `N` | New change / new before |
-| `e` | Edit change |
-| `d` | Describe change |
-| `s` | Squash |
-| `a` | Abandon change |
-| `r` | Rebase |
-| `S` | Split |
-| `u` / `U` | Undo / redo |
-| `f` / `F` | Git fetch / fetch all |
-| `p` / `P` | Git push / push all |
+| `e`       | Edit change             |
+| `d`       | Describe change         |
+| `s`       | Squash                  |
+| `a`       | Abandon change          |
+| `r`       | Rebase                  |
+| `S`       | Split                   |
+| `u` / `U` | Undo / redo             |
+| `f` / `F` | Git fetch / fetch all   |
+| `p` / `P` | Git push / push all     |
 
 ### Bookmarks
 
-| Key | Action |
-| --- | ------ |
-| `c` | Create bookmark |
-| `d` | Delete bookmark |
-| `r` | Rename bookmark |
+| Key | Action                 |
+| --- | ---------------------- |
+| `c` | Create bookmark        |
+| `d` | Delete bookmark        |
+| `r` | Rename bookmark        |
 | `b` | Set bookmark on commit |
-| `m` | Move bookmark |
+| `m` | Move bookmark          |
 
 See [GitHub issues](https://github.com/eliaskc/kajji/issues) for the roadmap.
 
