@@ -3,6 +3,7 @@ export {
 	readConfig,
 	writeConfig,
 	reloadConfig,
+	onConfigChange,
 	createDefaultConfig,
 	getConfigPath,
 } from "./config"

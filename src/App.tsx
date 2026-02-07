@@ -1,6 +1,13 @@
 import { Toaster } from "@opentui-ui/toast/solid"
 import { useRenderer } from "@opentui/solid"
-import { Show, createEffect, createMemo, createSignal, onMount } from "solid-js"
+import {
+	Show,
+	createEffect,
+	createMemo,
+	createSignal,
+	onCleanup,
+	onMount,
+} from "solid-js"
 import {
 	fetchOpLog,
 	jjGitFetch,
@@ -18,6 +25,7 @@ import { UndoModal } from "./components/modals/UndoModal"
 
 import {
 	createDefaultConfig,
+	onConfigChange,
 	readConfig,
 	reloadConfig,
 	writeConfig,
@@ -62,7 +70,7 @@ function AppContent() {
 	const commandLog = useCommandLog()
 	const globalLoading = useLoading()
 	const layout = useLayout()
-	const { colors, style } = useTheme()
+	const { colors, style, setTheme } = useTheme()
 	const [whatsNewChanges, setWhatsNewChanges] = createSignal<
 		VersionBlock[] | null
 	>(null)
@@ -129,6 +137,12 @@ function AppContent() {
 	}
 
 	onMount(() => {
+		setTheme(readConfig().ui.theme)
+		const unsubscribeConfig = onConfigChange((config) => {
+			setTheme(config.ui.theme)
+		})
+		onCleanup(unsubscribeConfig)
+
 		loadLog()
 		loadBookmarks()
 		loadRemoteBookmarks()

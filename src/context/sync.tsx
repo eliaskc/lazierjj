@@ -30,7 +30,7 @@ import {
 	jjSquash,
 } from "../commander/operations"
 import type { Commit, FileChange } from "../commander/types"
-import { readConfig } from "../config"
+import { onConfigChange, readConfig } from "../config"
 import {
 	type FileTreeNode,
 	type FlatFileNode,
@@ -149,6 +149,12 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	const [filesLoading, setFilesLoading] = createSignal(false)
 	const [filesError, setFilesError] = createSignal<string | null>(null)
 	const [showTree, setShowTree] = createSignal(readConfig().ui.showFileTree)
+	onMount(() => {
+		const unsubscribeConfig = onConfigChange((config) => {
+			setShowTree(config.ui.showFileTree)
+		})
+		onCleanup(unsubscribeConfig)
+	})
 
 	const [bookmarks, setBookmarks] = createSignal<Bookmark[]>([])
 	const [remoteBookmarks, setRemoteBookmarks] = createSignal<Bookmark[]>([])

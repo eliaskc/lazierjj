@@ -13,6 +13,21 @@ export function getConfigPath(): string {
 }
 
 let cachedConfig: AppConfig | null = null
+type ConfigChangeListener = (config: AppConfig) => void
+const configChangeListeners = new Set<ConfigChangeListener>()
+
+function notifyConfigChange(config: AppConfig): void {
+	for (const listener of configChangeListeners) {
+		listener(config)
+	}
+}
+
+export function onConfigChange(listener: ConfigChangeListener): () => void {
+	configChangeListeners.add(listener)
+	return () => {
+		configChangeListeners.delete(listener)
+	}
+}
 
 export function readConfig(): AppConfig {
 	if (cachedConfig) return cachedConfig
@@ -55,11 +70,14 @@ export function writeConfig(updates: Partial<AppConfig>): void {
 	const configPath = getConfigPath()
 	writeFileAtomic(configPath, JSON.stringify(merged, null, "\t"))
 	cachedConfig = merged as AppConfig
+	notifyConfigChange(cachedConfig)
 }
 
 export function reloadConfig(): AppConfig {
 	cachedConfig = null
-	return readConfig()
+	const config = readConfig()
+	notifyConfigChange(config)
+	return config
 }
 
 const DEFAULT_CONFIG_CONTENT = `{
