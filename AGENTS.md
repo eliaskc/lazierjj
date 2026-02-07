@@ -14,8 +14,10 @@ Use `/dex` to break down complex work, track progress across sessions, and coord
 - Check existing issues before starting work
 - When listing issues, include project status so Backlog/Ready/In Progress is visible. Recommended: `gh issue list --limit 200 --json number,title,projectItems --jq '.[] | "\(.number)\t\(.projectItems[0].status.name // "No status")\t\(.title)"'`
 - Create issues for new bugs, features, improvements
-- Use labels: `bug`, `feature`, `ui-polish`, `tech-debt`
+- Use labels: `bug`, `feature`, `needs-exploration`, `ui-polish`, `tech-debt`, `docs`
 - Reference issues in commit messages
+- Close issues when work is done: prefer magic words in commits/PRs (`Fixes #123` for bugs, `Closes #123` for features/improvements)
+- If needed, close manually with GitHub CLI: `gh issue close 123 --comment "Fixed by <commit-or-pr>"`
 
 ## Build/Test Commands
 
