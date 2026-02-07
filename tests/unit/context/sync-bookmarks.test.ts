@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import type { Bookmark } from "../../../src/commander/bookmarks"
-import { getVisibleBookmarks } from "../../../src/context/sync"
+import { getVisibleBookmarks } from "../../../src/context/sync-bookmarks"
 
 const makeBookmark = (overrides: Partial<Bookmark>): Bookmark => ({
 	name: "",

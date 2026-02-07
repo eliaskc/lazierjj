@@ -16,6 +16,7 @@ import {
 } from "../commander/bookmarks"
 import { getRepoPath } from "../repo"
 import { addRecentRepo } from "../utils/state"
+import { getVisibleBookmarks } from "./sync-bookmarks"
 
 import { fetchFiles } from "../commander/files"
 import { streamLogPage } from "../commander/log"
@@ -41,9 +42,6 @@ import { useLayout } from "./layout"
 import { profile, profileMsg } from "../utils/profiler"
 
 export type ViewMode = "log" | "files"
-
-export const getVisibleBookmarks = (bookmarks: Bookmark[], limit: number) =>
-	bookmarks.filter((bookmark) => bookmark.isLocal).slice(0, limit)
 
 export interface CommitDetails {
 	changeId: string
