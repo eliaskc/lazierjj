@@ -1,0 +1,77 @@
+import { existsSync, readFileSync } from "node:fs"
+import { homedir } from "node:os"
+import { join } from "node:path"
+import { parse as parseJsonc } from "jsonc-parser"
+import { writeFileAtomic } from "../utils/atomic-write"
+import { migrateStateIfNeeded } from "../utils/state"
+import { type AppConfig, ConfigSchema, SCHEMA_URL } from "./schema"
+
+const CONFIG_DIR = join(homedir(), ".config", "kajji")
+
+export function getConfigPath(): string {
+	return join(CONFIG_DIR, "config.json")
+}
+
+let cachedConfig: AppConfig | null = null
+
+export function readConfig(): AppConfig {
+	if (cachedConfig) return cachedConfig
+	migrateStateIfNeeded()
+
+	const configPath = getConfigPath()
+	if (!existsSync(configPath)) {
+		cachedConfig = ConfigSchema.parse({})
+		return cachedConfig
+	}
+
+	try {
+		const content = readFileSync(configPath, "utf-8")
+		const raw = parseJsonc(content)
+		const result = ConfigSchema.safeParse(raw ?? {})
+		if (result.success) {
+			cachedConfig = result.data
+		} else {
+			// Log validation issues but don't crash — use defaults
+			for (const issue of result.error.issues) {
+				const path = issue.path.join(".")
+				console.error(`[config] Invalid field "${path}": ${issue.message}`)
+			}
+			cachedConfig = ConfigSchema.parse({})
+		}
+		return cachedConfig
+	} catch {
+		cachedConfig = ConfigSchema.parse({})
+		return cachedConfig
+	}
+}
+
+export function writeConfig(updates: Partial<AppConfig>): void {
+	const current = readConfig()
+	const merged = { ...current, ...updates }
+	// Preserve $schema if it was set
+	if (current.$schema) {
+		merged.$schema = current.$schema
+	}
+	const configPath = getConfigPath()
+	writeFileAtomic(configPath, JSON.stringify(merged, null, "\t"))
+	cachedConfig = merged as AppConfig
+}
+
+export function reloadConfig(): AppConfig {
+	cachedConfig = null
+	return readConfig()
+}
+
+const DEFAULT_CONFIG_CONTENT = `{
+\t// JSON Schema for editor autocomplete (ctrl+space)
+\t"$schema": "${SCHEMA_URL}"
+}
+`
+
+export function createDefaultConfig(): string {
+	const configPath = getConfigPath()
+	if (!existsSync(configPath)) {
+		writeFileAtomic(configPath, DEFAULT_CONFIG_CONTENT)
+	}
+	return configPath
+}

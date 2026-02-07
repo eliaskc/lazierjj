@@ -19,7 +19,8 @@
 		"test:bench": "bun test tests/bench/*.bench.ts",
 		"check": "tsc --noEmit",
 		"lint": "biome check .",
-		"lint:fix": "biome check --write ."
+		"lint:fix": "biome check --write .",
+		"generate:schema": "bun run script/generate-schema.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
@@ -41,8 +42,10 @@
 		"diff": "^8.0.2",
 		"fuzzysort": "^3.1.0",
 		"ghostty-opentui": "^1.3.11",
+		"jsonc-parser": "^3.3.1",
 		"nanoid": "^5.1.6",
-		"solid-js": "1.9.9"
+		"solid-js": "1.9.9",
+		"zod": "^4.3.6"
 	},
 	"keywords": [
 		"jj",

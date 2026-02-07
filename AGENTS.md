@@ -9,8 +9,6 @@ Follow the Boy Scout rule:
 
 All work is tracked in [GitHub Issues](https://github.com/eliaskc/kajji/issues).
 
-Use `/dex` to break down complex work, track progress across sessions, and coordinate multi-step implementations.
-
 - Check existing issues before starting work
 - When listing issues, include project status so Backlog/Ready/In Progress is visible. Recommended: `gh issue list --limit 200 --json number,title,projectItems --jq '.[] | "\(.number)\t\(.projectItems[0].status.name // "No status")\t\(.title)"'`
 - Create issues for new bugs, features, improvements

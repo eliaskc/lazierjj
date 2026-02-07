@@ -16,6 +16,12 @@ import { HelpModal } from "./components/modals/HelpModal"
 import { RecentReposModal } from "./components/modals/RecentReposModal"
 import { UndoModal } from "./components/modals/UndoModal"
 
+import {
+	createDefaultConfig,
+	readConfig,
+	reloadConfig,
+	writeConfig,
+} from "./config"
 import { CommandProvider, useCommand } from "./context/command"
 import { CommandLogProvider, useCommandLog } from "./context/commandlog"
 import { DialogContainer, DialogProvider, useDialog } from "./context/dialog"
@@ -34,7 +40,7 @@ import {
 } from "./utils/changelog"
 import type { VersionBlock } from "./utils/changelog"
 import { isCriticalStartupError, parseJjError } from "./utils/error-parser"
-import { readConfig, readState, writeConfig, writeState } from "./utils/state"
+import { readState, writeState } from "./utils/state"
 import { checkForUpdates, getCurrentVersion } from "./utils/update"
 
 import changelogContent from "../CHANGELOG.md" with { type: "text" }
@@ -275,6 +281,24 @@ function AppContent() {
 						],
 					},
 				),
+		},
+		{
+			id: "global.open_config",
+			title: "open config",
+			context: "global",
+			type: "action",
+			visibility: "help-only",
+			onSelect: async () => {
+				const configPath = createDefaultConfig()
+				const editor = process.env.EDITOR || process.env.VISUAL || "vi"
+				renderer.suspend?.()
+				const proc = Bun.spawn([editor, configPath], {
+					stdio: ["inherit", "inherit", "inherit"],
+				})
+				await proc.exited
+				renderer.resume?.()
+				reloadConfig()
+			},
 		},
 		{
 			id: "global.refresh",

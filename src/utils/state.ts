@@ -17,10 +17,6 @@ export interface AppState {
 	dismissedVersion?: string | null
 }
 
-export interface AppConfig {
-	whatsNewDisabled?: boolean
-}
-
 const CONFIG_DIR = join(homedir(), ".config", "kajji")
 const STATE_DIR = join(homedir(), ".local", "state", "kajji")
 const OLD_STATE_PATH = join(CONFIG_DIR, "state.json")
@@ -35,7 +31,7 @@ function getConfigPath(): string {
 
 let migrationAttempted = false
 
-function migrateStateIfNeeded(): void {
+export function migrateStateIfNeeded(): void {
 	if (migrationAttempted) return
 	migrationAttempted = true
 
@@ -65,9 +61,7 @@ function migrateStateIfNeeded(): void {
 		}
 
 		if (oldState.whatsNewDisabled !== undefined && !existsSync(newConfigPath)) {
-			const nextConfig: AppConfig = {
-				whatsNewDisabled: oldState.whatsNewDisabled,
-			}
+			const nextConfig = { whatsNewDisabled: oldState.whatsNewDisabled }
 			writeFileAtomic(newConfigPath, JSON.stringify(nextConfig, null, 2))
 			configWritten = true
 		}
@@ -108,26 +102,6 @@ export function writeState(state: AppState): void {
 	migrateStateIfNeeded()
 	const statePath = getStatePath()
 	writeFileAtomic(statePath, JSON.stringify(state, null, 2))
-}
-
-export function readConfig(): AppConfig {
-	migrateStateIfNeeded()
-	const configPath = getConfigPath()
-	if (!existsSync(configPath)) {
-		return {}
-	}
-	try {
-		const content = readFileSync(configPath, "utf-8")
-		return JSON.parse(content) as AppConfig
-	} catch {
-		return {}
-	}
-}
-
-export function writeConfig(config: AppConfig): void {
-	migrateStateIfNeeded()
-	const configPath = getConfigPath()
-	writeFileAtomic(configPath, JSON.stringify(config, null, 2))
 }
 
 export function addRecentRepo(repoPath: string): void {
