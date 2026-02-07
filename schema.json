@@ -3,6 +3,7 @@
 	"type": "object",
 	"properties": {
 		"$schema": {
+			"description": "JSON Schema reference for editor autocomplete",
 			"type": "string"
 		},
 		"ui": {
@@ -16,7 +17,10 @@
 					"default": "lazygit",
 					"description": "Color theme",
 					"type": "string",
-					"enum": ["lazygit", "opencode"]
+					"enum": [
+						"lazygit",
+						"opencode"
+					]
 				}
 			}
 		},
@@ -33,7 +37,10 @@
 					"default": "unified",
 					"description": "Default diff view mode",
 					"type": "string",
-					"enum": ["unified", "split"]
+					"enum": [
+						"unified",
+						"split"
+					]
 				},
 				"autoSwitchWidth": {
 					"default": 120,
@@ -69,5 +76,7 @@
 			"type": "boolean"
 		}
 	},
-	"description": "kajji configuration"
+	"description": "kajji configuration",
+	"allowComments": true,
+	"allowTrailingCommas": true
 }

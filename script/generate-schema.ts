@@ -28,6 +28,8 @@ function relaxSchema(schema: JsonSchema): JsonSchema {
 
 const raw = z.toJSONSchema(ConfigSchema, { target: "draft-2020-12" })
 const schema = relaxSchema(raw as JsonSchema)
+schema.allowComments = true
+schema.allowTrailingCommas = true
 const output = JSON.stringify(schema, null, "\t")
 const outPath = resolve(import.meta.dir, "../schema.json")
 const siteOutPath = resolve(import.meta.dir, "../site/public/schema.json")
