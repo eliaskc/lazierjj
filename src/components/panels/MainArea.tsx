@@ -16,6 +16,7 @@ import {
 
 import type { DiffStats } from "../../commander/operations"
 import type { Commit } from "../../commander/types"
+import { onConfigChange, readConfig } from "../../config"
 import { useCommand } from "../../context/command"
 import { useFocus } from "../../context/focus"
 import { useLayout } from "../../context/layout"
@@ -39,7 +40,6 @@ type DiffViewStyle = "unified" | "split"
 
 import { profileLog } from "../../utils/profiler"
 
-const SPLIT_VIEW_THRESHOLD = 140
 const UNIFIED_RIGHT_PADDING = 0
 const SPLIT_RIGHT_PADDING = 0
 const SCROLLBAR_GUTTER = 0
@@ -274,7 +274,7 @@ function CommitHeader(props: {
 export function MainArea() {
 	const { activeCommit, commitDetails, viewMode, selectedFile } = useSync()
 	const layout = useLayout()
-	const { mainAreaWidth } = layout
+	const { mainAreaWidth, terminalWidth } = layout
 	const { colors } = useTheme()
 	const focus = useFocus()
 	const command = useCommand()
@@ -294,9 +294,33 @@ export function MainArea() {
 
 	const [viewStyle, setViewStyle] = createSignal<DiffViewStyle>("unified")
 	const [wrapEnabled, setWrapEnabled] = createSignal(true)
+	const [diffLayout, setDiffLayout] = createSignal(readConfig().diff.layout)
+	const [diffAutoSwitchWidth, setDiffAutoSwitchWidth] = createSignal(
+		readConfig().diff.autoSwitchWidth,
+	)
+	const [diffWrap, setDiffWrap] = createSignal(readConfig().diff.wrap)
+	const [viewStyleOverride, setViewStyleOverride] =
+		createSignal<DiffViewStyle | null>(null)
+	const [wrapOverride, setWrapOverride] = createSignal<boolean | null>(null)
+
+	const configuredViewStyle = createMemo<DiffViewStyle>(() => {
+		const layout = diffLayout()
+		if (layout === "unified" || layout === "split") return layout
+		return terminalWidth() >= diffAutoSwitchWidth() ? "split" : "unified"
+	})
 
 	createEffect(() => {
-		setViewStyle(mainAreaWidth() >= SPLIT_VIEW_THRESHOLD ? "split" : "unified")
+		const styleOverride = viewStyleOverride()
+		if (styleOverride !== null) {
+			setViewStyle(styleOverride)
+			return
+		}
+		setViewStyle(configuredViewStyle())
+	})
+
+	createEffect(() => {
+		const wrap = wrapOverride() ?? diffWrap()
+		setWrapEnabled(wrap)
 	})
 	const [parsedFiles, setParsedFiles] = createSignal<FlattenedFile[]>([])
 	const [parsedDiffLoading, setParsedDiffLoading] = createSignal(false)
@@ -582,6 +606,15 @@ export function MainArea() {
 	})
 
 	onMount(() => {
+		const unsubscribeConfig = onConfigChange((config) => {
+			setDiffLayout(config.diff.layout)
+			setDiffAutoSwitchWidth(config.diff.autoSwitchWidth)
+			setDiffWrap(config.diff.wrap)
+			setViewStyleOverride(null)
+			setWrapOverride(null)
+		})
+		onCleanup(unsubscribeConfig)
+
 		const pollInterval = setInterval(() => {
 			if (scrollRef) {
 				const currentScroll = scrollRef.scrollTop ?? 0
@@ -671,7 +704,10 @@ export function MainArea() {
 			context: "detail",
 			type: "view",
 			onSelect: () => {
-				setViewStyle((s) => (s === "unified" ? "split" : "unified"))
+				setViewStyleOverride((s) => {
+					const current = s ?? viewStyle()
+					return current === "unified" ? "split" : "unified"
+				})
 			},
 		},
 		{
@@ -681,7 +717,10 @@ export function MainArea() {
 			context: "detail",
 			type: "view",
 			onSelect: () => {
-				setWrapEnabled((enabled) => !enabled)
+				setWrapOverride((enabled) => {
+					const current = enabled ?? wrapEnabled()
+					return !current
+				})
 			},
 		},
 		{

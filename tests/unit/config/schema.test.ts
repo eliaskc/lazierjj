@@ -5,7 +5,7 @@ describe("ConfigSchema", () => {
 	test("empty object gets all defaults", () => {
 		const config = ConfigSchema.parse({})
 		expect(config.ui.theme).toBe("lazygit")
-		expect(config.diff.defaultMode).toBe("unified")
+		expect(config.diff.layout).toBe("auto")
 		expect(config.diff.autoSwitchWidth).toBe(120)
 		expect(config.ui.showFileTree).toBe(true)
 		expect(config.whatsNewDisabled).toBe(false)
@@ -16,15 +16,15 @@ describe("ConfigSchema", () => {
 			ui: { theme: "opencode" },
 		})
 		expect(config.ui.theme).toBe("opencode")
-		expect(config.diff.defaultMode).toBe("unified")
+		expect(config.diff.layout).toBe("auto")
 		expect(config.ui.showFileTree).toBe(true)
 	})
 
 	test("partial nested config merges with defaults", () => {
 		const config = ConfigSchema.parse({
-			diff: { defaultMode: "split" },
+			diff: { layout: "split" },
 		})
-		expect(config.diff.defaultMode).toBe("split")
+		expect(config.diff.layout).toBe("split")
 		expect(config.diff.autoSwitchWidth).toBe(120)
 	})
 
@@ -48,9 +48,9 @@ describe("ConfigSchema", () => {
 		expect(result.success).toBe(false)
 	})
 
-	test("invalid diff mode rejects", () => {
+	test("invalid diff layout rejects", () => {
 		const result = ConfigSchema.safeParse({
-			diff: { defaultMode: "side-by-side" },
+			diff: { layout: "side-by-side" },
 		})
 		expect(result.success).toBe(false)
 	})

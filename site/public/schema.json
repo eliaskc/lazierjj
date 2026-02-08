@@ -32,25 +32,26 @@
 		},
 		"diff": {
 			"default": {
-				"defaultMode": "unified",
+				"layout": "auto",
 				"autoSwitchWidth": 120,
 				"wrap": true
 			},
 			"description": "Diff display settings",
 			"type": "object",
 			"properties": {
-				"defaultMode": {
-					"default": "unified",
-					"description": "Default diff view mode",
+				"layout": {
+					"default": "auto",
+					"description": "Diff layout mode: auto switches based on autoSwitchWidth, unified/split are fixed",
 					"type": "string",
 					"enum": [
+						"auto",
 						"unified",
 						"split"
 					]
 				},
 				"autoSwitchWidth": {
 					"default": 120,
-					"description": "Auto-switch to split view above this terminal width (0 to disable)",
+					"description": "Auto-switch to split view above this terminal width (only used when layout is auto)",
 					"type": "integer",
 					"minimum": 0,
 					"maximum": 9007199254740991

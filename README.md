@@ -108,6 +108,36 @@ kajji comment delete -r @ --file src/App.tsx
 kajji comment delete -r @ --all -y
 ```
 
+### Configuration
+
+Kajji reads JSONC config from `~/.config/kajji/config.json` (comments and trailing commas are supported).
+
+- Open it from the command palette (`?`) with `open config`
+- Changes from `open config` are reloaded when you return to kajji
+- Schema autocomplete is available via `$schema` in the generated config
+
+```jsonc
+{
+  "$schema": "https://kajji.sh/schema.json",
+  "ui": {
+    "theme": "lazygit",       // "lazygit" | "opencode"
+    "showFileTree": true
+  },
+  "diff": {
+    "layout": "auto",         // "auto" | "unified" | "split"
+    "autoSwitchWidth": 120,   // only used when layout is "auto"
+    "wrap": true
+  },
+  "whatsNewDisabled": false
+}
+```
+
+Not yet wired from config ([#16](https://github.com/eliaskc/kajji/issues/16)):
+
+- `diff.tool` — external diff tool
+- `diff.useJjFormatter` — use jj's `ui.diff-formatter`
+- keybind overrides
+
 ### Keybindings
 
 | Key       | Action                            |

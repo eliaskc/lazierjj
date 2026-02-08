@@ -14,17 +14,19 @@ export const UiSchema = z.object({
 })
 
 export const DiffSchema = z.object({
-	defaultMode: z
-		.enum(["unified", "split"])
-		.default("unified")
-		.describe("Default diff view mode"),
+	layout: z
+		.enum(["auto", "unified", "split"])
+		.default("auto")
+		.describe(
+			"Diff layout mode: auto switches based on autoSwitchWidth, unified/split are fixed",
+		),
 	autoSwitchWidth: z
 		.number()
 		.int()
 		.min(0)
 		.default(120)
 		.describe(
-			"Auto-switch to split view above this terminal width (0 to disable)",
+			"Auto-switch to split view above this terminal width (only used when layout is auto)",
 		),
 	wrap: z.boolean().default(true).describe("Wrap long lines in diff view"),
 })
@@ -41,7 +43,7 @@ export const ConfigSchema = z
 			.describe("UI settings"),
 
 		diff: DiffSchema.optional()
-			.default({ defaultMode: "unified", autoSwitchWidth: 120, wrap: true })
+			.default({ layout: "auto", autoSwitchWidth: 120, wrap: true })
 			.describe("Diff display settings"),
 
 		whatsNewDisabled: z
