@@ -76,7 +76,7 @@ export function getUpdateCommand(
 		case "yarn":
 			return `yarn global add kajji@${version}`
 		case "curl":
-			return "curl -fsSL https://raw.githubusercontent.com/eliaskc/kajji/main/install.sh | bash"
+			return "curl -fsSL https://kajji.sh/install.sh | bash"
 		default:
 			return null
 	}
@@ -143,11 +143,10 @@ async function runUpdate(
 			result = await $`yarn global add kajji@${version}`.quiet().nothrow()
 			break
 		case "curl":
-			result =
-				await $`curl -fsSL https://raw.githubusercontent.com/eliaskc/kajji/main/install.sh | bash`
-					.env({ ...process.env, VERSION: version })
-					.quiet()
-					.nothrow()
+			result = await $`curl -fsSL https://kajji.sh/install.sh | bash`
+				.env({ ...process.env, VERSION: version })
+				.quiet()
+				.nothrow()
 			break
 		default:
 			return false

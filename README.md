@@ -22,7 +22,7 @@ Kajji is my attempt to bring the UX of lazygit to jj, while also aiming for top-
 
 ```bash
 # recommended (standalone binary, no dependencies)
-curl -fsSL https://raw.githubusercontent.com/eliaskc/kajji/main/install.sh | bash
+curl -fsSL https://kajji.sh/install.sh | bash
 
 # or via package manager
 npm install -g kajji

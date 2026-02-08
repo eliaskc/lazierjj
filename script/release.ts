@@ -157,5 +157,5 @@ Published:
 
 Verify:
   npm install -g kajji@${newVersion} && kajji
-  curl -fsSL https://raw.githubusercontent.com/eliaskc/kajji/main/install.sh | bash
+  curl -fsSL https://kajji.sh/install.sh | bash
 `)

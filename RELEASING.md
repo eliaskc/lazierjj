@@ -47,7 +47,7 @@ The script:
 npm install -g kajji@<version>
 kajji
 
-curl -fsSL https://raw.githubusercontent.com/eliaskc/kajji/main/install.sh | bash
+curl -fsSL https://kajji.sh/install.sh | bash
 ~/.kajji/bin/kajji
 ```
 
