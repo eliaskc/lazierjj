@@ -279,7 +279,7 @@ function CommitHeader(props: {
 export function MainArea() {
 	const { activeCommit, commitDetails, viewMode, selectedFile } = useSync()
 	const layout = useLayout()
-	const { mainAreaWidth, terminalWidth } = layout
+	const { mainAreaWidth } = layout
 	const { colors } = useTheme()
 	const focus = useFocus()
 	const command = useCommand()
@@ -334,7 +334,7 @@ export function MainArea() {
 	const configuredViewStyle = createMemo<DiffViewStyle>(() => {
 		const layout = diffLayout()
 		if (layout === "unified" || layout === "split") return layout
-		return terminalWidth() >= diffAutoSwitchWidth() ? "split" : "unified"
+		return mainAreaWidth() >= diffAutoSwitchWidth() ? "split" : "unified"
 	})
 
 	createEffect(() => {
