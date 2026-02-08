@@ -760,6 +760,7 @@ export function MainArea() {
 			hotkey="3"
 			panelId="detail"
 			focused={isFocused()}
+			overflow="visible"
 			topRight={renderRepoInfo}
 		>
 			<Show when={hasError()}>

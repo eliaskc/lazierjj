@@ -22,6 +22,7 @@ interface PanelProps {
 	hotkey: string
 	focused: boolean
 	topRight?: CornerContent
+	overflow?: "hidden" | "visible"
 	children: JSX.Element
 }
 
@@ -139,7 +140,7 @@ export function Panel(props: PanelProps) {
 			borderColor={props.focused ? colors().borderFocused : colors().border}
 			flexGrow={1}
 			height="100%"
-			overflow="hidden"
+			overflow={props.overflow ?? "hidden"}
 			gap={0}
 			onMouseDown={handleMouseDown}
 		>
