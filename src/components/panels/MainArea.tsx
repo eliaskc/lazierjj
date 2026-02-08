@@ -14,6 +14,7 @@ import {
 	onMount,
 } from "solid-js"
 
+import { fetchDiff } from "../../commander/diff"
 import type { DiffStats } from "../../commander/operations"
 import { type Commit, getRevisionId } from "../../commander/types"
 import { onConfigChange, readConfig } from "../../config"
@@ -44,6 +45,10 @@ const UNIFIED_RIGHT_PADDING = 0
 const SPLIT_RIGHT_PADDING = 0
 const SCROLLBAR_GUTTER = 0
 const HORIZONTAL_SCROLL_STEP = 5
+
+let sessionViewStyleOverride: DiffViewStyle | null = null
+let sessionWrapOverride: boolean | null = null
+let sessionUseJjFormatterOverride: boolean | null = null
 
 function FileStats(props: { stats: DiffStats; maxWidth: number }) {
 	const { colors } = useTheme()
@@ -299,9 +304,32 @@ export function MainArea() {
 		readConfig().diff.autoSwitchWidth,
 	)
 	const [diffWrap, setDiffWrap] = createSignal(readConfig().diff.wrap)
+	const [diffUseJjFormatter, setDiffUseJjFormatter] = createSignal(
+		readConfig().diff.useJjFormatter,
+	)
+	const [useJjFormatterOverride, setUseJjFormatterOverride] = createSignal<
+		boolean | null
+	>(sessionUseJjFormatterOverride)
 	const [viewStyleOverride, setViewStyleOverride] =
-		createSignal<DiffViewStyle | null>(null)
-	const [wrapOverride, setWrapOverride] = createSignal<boolean | null>(null)
+		createSignal<DiffViewStyle | null>(sessionViewStyleOverride)
+	const [wrapOverride, setWrapOverride] = createSignal<boolean | null>(
+		sessionWrapOverride,
+	)
+	const useJjFormatter = createMemo(
+		() => useJjFormatterOverride() ?? diffUseJjFormatter(),
+	)
+
+	createEffect(() => {
+		sessionUseJjFormatterOverride = useJjFormatterOverride()
+	})
+
+	createEffect(() => {
+		sessionViewStyleOverride = viewStyleOverride()
+	})
+
+	createEffect(() => {
+		sessionWrapOverride = wrapOverride()
+	})
 
 	const configuredViewStyle = createMemo<DiffViewStyle>(() => {
 		const layout = diffLayout()
@@ -319,10 +347,22 @@ export function MainArea() {
 	})
 
 	createEffect(() => {
+		if (useJjFormatter()) {
+			setWrapEnabled(false)
+			return
+		}
 		const wrap = wrapOverride() ?? diffWrap()
 		setWrapEnabled(wrap)
 	})
+
+	createEffect(() => {
+		if (!focus.isPanel("detail")) return
+		focus.setActiveContext(
+			useJjFormatter() ? "detail.diff_jj_formatter" : "detail.diff_custom",
+		)
+	})
 	const [parsedFiles, setParsedFiles] = createSignal<FlattenedFile[]>([])
+	const [rawDiffOutput, setRawDiffOutput] = createSignal("")
 	const [parsedDiffLoading, setParsedDiffLoading] = createSignal(false)
 	const [parsedDiffError, setParsedDiffError] = createSignal<string | null>(
 		null,
@@ -387,6 +427,10 @@ export function MainArea() {
 	})
 
 	const maxLineLengths = createMemo(() => {
+		if (useJjFormatter()) {
+			return { maxUnified: 0, maxLeft: 0, maxRight: 0 }
+		}
+
 		let maxUnified = 0
 		let maxLeft = 0
 		let maxRight = 0
@@ -413,6 +457,18 @@ export function MainArea() {
 		return { maxUnified, maxLeft, maxRight }
 	})
 
+	const rawMaxLineLength = createMemo(() => {
+		if (!useJjFormatter()) return 0
+		let maxLength = 0
+		for (const line of rawDiffOutput().split("\n")) {
+			const length = line.length
+			if (length > maxLength) {
+				maxLength = length
+			}
+		}
+		return maxLength
+	})
+
 	const lineNumWidth = createMemo(() => {
 		const maxLine = getMaxLineNumber(parsedFiles())
 		return Math.max(1, getLineNumWidth(maxLine))
@@ -431,6 +487,9 @@ export function MainArea() {
 	})
 
 	const maxScrollableWidth = createMemo(() => {
+		if (useJjFormatter()) {
+			return rawMaxLineLength()
+		}
 		if (viewStyle() === "split") {
 			const { maxLeft, maxRight } = maxLineLengths()
 			return Math.max(maxLeft, maxRight)
@@ -511,6 +570,7 @@ export function MainArea() {
 	createEffect(() => {
 		const commit = activeCommit()
 		const vMode = viewMode()
+		const showJjFormatter = useJjFormatter()
 		if (!commit) return
 
 		let paths: string[] | undefined
@@ -525,7 +585,7 @@ export function MainArea() {
 			}
 		}
 
-		const fetchKey = `${commit.changeId}:${commit.commitId}:${paths?.join(",") ?? "all"}`
+		const fetchKey = `${commit.changeId}:${commit.commitId}:${paths?.join(",") ?? "all"}:${showJjFormatter ? "jj" : "custom"}`
 		if (fetchKey === currentFetchKey) return
 		currentFetchKey = fetchKey
 
@@ -533,14 +593,47 @@ export function MainArea() {
 		setParsedDiffError(null)
 
 		const fetchStart = performance.now()
-		fetchParsedDiff(getRevisionId(commit), { paths })
-			.then((files) => {
+		const fetcher = showJjFormatter
+			? fetchDiff(getRevisionId(commit), {
+					paths,
+					columns: Math.max(1, viewportWidth()),
+				})
+			: fetchParsedDiff(getRevisionId(commit), { paths })
+
+		fetcher
+			.then((result) => {
 				if (currentFetchKey !== fetchKey) return
 
 				const fetchMs = performance.now() - fetchStart
 
+				if (showJjFormatter) {
+					const renderedDiff = result as string
+					profileLog("diff-fetch-complete", {
+						fetchMs: Math.round(fetchMs),
+						flattenMs: 0,
+						files: 0,
+						lines: renderedDiff.split("\n").length,
+					})
+
+					const renderStart = performance.now()
+					setParsedFiles([])
+					setRawDiffOutput(renderedDiff)
+					setParsedDiffLoading(false)
+					const signalMs = performance.now() - renderStart
+
+					queueMicrotask(() => {
+						const totalRenderMs = performance.now() - renderStart
+						profileLog("diff-render-complete", {
+							signalMs: Math.round(signalMs * 100) / 100,
+							totalRenderMs: Math.round(totalRenderMs * 100) / 100,
+						})
+					})
+					return
+				}
+
+				const parsedDiff = result as Parameters<typeof flattenDiff>[0]
 				const flattenStart = performance.now()
-				const flattened = flattenDiff(files)
+				const flattened = flattenDiff(parsedDiff)
 				const flattenMs = performance.now() - flattenStart
 
 				const lineCount = flattened.reduce(
@@ -556,6 +649,7 @@ export function MainArea() {
 				})
 
 				const renderStart = performance.now()
+				setRawDiffOutput("")
 				setParsedFiles(flattened)
 				setParsedDiffLoading(false)
 				const signalMs = performance.now() - renderStart
@@ -598,6 +692,7 @@ export function MainArea() {
 	})
 
 	createEffect(() => {
+		if (useJjFormatter()) return
 		if (parsedFiles().length > 0) return
 		if (headerHeight() > viewportHeight()) return
 		if (scrollTop() === 0) return
@@ -610,6 +705,8 @@ export function MainArea() {
 			setDiffLayout(config.diff.layout)
 			setDiffAutoSwitchWidth(config.diff.autoSwitchWidth)
 			setDiffWrap(config.diff.wrap)
+			setDiffUseJjFormatter(config.diff.useJjFormatter)
+			setUseJjFormatterOverride(null)
 			setViewStyleOverride(null)
 			setWrapOverride(null)
 		})
@@ -698,10 +795,25 @@ export function MainArea() {
 			},
 		},
 		{
+			id: "detail.toggle_jj_formatter",
+			title: "toggle jj formatter",
+			keybind: "toggle_diff_formatter",
+			context: "detail",
+			type: "view",
+			onSelect: () => {
+				setUseJjFormatterOverride((enabled) => {
+					if (enabled === null) {
+						return !diffUseJjFormatter()
+					}
+					return !enabled
+				})
+			},
+		},
+		{
 			id: "detail.toggle_diff_style",
 			title: "toggle split/unified",
 			keybind: "toggle_diff_style",
-			context: "detail",
+			context: "detail.diff_custom",
 			type: "view",
 			onSelect: () => {
 				setViewStyleOverride((s) => {
@@ -714,7 +826,7 @@ export function MainArea() {
 			id: "detail.toggle_diff_wrap",
 			title: "toggle wrap",
 			keybind: "toggle_diff_wrap",
-			context: "detail",
+			context: "detail.diff_custom",
 			type: "view",
 			onSelect: () => {
 				setWrapOverride((enabled) => {
@@ -751,7 +863,7 @@ export function MainArea() {
 			id: "detail.prev_hunk",
 			title: "previous hunk",
 			keybind: "nav_prev_hunk",
-			context: "detail",
+			context: "detail.diff_custom",
 			type: "navigation",
 			visibility: "help-only",
 			onSelect: () => {
@@ -762,7 +874,7 @@ export function MainArea() {
 			id: "detail.next_hunk",
 			title: "next hunk",
 			keybind: "nav_next_hunk",
-			context: "detail",
+			context: "detail.diff_custom",
 			type: "navigation",
 			visibility: "help-only",
 			onSelect: () => {
@@ -773,7 +885,7 @@ export function MainArea() {
 			id: "detail.prev_file",
 			title: "previous file",
 			keybind: "nav_prev_file",
-			context: "detail",
+			context: "detail.diff_custom",
 			type: "navigation",
 			visibility: "help-only",
 			onSelect: () => {
@@ -784,7 +896,7 @@ export function MainArea() {
 			id: "detail.next_file",
 			title: "next file",
 			keybind: "nav_next_file",
-			context: "detail",
+			context: "detail.diff_custom",
 			type: "navigation",
 			visibility: "help-only",
 			onSelect: () => {
@@ -795,7 +907,8 @@ export function MainArea() {
 
 	const isLoading = () => parsedDiffLoading()
 	const hasError = () => parsedDiffError()
-	const hasContent = () => parsedFiles().length > 0
+	const hasContent = () =>
+		useJjFormatter() ? rawDiffOutput().length > 0 : parsedFiles().length > 0
 	const needsVerticalScrollbar = createMemo(
 		() => scrollHeight() > viewportHeight(),
 	)
@@ -854,7 +967,15 @@ export function MainArea() {
 						<text fg={colors().error}>Error: {parsedDiffError()}</text>
 					</Show>
 					<Show when={!parsedDiffError()}>
-						<Show when={parsedFiles().length > 0}>
+						<Show when={useJjFormatter()}>
+							<AnsiText
+								content={rawDiffOutput()}
+								wrapMode="none"
+								cropStart={scrollLeft()}
+								cropWidth={Math.max(1, viewportWidth())}
+							/>
+						</Show>
+						<Show when={!useJjFormatter() && parsedFiles().length > 0}>
 							<box flexDirection="column">
 								<Show when={viewStyle() === "unified"}>
 									<VirtualizedUnifiedView

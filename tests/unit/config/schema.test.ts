@@ -7,6 +7,7 @@ describe("ConfigSchema", () => {
 		expect(config.ui.theme).toBe("lazygit")
 		expect(config.diff.layout).toBe("auto")
 		expect(config.diff.autoSwitchWidth).toBe(120)
+		expect(config.diff.useJjFormatter).toBe(false)
 		expect(config.ui.showFileTree).toBe(true)
 		expect(config.whatsNewDisabled).toBe(false)
 	})
@@ -26,6 +27,7 @@ describe("ConfigSchema", () => {
 		})
 		expect(config.diff.layout).toBe("split")
 		expect(config.diff.autoSwitchWidth).toBe(120)
+		expect(config.diff.useJjFormatter).toBe(false)
 	})
 
 	test("existing config with only whatsNewDisabled still works", () => {

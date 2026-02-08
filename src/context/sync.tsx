@@ -426,8 +426,6 @@ export function SyncProvider(props: { children: JSX.Element }) {
 			focus.setActiveContext(mode === "files" ? "log.files" : "log.revisions")
 		} else if (currentPanel === "refs") {
 			focus.setActiveContext("refs.bookmarks")
-		} else if (currentPanel === "detail") {
-			focus.setActiveContext("detail")
 		}
 	})
 

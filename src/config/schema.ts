@@ -29,6 +29,10 @@ export const DiffSchema = z.object({
 			"Auto-switch to split view above this terminal width (only used when layout is auto)",
 		),
 	wrap: z.boolean().default(true).describe("Wrap long lines in diff view"),
+	useJjFormatter: z
+		.boolean()
+		.default(false)
+		.describe("Use jj's ui.diff-formatter output in the diff view"),
 })
 
 export const ConfigSchema = z
@@ -43,7 +47,12 @@ export const ConfigSchema = z
 			.describe("UI settings"),
 
 		diff: DiffSchema.optional()
-			.default({ layout: "auto", autoSwitchWidth: 120, wrap: true })
+			.default({
+				layout: "auto",
+				autoSwitchWidth: 120,
+				wrap: true,
+				useJjFormatter: false,
+			})
 			.describe("Diff display settings"),
 
 		whatsNewDisabled: z

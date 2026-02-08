@@ -7,8 +7,8 @@ export type Panel = "log" | "refs" | "detail" | "commandlog"
  * Context represents the current interaction mode (what keys mean right now).
  * Format: panel.mode (e.g., "log.revisions", "log.files")
  *
- * Modes are siblings, not hierarchical. "files" is NOT a child of "revisions".
- * This prevents accidental command inheritance via prefix matching.
+ * Most modes are siblings (e.g. "log.revisions" and "log.files").
+ * Some contexts intentionally use sub-modes for scoped commands (e.g. "detail.diff_*" ).
  */
 export type Context =
 	// Special contexts
@@ -24,6 +24,8 @@ export type Context =
 	| "refs.bookmarks"
 	// Detail panel
 	| "detail"
+	| "detail.diff_custom"
+	| "detail.diff_jj_formatter"
 	// Command log panel
 	| "commandlog"
 

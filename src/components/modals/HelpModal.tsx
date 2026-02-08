@@ -89,7 +89,12 @@ function contextToGroup(context: Context): ContextGroup {
 	if (context === "log.files") return "files"
 	if (context === "refs.bookmarks") return "bookmarks"
 	if (context === "log.oplog") return "oplog"
-	if (context === "detail" || context === "commandlog") return "detail"
+	if (
+		context === "detail" ||
+		context.startsWith("detail.") ||
+		context === "commandlog"
+	)
+		return "detail"
 	return "global"
 }
 

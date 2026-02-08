@@ -126,7 +126,8 @@ Kajji reads JSONC config from `~/.config/kajji/config.json` (comments and traili
   "diff": {
     "layout": "auto",         // "auto" | "unified" | "split"
     "autoSwitchWidth": 120,   // only used when layout is "auto"
-    "wrap": true
+    "wrap": true,
+    "useJjFormatter": false   // use jj's ui.diff-formatter output in Detail
   },
   "whatsNewDisabled": false
 }
@@ -134,8 +135,6 @@ Kajji reads JSONC config from `~/.config/kajji/config.json` (comments and traili
 
 Not yet wired from config ([#16](https://github.com/eliaskc/kajji/issues/16)):
 
-- `diff.tool` — external diff tool
-- `diff.useJjFormatter` — use jj's `ui.diff-formatter`
 - keybind overrides
 
 ### Keybindings
@@ -149,8 +148,9 @@ Not yet wired from config ([#16](https://github.com/eliaskc/kajji/issues/16)):
 | `ctrl+x`  | Toggle focus mode (normal / diff) |
 | `ctrl+o`  | Open recent repository            |
 | `o`       | Open commit/PR on GitHub          |
-| `w`       | Toggle line wrapping in diff      |
-| `v`       | Toggle split / unified diff       |
+| `-`       | Toggle tree/list (Files) or jj formatter (Detail) |
+| `w`       | Toggle line wrapping in diff (built-in renderer) |
+| `v`       | Toggle split / unified diff (built-in renderer) |
 | `ctrl+p`  | Show commands (or `?`)            |
 | `q`       | Quit                              |
 
