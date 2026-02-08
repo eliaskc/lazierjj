@@ -1,4 +1,3 @@
-import { Toaster } from "@opentui-ui/toast/solid"
 import { useRenderer } from "@opentui/solid"
 import {
 	Show,
@@ -485,38 +484,12 @@ function AppContent() {
 		}
 	}
 
-	const toasterOptions = () => ({
-		position: "top-right" as const,
-		toastOptions: {
-			style: {
-				backgroundColor: colors().background,
-				foregroundColor: colors().text,
-				borderColor: colors().border,
-				borderStyle: style().panel.borderStyle,
-				mutedColor: colors().textMuted,
-			},
-			success: {
-				style: { borderColor: colors().success },
-			},
-			error: {
-				style: { borderColor: colors().error },
-			},
-			warning: {
-				style: { borderColor: colors().warning },
-			},
-			info: {
-				style: { borderColor: colors().info },
-			},
-		},
-	})
-
 	return (
 		<Show
 			when={whatsNewChanges()}
 			fallback={
 				<DialogContainer>
 					<LayoutGrid />
-					<Toaster {...toasterOptions()} />
 				</DialogContainer>
 			}
 		>

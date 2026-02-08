@@ -1,5 +1,4 @@
 import { join } from "node:path"
-import { toast } from "@opentui-ui/toast/solid"
 import { $ } from "bun"
 import { readState, writeState } from "./state"
 
@@ -162,22 +161,8 @@ export function checkForUpdates(): void {
 
 	setTimeout(async () => {
 		try {
-			// Dynamic import to avoid circular dependency
 			const { mockMode } = await import("../mock")
-			if (mockMode === "update-success") {
-				await new Promise((r) => setTimeout(r, 1000))
-				toast.success("Updated to v0.4.0", {
-					description: "Restart kajji to use the new version",
-					duration: 8000,
-				})
-				return
-			}
-			if (mockMode === "update-failed") {
-				await new Promise((r) => setTimeout(r, 1000))
-				toast.error("Update failed", {
-					description: "Try manually: bun install -g kajji@0.4.0",
-					duration: 10000,
-				})
+			if (mockMode === "update-success" || mockMode === "update-failed") {
 				return
 			}
 
@@ -194,20 +179,7 @@ export function checkForUpdates(): void {
 			const pm = await detectPackageManager()
 			if (pm === "unknown") return
 
-			const success = await runUpdate(pm, latestVersion)
-
-			if (success) {
-				toast.success(`Updated to v${latestVersion}`, {
-					description: "Restart kajji to use the new version",
-					duration: 8000,
-				})
-			} else {
-				const cmd = getUpdateCommand(pm, latestVersion)
-				toast.error("Update failed", {
-					description: cmd ? `Try manually: ${cmd}` : "Please update manually",
-					duration: 10000,
-				})
-			}
+			await runUpdate(pm, latestVersion)
 		} catch {
 			// Non-blocking, silent failure
 		}

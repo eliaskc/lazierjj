@@ -33,7 +33,6 @@
 	"dependencies": {
 		"@babel/core": "^7.28.5",
 		"@babel/preset-typescript": "^7.28.5",
-		"@opentui-ui/toast": "^0.0.5",
 		"@opentui/core": "0.1.75",
 		"@opentui/solid": "0.1.75",
 		"@pierre/diffs": "^1.0.10",
