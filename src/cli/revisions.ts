@@ -8,7 +8,7 @@ export interface RevisionInfo {
 
 export async function fetchRevisions(revset: string): Promise<RevisionInfo[]> {
 	const template =
-		'change_id.short() ++ "\\t" ++ commit_id ++ "\\t" ++ description.first_line()'
+		'change_id ++ "\\t" ++ commit_id ++ "\\t" ++ description.first_line()'
 
 	const result = await execute([
 		"log",

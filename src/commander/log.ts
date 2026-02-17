@@ -12,9 +12,9 @@ function buildTemplate(): string {
 
 	const prefix = [
 		`"${MARKER}"`,
-		"change_id.short()",
+		"change_id",
 		`"${MARKER}"`,
-		"commit_id.short()",
+		"commit_id",
 		`"${MARKER}"`,
 		"immutable",
 		`"${MARKER}"`,

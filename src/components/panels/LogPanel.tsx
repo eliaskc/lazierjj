@@ -92,15 +92,15 @@ function sortBookmarksByProximity(
 	const nearestHeadRank = new Map(
 		nearestHeadBookmarkNames.map((name, index) => [name, index]),
 	)
-	const toShortChangeId = (changeId: string) => changeId.trim().slice(0, 8)
-	const commitIndexByShortChangeId = new Map(
+	const toCanonicalChangeId = (changeId: string) => changeId.trim()
+	const commitIndexByChangeId = new Map(
 		orderedCommits.map((commit, index) => [
-			toShortChangeId(commit.changeId),
+			toCanonicalChangeId(commit.changeId),
 			index,
 		]),
 	)
-	const targetIndex = commitIndexByShortChangeId.get(
-		toShortChangeId(targetChangeId),
+	const targetIndex = commitIndexByChangeId.get(
+		toCanonicalChangeId(targetChangeId),
 	)
 	if (targetIndex === undefined) return bookmarks
 
@@ -117,7 +117,7 @@ function sortBookmarksByProximity(
 			}
 			const bookmarkIndices = bookmark.changeId
 				.split(",")
-				.map((id) => commitIndexByShortChangeId.get(toShortChangeId(id)))
+				.map((id) => commitIndexByChangeId.get(toCanonicalChangeId(id)))
 				.filter((index): index is number => index !== undefined)
 			const bookmarkIndex = bookmarkIndices.length
 				? Math.min(...bookmarkIndices)
@@ -388,11 +388,8 @@ export function LogPanel() {
 	const findLocalBookmark = (name: string) =>
 		bookmarks().find((b) => b.isLocal && b.name === name)
 
-	const changeIdMatches = (left: string, right: string) => {
-		const a = left.trim()
-		const b = right.trim()
-		return a === b || a.startsWith(b) || b.startsWith(a)
-	}
+	const changeIdMatches = (left: string, right: string) =>
+		left.trim() === right.trim()
 
 	const bookmarkPointsToChange = (bookmark: Bookmark, changeId: string) =>
 		bookmark.changeId
@@ -1306,13 +1303,13 @@ export function LogPanel() {
 				const commit = selectedCommit()
 				if (!commit) return
 				const revId = getRevisionId(commit)
-				const selectedShortChangeId = commit.changeId.slice(0, 8)
+				const selectedChangeId = commit.changeId
 				const localBookmarks = bookmarks().filter((b) => b.isLocal)
 				const currentRevisionBookmarks = localBookmarks.filter((b) =>
 					b.changeId
 						.split(",")
-						.map((id) => id.trim().slice(0, 8))
-						.includes(selectedShortChangeId),
+						.map((id) => id.trim())
+						.includes(selectedChangeId),
 				)
 				let nearestHeadBookmarkNames: string[] = []
 				try {
@@ -1326,8 +1323,8 @@ export function LogPanel() {
 						(b) =>
 							!b.changeId
 								.split(",")
-								.map((id) => id.trim().slice(0, 8))
-								.includes(selectedShortChangeId),
+								.map((id) => id.trim())
+								.includes(selectedChangeId),
 					),
 					commits(),
 					commit.changeId,
