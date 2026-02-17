@@ -388,6 +388,32 @@ export function LogPanel() {
 	const findLocalBookmark = (name: string) =>
 		bookmarks().find((b) => b.isLocal && b.name === name)
 
+	const changeIdMatches = (left: string, right: string) => {
+		const a = left.trim()
+		const b = right.trim()
+		return a === b || a.startsWith(b) || b.startsWith(a)
+	}
+
+	const bookmarkPointsToChange = (bookmark: Bookmark, changeId: string) =>
+		bookmark.changeId
+			.split(",")
+			.map((id) => id.trim())
+			.some((id) => changeIdMatches(id, changeId))
+
+	const findBookmarkForChange = (
+		changeId: string,
+		options?: { localOnly?: boolean },
+	) =>
+		bookmarks().find(
+			(bookmark) =>
+				(!options?.localOnly || bookmark.isLocal) &&
+				bookmarkPointsToChange(bookmark, changeId),
+		)
+
+	const findBookmarkByName = (name: string) =>
+		findLocalBookmark(name) ??
+		bookmarks().find((bookmark) => bookmark.name === name)
+
 	const openForBookmark = async (bookmark: Bookmark) => {
 		if (!bookmark.changeId) {
 			commandLog.addEntry({
@@ -455,10 +481,12 @@ export function LogPanel() {
 			// fall through to PR open
 		}
 
-		let bookmark = commit.bookmarks[0]
-		if (!bookmark) {
+		const bookmark = commit.bookmarks[0]
+		let targetBookmark = bookmark ? findBookmarkByName(bookmark) : null
+		if (!targetBookmark) {
 			const confirmed = await dialog.confirm({
-				message: "No bookmark for this change. Push it to create one?",
+				message:
+					"No bookmark points to this change yet. Create and push one before opening a PR?",
 			})
 			if (!confirmed) return
 			const pushResult = await globalLoading.run("Pushing...", () =>
@@ -468,35 +496,24 @@ export function LogPanel() {
 			if (!pushResult.success) return
 			await refresh()
 			await loadBookmarks()
-			bookmark = bookmarks().find(
-				(b) => b.isLocal && b.changeId === commit.changeId,
-			)?.name
+			targetBookmark =
+				findBookmarkForChange(commit.changeId, { localOnly: true }) ??
+				findBookmarkForChange(commit.changeId)
 		}
 
-		if (!bookmark) {
+		if (!targetBookmark) {
 			commandLog.addEntry({
 				command: "open",
 				success: false,
 				exitCode: 1,
 				stdout: "",
-				stderr: "No local bookmark found for this change",
+				stderr:
+					"No bookmark found for this change after push. Refresh and try again.",
 			})
 			return
 		}
 
-		const localBookmark = findLocalBookmark(bookmark)
-		if (!localBookmark) {
-			commandLog.addEntry({
-				command: "open",
-				success: false,
-				exitCode: 1,
-				stdout: "",
-				stderr: `Bookmark "${bookmark}" not found locally`,
-			})
-			return
-		}
-
-		await openForBookmark(localBookmark)
+		await openForBookmark(targetBookmark)
 	}
 
 	let scrollRef: ScrollBoxRenderable | undefined
