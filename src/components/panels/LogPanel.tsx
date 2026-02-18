@@ -47,7 +47,7 @@ import {
 	jjSquashInteractive,
 	parseOpLog,
 } from "../../commander/operations"
-import { getRevisionId } from "../../commander/types"
+import { type Commit, getRevisionId } from "../../commander/types"
 import { useCommand } from "../../context/command"
 import { useCommandLog } from "../../context/commandlog"
 import { useDialog } from "../../context/dialog"
@@ -69,6 +69,7 @@ import {
 	type FilterableFileTreeApi,
 } from "../FilterableFileTree"
 import { Panel } from "../Panel"
+import { BookmarkNameModal } from "../modals/BookmarkNameModal"
 import { DescribeModal } from "../modals/DescribeModal"
 import { NewChangeModal } from "../modals/NewChangeModal"
 import { RebaseModal } from "../modals/RebaseModal"
@@ -388,14 +389,11 @@ export function LogPanel() {
 	const findLocalBookmark = (name: string) =>
 		bookmarks().find((b) => b.isLocal && b.name === name)
 
-	const changeIdMatches = (left: string, right: string) =>
-		left.trim() === right.trim()
-
 	const bookmarkPointsToChange = (bookmark: Bookmark, changeId: string) =>
 		bookmark.changeId
 			.split(",")
 			.map((id) => id.trim())
-			.some((id) => changeIdMatches(id, changeId))
+			.includes(changeId.trim())
 
 	const findBookmarkForChange = (
 		changeId: string,
@@ -411,7 +409,53 @@ export function LogPanel() {
 		findLocalBookmark(name) ??
 		bookmarks().find((bookmark) => bookmark.name === name)
 
-	const openForBookmark = async (bookmark: Bookmark) => {
+	const createBookmarkPushAndOpen = async (
+		commit: Commit,
+		bookmarkName: string,
+	) => {
+		const createResult = await globalLoading.run("Creating bookmark...", () =>
+			jjBookmarkCreate(bookmarkName, { revision: getRevisionId(commit) }),
+		)
+		commandLog.addEntry(createResult)
+		if (!createResult.success) return
+
+		const pushResult = await globalLoading.run("Pushing...", () =>
+			jjGitPushBookmark(bookmarkName),
+		)
+		commandLog.addEntry(pushResult)
+		if (!pushResult.success) return
+
+		await refresh()
+		await loadBookmarks()
+
+		const prResult = await globalLoading.run("Opening...", () =>
+			ghPrCreateWeb(bookmarkName),
+		)
+		commandLog.addEntry(prResult)
+	}
+
+	const promptForBookmarkAndOpen = (commit: Commit) => {
+		dialog.open(
+			() => (
+				<BookmarkNameModal
+					title="Create bookmark to open PR"
+					initialValue={`push-${commit.changeId.slice(0, 8)}`}
+					onSave={(name) => {
+						void createBookmarkPushAndOpen(commit, name)
+					}}
+				/>
+			),
+			{
+				id: "open-pr-create-bookmark",
+				hints: [{ key: "enter", label: "continue" }],
+			},
+		)
+	}
+
+	const openForBookmark = async (
+		bookmark: Bookmark,
+		options?: { confirmPush?: boolean },
+	) => {
 		if (!bookmark.changeId) {
 			commandLog.addEntry({
 				command: "open",
@@ -444,10 +488,12 @@ export function LogPanel() {
 		}
 
 		if (needsPush) {
-			const confirmed = await dialog.confirm({
-				message: `Bookmark "${bookmark.name}" isn't pushed. Push before opening PR?`,
-			})
-			if (!confirmed) return
+			if (options?.confirmPush !== false) {
+				const confirmed = await dialog.confirm({
+					message: `Bookmark "${bookmark.name}" isn't pushed. Push before opening PR?`,
+				})
+				if (!confirmed) return
+			}
 			const pushResult = await globalLoading.run("Pushing...", () =>
 				jjGitPushBookmark(bookmark.name),
 			)
@@ -462,7 +508,7 @@ export function LogPanel() {
 		commandLog.addEntry(prResult)
 	}
 
-	const openForCommit = async () => {
+	const openForCommit = async (options?: { direct?: boolean }) => {
 		const commit = selectedCommit()
 		if (!commit) return
 
@@ -481,36 +527,37 @@ export function LogPanel() {
 		const bookmark = commit.bookmarks[0]
 		let targetBookmark = bookmark ? findBookmarkByName(bookmark) : null
 		if (!targetBookmark) {
-			const confirmed = await dialog.confirm({
-				message:
-					"No bookmark points to this change yet. Create and push one before opening a PR?",
-			})
-			if (!confirmed) return
-			const pushResult = await globalLoading.run("Pushing...", () =>
-				jjGitPushChange(getRevisionId(commit)),
-			)
-			commandLog.addEntry(pushResult)
-			if (!pushResult.success) return
-			await refresh()
-			await loadBookmarks()
-			targetBookmark =
-				findBookmarkForChange(commit.changeId, { localOnly: true }) ??
-				findBookmarkForChange(commit.changeId)
+			if (options?.direct) {
+				const pushResult = await globalLoading.run("Pushing...", () =>
+					jjGitPushChange(getRevisionId(commit)),
+				)
+				commandLog.addEntry(pushResult)
+				if (!pushResult.success) return
+				await refresh()
+				await loadBookmarks()
+				targetBookmark =
+					findBookmarkForChange(commit.changeId, { localOnly: true }) ??
+					findBookmarkForChange(commit.changeId)
+				if (!targetBookmark) {
+					commandLog.addEntry({
+						command: "open",
+						success: false,
+						exitCode: 1,
+						stdout: "",
+						stderr:
+							"Pushed the change, but couldn't resolve its bookmark yet. Try 'O' again.",
+					})
+					return
+				}
+			} else {
+				promptForBookmarkAndOpen(commit)
+				return
+			}
 		}
 
-		if (!targetBookmark) {
-			commandLog.addEntry({
-				command: "open",
-				success: false,
-				exitCode: 1,
-				stdout: "",
-				stderr:
-					"No bookmark found for this change after push. Refresh and try again.",
-			})
-			return
-		}
-
-		await openForBookmark(targetBookmark)
+		await openForBookmark(targetBookmark, {
+			confirmPush: options?.direct !== true,
+		})
 	}
 
 	let scrollRef: ScrollBoxRenderable | undefined
@@ -1255,6 +1302,18 @@ export function LogPanel() {
 			type: "action",
 			panel: "log",
 			onSelect: openForCommit,
+		},
+		{
+			id: "log.revisions.open_direct",
+			title: "open (direct)",
+			keybind: "open_direct",
+			context: "log.revisions",
+			type: "action",
+			panel: "log",
+			visibility: "help-only",
+			onSelect: () => {
+				void openForCommit({ direct: true })
+			},
 		},
 		{
 			id: "log.revisions.abandon",
