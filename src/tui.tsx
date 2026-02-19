@@ -1,3 +1,12 @@
+// biome-ignore lint/suspicious/noExplicitAny: startup profiling
+const g = globalThis as any
+function _trace(label: string) {
+	if (!g.__STARTUP_TRACE) return
+	const ms = (Bun.nanoseconds() - g.__STARTUP_T0) / 1e6
+	console.error(`[startup] ${ms.toFixed(1).padStart(7)}ms  ${label}`)
+}
+_trace("tui.tsx top (imports starting)")
+
 import { ConsolePosition } from "@opentui/core"
 import { extend, render, useRenderer } from "@opentui/solid"
 import { GhosttyTerminalRenderable } from "ghostty-opentui/terminal-buffer"
@@ -18,6 +27,8 @@ import { getRecentRepos } from "./utils/state"
 
 import changelogContent from "../CHANGELOG.md" with { type: "text" }
 
+_trace("tui.tsx imports done")
+
 // Mock error messages for testing
 const MOCK_ERRORS = {
 	"error-stale": `jj log failed: Error: The working copy is stale (not updated since operation abc123).
@@ -25,9 +36,13 @@ Hint: Run \`jj workspace update-stale\` to update it.
 For more information, see https://martinvonz.github.io/jj/latest/working-copy/`,
 }
 
+_trace("before extend()")
 extend({ "ghostty-terminal": GhosttyTerminalRenderable })
+_trace("after extend()")
 
+_trace("before initHighlighter()")
 initHighlighter()
+_trace("after initHighlighter()")
 
 export async function runTui(args: string[]): Promise<void> {
 	const isDev = Bun.env.NODE_ENV === "development"
@@ -69,8 +84,11 @@ export async function runTui(args: string[]): Promise<void> {
 	}
 
 	function Root() {
+		_trace("Root() called")
 		const renderer = useRenderer()
+		_trace("before checkRepoStatus()")
 		const initialStatus = checkRepoStatus(getRepoPath())
+		_trace("after checkRepoStatus()")
 		if (initialStatus.repoPath !== getRepoPath()) {
 			setRepoPath(initialStatus.repoPath)
 		}
@@ -217,6 +235,7 @@ export async function runTui(args: string[]): Promise<void> {
 		)
 	}
 
+	_trace("before render()")
 	render(() => <Root />, {
 		consoleOptions: {
 			position: ConsolePosition.BOTTOM,
