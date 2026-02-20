@@ -180,7 +180,14 @@ function buildArgs(
 	template: string,
 	limit?: number,
 ) {
-	const args = ["log", "--color", "always", "--template", template]
+	const args = [
+		"log",
+		"--color",
+		"always",
+		"--ignore-working-copy",
+		"--template",
+		template,
+	]
 
 	if (options?.revset) {
 		args.push("-r", options.revset)
