@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.1
+
+### fixed
+- layout: startup and error screens updated to match flat design language ([`ced648cd`](../../commit/ced648cd))
+
 ## 0.10.0
 
 ### new
