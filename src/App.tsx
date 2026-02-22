@@ -15,9 +15,11 @@ import {
 	jjUndo,
 	jjWorkspaceUpdateStale,
 } from "./commander/operations"
+import { getRevisionId } from "./commander/types"
 import { ErrorScreen } from "./components/ErrorScreen"
 import { LayoutGrid } from "./components/Layout"
 import { WhatsNewScreen } from "./components/WhatsNewScreen"
+import { ActionMenuModal } from "./components/modals/ActionMenuModal"
 import { HelpModal, helpContentWidth } from "./components/modals/HelpModal"
 import { RecentReposModal } from "./components/modals/RecentReposModal"
 import { UndoModal } from "./components/modals/UndoModal"
@@ -58,6 +60,11 @@ import { checkForUpdates, getCurrentVersion } from "./utils/update"
 
 import changelogContent from "../CHANGELOG.md" with { type: "text" }
 
+const GIT_ACTION_MENU_DIALOG = {
+	width: "45%" as const,
+	maxWidth: 54,
+}
+
 function AppContent() {
 	const renderer = useRenderer()
 	const {
@@ -68,6 +75,7 @@ function AppContent() {
 		error,
 		loading,
 		commits,
+		selectedCommit,
 	} = useSync()
 	const focus = useFocus()
 	const command = useCommand()
@@ -183,6 +191,138 @@ function AppContent() {
 			proc.stdin.end()
 		}
 	})
+
+	const runGitFetch = async (
+		text: string,
+		options?: Parameters<typeof jjGitFetch>[0],
+	) => {
+		const result = await globalLoading.run(text, () => jjGitFetch(options))
+		commandLog.addEntry(result)
+		if (result.success) {
+			refresh()
+		}
+	}
+
+	const runGitPush = async (
+		text: string,
+		options?: Parameters<typeof jjGitPush>[0],
+	) => {
+		const result = await globalLoading.run(text, () => jjGitPush(options))
+		commandLog.addEntry(result)
+		if (result.success) {
+			refresh()
+		}
+	}
+
+	const formatNamedList = (items: string[], flag: string) => {
+		if (items.length === 0) return flag
+		if (items.length === 1) return `${flag} ${items[0]}`
+		if (items.length === 2) return `${flag} ${items[0]}, ${items[1]}`
+		return `${flag} ${items[0]}, ${items[1]} +${items.length - 2}`
+	}
+
+	const openFetchMenu = () => {
+		const commit =
+			focus.activeContext() === "log.revisions" ? selectedCommit() : null
+		const options = [
+			{
+				key: "a",
+				label: "--all-remotes",
+				onSelect: () =>
+					void runGitFetch("Fetching all...", { allRemotes: true }),
+			},
+			{
+				key: "t",
+				label: "--tracked",
+				onSelect: () =>
+					void runGitFetch("Fetching tracked...", { tracked: true }),
+			},
+			{
+				key: "p",
+				label: "--branch glob:push-*",
+				onSelect: () =>
+					void runGitFetch("Fetching stack branches...", {
+						branches: ["glob:push-*"],
+					}),
+			},
+		]
+
+		if (commit && commit.bookmarks.length > 0) {
+			options.unshift({
+				key: "b",
+				label: formatNamedList(commit.bookmarks, "--branch"),
+				onSelect: () =>
+					void runGitFetch("Fetching selected branches...", {
+						branches: commit.bookmarks,
+					}),
+			})
+		}
+
+		dialog.open(() => <ActionMenuModal options={options} />, {
+			id: "fetch-menu",
+			title: [{ text: "Fetch", style: "action" }, " options"],
+			...GIT_ACTION_MENU_DIALOG,
+			hints: [{ key: "enter", label: "run" }],
+		})
+	}
+
+	const openPushMenu = () => {
+		const commit =
+			focus.activeContext() === "log.revisions" ? selectedCommit() : null
+		const options = [
+			{
+				key: "a",
+				label: "--all",
+				onSelect: () => void runGitPush("Pushing all...", { all: true }),
+			},
+			{
+				key: "t",
+				label: "--tracked",
+				onSelect: () =>
+					void runGitPush("Pushing tracked...", { tracked: true }),
+			},
+			{
+				key: "d",
+				label: "--deleted",
+				onSelect: () =>
+					void runGitPush("Pushing deleted...", { deleted: true }),
+			},
+			{
+				key: "n",
+				label: "--dry-run",
+				onSelect: () => void runGitPush("Dry run push...", { dryRun: true }),
+			},
+		]
+
+		if (commit) {
+			if (commit.bookmarks.length > 0) {
+				options.unshift({
+					key: "b",
+					label: formatNamedList(commit.bookmarks, "--bookmark"),
+					onSelect: () =>
+						void runGitPush("Pushing selected bookmarks...", {
+							bookmarks: commit.bookmarks,
+						}),
+				})
+			} else {
+				options.unshift({
+					key: "c",
+					label: `--change ${getRevisionId(commit).slice(0, 8)}`,
+					onSelect: () =>
+						void runGitPush("Pushing selected change...", {
+							changes: [getRevisionId(commit)],
+						}),
+				})
+			}
+		}
+
+		dialog.open(() => <ActionMenuModal options={options} />, {
+			id: "push-menu",
+			title: [{ text: "Push", style: "action" }, " options"],
+			...GIT_ACTION_MENU_DIALOG,
+			hints: [{ key: "enter", label: "run" }],
+		})
+	}
 
 	command.register(() => [
 		{
@@ -349,32 +489,18 @@ function AppContent() {
 			context: "global",
 			type: "git",
 			visibility: "help-only",
-			onSelect: async () => {
-				const result = await globalLoading.run("Fetching...", () =>
-					jjGitFetch(),
-				)
-				commandLog.addEntry(result)
-				if (result.success) {
-					refresh()
-				}
+			onSelect: () => {
+				void runGitFetch("Fetching...")
 			},
 		},
 		{
 			id: "global.git_fetch_all",
-			title: "git fetch all",
+			title: "git fetch menu",
 			keybind: "jj_git_fetch_all",
 			context: "global",
 			type: "git",
 			visibility: "help-only",
-			onSelect: async () => {
-				const result = await globalLoading.run("Fetching all...", () =>
-					jjGitFetch({ allRemotes: true }),
-				)
-				commandLog.addEntry(result)
-				if (result.success) {
-					refresh()
-				}
-			},
+			onSelect: openFetchMenu,
 		},
 		{
 			id: "global.git_push",
@@ -383,30 +509,18 @@ function AppContent() {
 			context: "global",
 			type: "git",
 			visibility: "help-only",
-			onSelect: async () => {
-				const result = await globalLoading.run("Pushing...", () => jjGitPush())
-				commandLog.addEntry(result)
-				if (result.success) {
-					refresh()
-				}
+			onSelect: () => {
+				void runGitPush("Pushing...")
 			},
 		},
 		{
 			id: "global.git_push_all",
-			title: "git push all",
+			title: "git push menu",
 			keybind: "jj_git_push_all",
 			context: "global",
 			type: "git",
 			visibility: "help-only",
-			onSelect: async () => {
-				const result = await globalLoading.run("Pushing all...", () =>
-					jjGitPush({ all: true }),
-				)
-				commandLog.addEntry(result)
-				if (result.success) {
-					refresh()
-				}
-			},
+			onSelect: openPushMenu,
 		},
 		{
 			id: "global.undo",

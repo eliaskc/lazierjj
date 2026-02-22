@@ -456,10 +456,30 @@ export async function jjWorkspaceUpdateStale(): Promise<OperationResult> {
 	}
 }
 
-export async function jjGitFetch(options?: {
+export interface GitFetchOptions {
 	allRemotes?: boolean
-}): Promise<OperationResult> {
+	tracked?: boolean
+	branches?: string[]
+	remotes?: string[]
+}
+
+export async function jjGitFetch(
+	options?: GitFetchOptions,
+): Promise<OperationResult> {
 	const args = ["git", "fetch"]
+	if (options?.branches?.length) {
+		for (const branch of options.branches) {
+			args.push("--branch", branch)
+		}
+	}
+	if (options?.tracked) {
+		args.push("--tracked")
+	}
+	if (options?.remotes?.length) {
+		for (const remote of options.remotes) {
+			args.push("--remote", remote)
+		}
+	}
 	if (options?.allRemotes) {
 		args.push("--all-remotes")
 	}
@@ -470,12 +490,58 @@ export async function jjGitFetch(options?: {
 	}
 }
 
-export async function jjGitPush(options?: {
+export interface GitPushOptions {
+	remote?: string
+	bookmarks?: string[]
 	all?: boolean
-}): Promise<OperationResult> {
+	tracked?: boolean
+	deleted?: boolean
+	allowEmptyDescription?: boolean
+	allowPrivate?: boolean
+	revisions?: string[]
+	changes?: string[]
+	dryRun?: boolean
+}
+
+export async function jjGitPush(
+	options?: GitPushOptions,
+): Promise<OperationResult> {
 	const args = ["git", "push"]
+	if (options?.remote) {
+		args.push("--remote", options.remote)
+	}
+	if (options?.bookmarks?.length) {
+		for (const bookmark of options.bookmarks) {
+			args.push("--bookmark", bookmark)
+		}
+	}
 	if (options?.all) {
 		args.push("--all")
+	}
+	if (options?.tracked) {
+		args.push("--tracked")
+	}
+	if (options?.deleted) {
+		args.push("--deleted")
+	}
+	if (options?.allowEmptyDescription) {
+		args.push("--allow-empty-description")
+	}
+	if (options?.allowPrivate) {
+		args.push("--allow-private")
+	}
+	if (options?.revisions?.length) {
+		for (const revision of options.revisions) {
+			args.push("--revisions", revision)
+		}
+	}
+	if (options?.changes?.length) {
+		for (const change of options.changes) {
+			args.push("--change", change)
+		}
+	}
+	if (options?.dryRun) {
+		args.push("--dry-run")
 	}
 	const result = await execute(args)
 	return {
