@@ -265,13 +265,23 @@ function AppContent() {
 			keybind: "help",
 			context: "global",
 			type: "action",
-			onSelect: () =>
+			onSelect: () => {
+				const cols = layout.helpModalColumns()
+				const colWidth = 32
+				const colGap = cols === 3 ? 4 : 2
+				const dialogPadding = 4
+				const scrollbarGutter = 2
+				const width =
+					cols * colWidth +
+					(cols - 1) * colGap +
+					scrollbarGutter +
+					dialogPadding
 				dialog.toggle("help", () => <HelpModal />, {
 					title: "Commands",
-					width: "90%",
-					maxWidth: 120,
+					width,
 					hints: [{ key: "enter", label: "execute" }],
-				}),
+				})
+			},
 		},
 		{
 			id: "global.switch_repository",

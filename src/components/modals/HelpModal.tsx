@@ -1,7 +1,7 @@
 import {
+	type InputRenderable,
 	RGBA,
 	type ScrollBoxRenderable,
-	type TextareaRenderable,
 } from "@opentui/core"
 import { useKeyboard } from "@opentui/solid"
 
@@ -116,7 +116,7 @@ export function HelpModal() {
 	const [filter, setFilter] = createSignal("")
 	const [selectedIndex, setSelectedIndex] = createSignal(-1)
 	const [scrollTop, setScrollTop] = createSignal(0)
-	let searchInputRef: TextareaRenderable | undefined
+	let searchInputRef: InputRenderable | undefined
 	let scrollRef: ScrollBoxRenderable | undefined
 
 	const columnCount = () => layout.helpModalColumns()
@@ -381,11 +381,18 @@ export function HelpModal() {
 
 	const isMatched = (cmd: CommandOption) => matchedIds().has(cmd.id)
 	const isSelected = (cmd: CommandOption) => selectedCommand()?.id === cmd.id
+	const columnWidth = 32
+	const columnGap = () => (columnCount() === 3 ? 4 : 2)
+	const scrollbarGutter = 2
+	const modalWidth = () =>
+		columnCount() * columnWidth +
+		(columnCount() - 1) * columnGap() +
+		scrollbarGutter
 
 	return (
-		<box flexDirection="column" flexGrow={1} height="100%">
-			<box marginBottom={1}>
-				<textarea
+		<box flexDirection="column" width={modalWidth()} height="80%">
+			<box height={1} flexShrink={0} overflow="hidden">
+				<input
 					ref={(r) => {
 						searchInputRef = r
 						setTimeout(() => {
@@ -398,17 +405,16 @@ export function HelpModal() {
 					}}
 					onSubmit={() => executeSelected()}
 					keyBindings={SINGLE_LINE_KEYBINDINGS}
-					wrapMode="none"
-					scrollMargin={0}
 					placeholder="Search"
 					placeholderColor={colors().textMuted}
-					flexGrow={1}
 					cursorColor={colors().primary}
 					textColor={colors().textMuted}
 					focusedTextColor={colors().text}
 					focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
+					width="100%"
 				/>
 			</box>
+			<box height={1} flexShrink={0} />
 
 			<scrollbox
 				ref={scrollRef}
@@ -416,7 +422,11 @@ export function HelpModal() {
 				scrollX={false}
 				horizontalScrollbarOptions={{ visible: false }}
 			>
-				<box flexDirection="row" gap={4} paddingRight={4}>
+				<box
+					flexDirection="row"
+					gap={columnGap()}
+					paddingRight={scrollbarGutter}
+				>
 					<For each={filteredColumns()}>
 						{(column) => (
 							<box flexDirection="column" width={32}>

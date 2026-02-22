@@ -254,6 +254,7 @@ export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
 						return [...s.slice(0, -1), { ...last, hints }]
 					})
 				},
+
 				open,
 				toggle,
 				close,
