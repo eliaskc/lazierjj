@@ -97,13 +97,7 @@ export function StatusBar() {
 	const commandGap = separator() ? ` ${separator()} ` : "   "
 
 	return (
-		<box
-			height={1}
-			flexShrink={0}
-			paddingLeft={1}
-			paddingRight={1}
-			flexDirection="row"
-		>
+		<box height={1} flexShrink={0} flexDirection="row">
 			<Show when={loading.isLoading()}>
 				<text>
 					<span style={{ fg: colors().warning }}>
