@@ -4,7 +4,6 @@ import {
 	type TextareaRenderable,
 } from "@opentui/core"
 import { useKeyboard } from "@opentui/solid"
-import { BorderBox } from "../BorderBox"
 
 const SINGLE_LINE_KEYBINDINGS = [
 	{ name: "return", action: "submit" as const },
@@ -383,33 +382,9 @@ export function HelpModal() {
 	const isMatched = (cmd: CommandOption) => matchedIds().has(cmd.id)
 	const isSelected = (cmd: CommandOption) => selectedCommand()?.id === cmd.id
 
-	const columnWidth = 32
-	const modalPadding = 4
-	const contentPaddingRight = 4
-	const columnGap = () => (columnCount() === 3 ? 4 : 2)
-	const totalColumnsWidth = () => columnCount() * columnWidth
-	const totalGapsWidth = () => (columnCount() - 1) * columnGap()
-	const modalWidth = () =>
-		totalColumnsWidth() +
-		totalGapsWidth() +
-		2 * modalPadding +
-		contentPaddingRight
-
 	return (
-		<BorderBox
-			border
-			borderStyle={style().panel.borderStyle}
-			borderColor={colors().borderFocused}
-			backgroundColor={colors().background}
-			paddingLeft={modalPadding}
-			paddingRight={modalPadding}
-			paddingTop={2}
-			paddingBottom={2}
-			width={modalWidth()}
-			height="80%"
-			topLeft={<text fg={colors().borderFocused}>[esc / ?]─Commands</text>}
-		>
-			<box flexDirection="row" marginBottom={2}>
+		<box flexDirection="column" flexGrow={1} height="100%">
+			<box flexDirection="row" marginBottom={1}>
 				<textarea
 					ref={(r) => {
 						searchInputRef = r
@@ -440,7 +415,7 @@ export function HelpModal() {
 				scrollX={false}
 				horizontalScrollbarOptions={{ visible: false }}
 			>
-				<box flexDirection="row" gap={columnGap()} paddingRight={4}>
+				<box flexDirection="row" gap={4} paddingRight={4}>
 					<For each={filteredColumns()}>
 						{(column) => (
 							<box flexDirection="column" width={32}>
@@ -497,6 +472,6 @@ export function HelpModal() {
 					</For>
 				</box>
 			</scrollbox>
-		</BorderBox>
+		</box>
 	)
 }

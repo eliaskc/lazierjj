@@ -28,6 +28,8 @@ export interface ThemeColors {
 	orange: string
 	green: string
 
+	backgroundDialog: string
+
 	scrollbarTrack: string
 	scrollbarThumb: string
 

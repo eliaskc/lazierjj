@@ -126,7 +126,13 @@ export function BookmarksPanel() {
 
 		if (needsPush) {
 			const confirmed = await dialog.confirm({
-				message: `Bookmark "${bookmark.name}" isn't pushed. Push before opening PR?`,
+				message: [
+					"Bookmark ",
+					{ text: bookmark.name, style: "target" },
+					" isn't pushed. ",
+					{ text: "Push", style: "action" },
+					" before opening PR?",
+				],
 			})
 			if (!confirmed) return
 			const pushResult = await globalLoading.run("Pushing...", () =>
@@ -679,6 +685,9 @@ export function BookmarksPanel() {
 					),
 					{
 						id: "bookmark-create",
+						title: "Create Bookmark",
+						width: "60%",
+						maxWidth: 90,
 						hints: [
 							{ key: "tab", label: "switch field" },
 							{ key: "enter", label: "save" },
@@ -701,7 +710,12 @@ export function BookmarksPanel() {
 				const currentIndex = selectedBookmarkIndex()
 				const totalBookmarks = localBookmarks().length
 				const confirmed = await dialog.confirm({
-					message: `Delete bookmark "${bookmark.name}"?`,
+					message: [
+						{ text: "Delete", style: "action" },
+						" bookmark ",
+						{ text: bookmark.name, style: "target" },
+						"?",
+					],
 				})
 				if (confirmed) {
 					await runOperation("Deleting bookmark...", () =>
@@ -739,6 +753,9 @@ export function BookmarksPanel() {
 					),
 					{
 						id: "bookmark-rename",
+						title: `Rename "${bookmark.name}"`,
+						width: "60%",
+						maxWidth: 90,
 						hints: [{ key: "enter", label: "save" }],
 					},
 				)
@@ -757,7 +774,13 @@ export function BookmarksPanel() {
 				const bookmark = selectedBookmark()
 				if (!bookmark) return
 				const confirmed = await dialog.confirm({
-					message: `Forget bookmark "${bookmark.name}"? (local only)`,
+					message: [
+						{ text: "Forget", style: "action" },
+						" bookmark ",
+						{ text: bookmark.name, style: "target" },
+						"? ",
+						{ text: "(local only)", style: "muted" },
+					],
 				})
 				if (confirmed) {
 					await runOperation("Forgetting bookmark...", () =>
@@ -781,7 +804,6 @@ export function BookmarksPanel() {
 				dialog.open(
 					() => (
 						<RevisionPickerModal
-							title={`Move "${bookmark.name}" to`}
 							commits={commits()}
 							defaultRevision={bookmark.changeId}
 							onSelect={(revision) => {
@@ -793,6 +815,9 @@ export function BookmarksPanel() {
 					),
 					{
 						id: "bookmark-move",
+						title: `Move "${bookmark.name}" to`,
+						width: "60%",
+						maxWidth: 90,
 						hints: [{ key: "enter", label: "confirm" }],
 					},
 				)

@@ -447,6 +447,9 @@ export function LogPanel() {
 			),
 			{
 				id: "open-pr-create-bookmark",
+				title: "Create bookmark to open PR",
+				width: "60%",
+				maxWidth: 90,
 				hints: [{ key: "enter", label: "continue" }],
 			},
 		)
@@ -490,7 +493,13 @@ export function LogPanel() {
 		if (needsPush) {
 			if (options?.confirmPush !== false) {
 				const confirmed = await dialog.confirm({
-					message: `Bookmark "${bookmark.name}" isn't pushed. Push before opening PR?`,
+					message: [
+						"Bookmark ",
+						{ text: bookmark.name, style: "target" },
+						" isn't pushed. ",
+						{ text: "Push", style: "action" },
+						" before opening PR?",
+					],
 				})
 				if (!confirmed) return
 			}
@@ -1139,6 +1148,9 @@ export function LogPanel() {
 					),
 					{
 						id: "squash",
+						title: `Squash ${commit.changeId.slice(0, 8)} into`,
+						width: "80%",
+						maxWidth: 120,
 						hints: [
 							{ key: "u", label: "use dest msg" },
 							{ key: "K", label: "keep emptied" },
@@ -1198,6 +1210,9 @@ export function LogPanel() {
 					),
 					{
 						id: "rebase",
+						title: `Rebase ${commit.changeId.slice(0, 8)} onto`,
+						width: "80%",
+						maxWidth: 120,
 						hints: [
 							{ key: "s", label: "descendants" },
 							{ key: "b", label: "branch" },
@@ -1286,6 +1301,9 @@ export function LogPanel() {
 					),
 					{
 						id: "describe",
+						title: `Describe ${commit.changeId.slice(0, 8)}`,
+						width: "60%",
+						maxWidth: 90,
 						hints: [
 							{ key: "tab", label: "switch field" },
 							{ key: "enter", label: "save" },
@@ -1327,7 +1345,12 @@ export function LogPanel() {
 				const commit = selectedCommit()
 				if (!commit) return
 				const confirmed = await dialog.confirm({
-					message: `Abandon change ${commit.changeId.slice(0, 8)}?`,
+					message: [
+						{ text: "Abandon", style: "action" },
+						" change ",
+						{ text: commit.changeId.slice(0, 8), style: "target" },
+						"?",
+					],
 				})
 				if (!confirmed) return
 				const revId = getRevisionId(commit)
@@ -1392,7 +1415,6 @@ export function LogPanel() {
 				dialog.open(
 					() => (
 						<SetBookmarkModal
-							title={`Set bookmark on ${commit.changeId.slice(0, 8)}`}
 							bookmarks={moveTargetBookmarks}
 							currentRevisionBookmarks={currentRevisionBookmarks}
 							changeId={commit.changeId}
@@ -1410,6 +1432,9 @@ export function LogPanel() {
 					),
 					{
 						id: "set-bookmark",
+						title: `Set bookmark on ${commit.changeId.slice(0, 8)}`,
+						width: "60%",
+						maxWidth: 90,
 						hints: [
 							{ key: "up/down", label: "navigate" },
 							{ key: "enter", label: "confirm" },
@@ -1464,6 +1489,9 @@ export function LogPanel() {
 					),
 					{
 						id: "restore-modal",
+						title: "Restore to this operation?",
+						width: "60%",
+						maxWidth: 90,
 						hints: [
 							{ key: "y", label: "confirm" },
 							{ key: "n", label: "cancel" },
@@ -1537,7 +1565,13 @@ export function LogPanel() {
 				const node = file.node
 				const pathType = node.isDirectory ? "folder" : "file"
 				const confirmed = await dialog.confirm({
-					message: `Restore ${pathType} "${node.path}"? This will discard changes.`,
+					message: [
+						{ text: "Restore", style: "action" },
+						` ${pathType} `,
+						{ text: node.path, style: "target" },
+						"? ",
+						{ text: "This will discard changes.", style: "muted" },
+					],
 				})
 				if (confirmed) {
 					await runOperation("Restoring...", () => jjRestore([node.path]))

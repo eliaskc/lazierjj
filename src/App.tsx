@@ -267,6 +267,9 @@ function AppContent() {
 			type: "action",
 			onSelect: () =>
 				dialog.toggle("help", () => <HelpModal />, {
+					title: "Commands",
+					width: "90%",
+					maxWidth: 120,
 					hints: [{ key: "enter", label: "execute" }],
 				}),
 		},
@@ -288,6 +291,8 @@ function AppContent() {
 						/>
 					),
 					{
+						title: "Recent repositories",
+						width: 70,
 						hints: [
 							{ key: "j/k", label: "select" },
 							{ key: "1-9", label: "open" },
@@ -424,6 +429,9 @@ function AppContent() {
 					),
 					{
 						id: "undo-modal",
+						title: "Undo last operation?",
+						width: "60%",
+						maxWidth: 90,
 						hints: [
 							{ key: "y", label: "confirm" },
 							{ key: "n", label: "cancel" },
@@ -459,6 +467,9 @@ function AppContent() {
 					),
 					{
 						id: "redo-modal",
+						title: "Redo last operation?",
+						width: "60%",
+						maxWidth: 90,
 						hints: [
 							{ key: "y", label: "confirm" },
 							{ key: "n", label: "cancel" },

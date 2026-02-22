@@ -4,7 +4,6 @@ import { Show, createSignal, onMount } from "solid-js"
 import { type Commit, getRevisionId } from "../../commander/types"
 import { useDialog } from "../../context/dialog"
 import { useTheme } from "../../context/theme"
-import { BorderBox } from "../BorderBox"
 import { RevisionPicker } from "../RevisionPicker"
 
 const SINGLE_LINE_KEYBINDINGS = [
@@ -18,7 +17,6 @@ interface BookmarkNameModalProps {
 	defaultRevision?: string
 	initialValue?: string
 	placeholder?: string
-	width?: number | "auto" | `${number}%`
 	height?: number
 	onSave: (name: string, revision?: string) => void
 }
@@ -108,31 +106,19 @@ export function BookmarkNameModal(props: BookmarkNameModalProps) {
 
 	const pickerHeight = () => props.height ?? 10
 
-	const nameTitleColor = () =>
-		focusedField() === "name" || !hasRevisionPicker()
+	const sectionBorderColor = (field: "name" | "picker") =>
+		focusedField() === field || (!hasRevisionPicker() && field === "name")
 			? colors().borderFocused
 			: colors().border
-	const revisionTitleColor = () =>
-		focusedField() === "picker" ? colors().borderFocused : colors().border
 
 	return (
-		<box
-			flexDirection="column"
-			width={props.width ?? "60%"}
-			maxWidth={90}
-			gap={0}
-		>
-			<BorderBox
+		<box flexDirection="column" gap={0}>
+			<box
+				flexDirection="column"
 				border
 				borderStyle={style().panel.borderStyle}
-				borderColor={
-					focusedField() === "name" || !hasRevisionPicker()
-						? colors().borderFocused
-						: colors().border
-				}
-				backgroundColor={colors().background}
+				borderColor={sectionBorderColor("name")}
 				height={3}
-				topLeft={<text fg={nameTitleColor()}>{props.title}</text>}
 			>
 				<textarea
 					ref={(r) => {
@@ -156,33 +142,19 @@ export function BookmarkNameModal(props: BookmarkNameModalProps) {
 					focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
 					flexGrow={1}
 				/>
-			</BorderBox>
+			</box>
 
 			<Show when={error()}>
-				<box
-					border
-					borderStyle={style().panel.borderStyle}
-					borderColor={colors().error}
-					backgroundColor={colors().background}
-					padding={0}
-					paddingLeft={1}
-				>
-					<text fg={colors().error}>{error()}</text>
-				</box>
+				<text fg={colors().error}>{error()}</text>
 			</Show>
 
 			<Show when={hasRevisionPicker()}>
-				<BorderBox
+				<box
+					flexDirection="column"
 					border
 					borderStyle={style().panel.borderStyle}
-					borderColor={
-						focusedField() === "picker"
-							? colors().borderFocused
-							: colors().border
-					}
-					backgroundColor={colors().background}
+					borderColor={sectionBorderColor("picker")}
 					height={pickerHeight()}
-					topLeft={<text fg={revisionTitleColor()}>Revision</text>}
 				>
 					<RevisionPicker
 						commits={props.commits ?? []}
@@ -191,7 +163,7 @@ export function BookmarkNameModal(props: BookmarkNameModalProps) {
 						onSelect={handleRevisionSelect}
 						height={pickerHeight() - 2}
 					/>
-				</BorderBox>
+				</box>
 			</Show>
 		</box>
 	)

@@ -2,8 +2,6 @@ import { useKeyboard } from "@opentui/solid"
 import { createSignal } from "solid-js"
 import { type Commit, getRevisionId } from "../../commander/types"
 import { useDialog } from "../../context/dialog"
-import { useTheme } from "../../context/theme"
-import { BorderBox } from "../BorderBox"
 import { RevisionPicker } from "../RevisionPicker"
 
 export type RebaseMode = "revision" | "descendants" | "branch"
@@ -19,14 +17,12 @@ interface RebaseModalProps {
 	source: Commit
 	commits: Commit[]
 	defaultTarget?: string
-	width?: number | "auto" | `${number}%`
 	height?: number
 	onRebase: (target: string, options: RebaseOptions) => void
 }
 
 export function RebaseModal(props: RebaseModalProps) {
 	const dialog = useDialog()
-	const { colors, style } = useTheme()
 
 	const [selectedRevision, setSelectedRevision] = createSignal(
 		props.defaultTarget ??
@@ -85,33 +81,17 @@ export function RebaseModal(props: RebaseModalProps) {
 		setSelectedRevision(getRevisionId(commit))
 	}
 
-	const pickerHeight = () => props.height ?? 20
-
-	const title = () => `Rebase ${props.source.changeId.slice(0, 8)} onto`
+	const pickerHeight = () => props.height ?? 18
 
 	return (
-		<box
-			flexDirection="column"
-			width={props.width ?? "80%"}
-			maxWidth={120}
-			gap={0}
-		>
-			<BorderBox
-				border
-				borderStyle={style().panel.borderStyle}
-				borderColor={colors().borderFocused}
-				backgroundColor={colors().background}
+		<box flexDirection="column" height={pickerHeight()}>
+			<RevisionPicker
+				commits={props.commits}
+				defaultRevision={props.defaultTarget}
+				focused={true}
+				onSelect={handleRevisionSelect}
 				height={pickerHeight()}
-				topLeft={<text fg={colors().borderFocused}>{title()}</text>}
-			>
-				<RevisionPicker
-					commits={props.commits}
-					defaultRevision={props.defaultTarget}
-					focused={true}
-					onSelect={handleRevisionSelect}
-					height={pickerHeight() - 2}
-				/>
-			</BorderBox>
+			/>
 		</box>
 	)
 }

@@ -1,6 +1,8 @@
+import { TextAttributes } from "@opentui/core"
 import { RGBA } from "@opentui/core"
 import { useKeyboard, useRenderer } from "@opentui/solid"
 import {
+	For,
 	type JSX,
 	type ParentProps,
 	Show,
@@ -8,8 +10,6 @@ import {
 	onCleanup,
 	onMount,
 } from "solid-js"
-import { BorderBox } from "../components/BorderBox"
-import { FooterHints } from "../components/FooterHints"
 import { createSimpleContext } from "./helper"
 import { useTheme } from "./theme"
 
@@ -18,23 +18,31 @@ export interface DialogHint {
 	label: string
 }
 
+type Dimension = number | "auto" | `${number}%`
+
 interface DialogState {
 	id?: string
 	render: () => JSX.Element
 	onClose?: () => void
 	hints?: DialogHint[]
 	title?: string
+	width?: Dimension
+	maxWidth?: number
 }
 
+export type ConfirmSegment =
+	| string
+	| { text: string; style?: "action" | "target" | "muted" }
+
 interface ConfirmOptions {
-	message: string
+	message: string | ConfirmSegment[]
 }
 
 function ConfirmDialogContent(props: {
-	message: string
+	message: string | ConfirmSegment[]
 	onResolve: (confirmed: boolean) => void
 }) {
-	const { colors, style } = useTheme()
+	const { colors } = useTheme()
 
 	useKeyboard((evt) => {
 		if (evt.name === "y" || evt.name === "return") {
@@ -48,17 +56,54 @@ function ConfirmDialogContent(props: {
 		}
 	})
 
+	if (typeof props.message === "string") {
+		return (
+			<text fg={colors().text} attributes={TextAttributes.BOLD}>
+				{props.message}
+			</text>
+		)
+	}
+
 	return (
-		<BorderBox
-			border
-			borderStyle={style().panel.borderStyle}
-			borderColor={colors().borderFocused}
-			backgroundColor={colors().background}
-			paddingLeft={2}
-			width="50%"
-		>
-			<text fg={colors().text}>{props.message}</text>
-		</BorderBox>
+		<text>
+			<For each={props.message}>
+				{(segment) => {
+					if (typeof segment === "string") {
+						return <span style={{ fg: colors().text }}>{segment}</span>
+					}
+					switch (segment.style) {
+						case "action":
+							return (
+								<span
+									style={{
+										fg: colors().text,
+										attributes: TextAttributes.BOLD,
+									}}
+								>
+									{segment.text}
+								</span>
+							)
+						case "target":
+							return (
+								<span
+									style={{
+										fg: colors().primary,
+										attributes: TextAttributes.BOLD,
+									}}
+								>
+									{segment.text}
+								</span>
+							)
+						case "muted":
+							return (
+								<span style={{ fg: colors().textMuted }}>{segment.text}</span>
+							)
+						default:
+							return <span style={{ fg: colors().text }}>{segment.text}</span>
+					}
+				}}
+			</For>
+		</text>
 	)
 }
 
@@ -89,6 +134,8 @@ export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
 					onClose?: () => void
 					hints?: DialogHint[]
 					title?: string
+					width?: Dimension
+					maxWidth?: number
 				},
 			) => {
 				setStack((s) => [
@@ -99,6 +146,8 @@ export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
 						onClose: options?.onClose,
 						hints: options?.hints,
 						title: options?.title,
+						width: options?.width,
+						maxWidth: options?.maxWidth,
 					},
 				])
 			}
@@ -110,6 +159,8 @@ export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
 					onClose?: () => void
 					hints?: DialogHint[]
 					title?: string
+					width?: Dimension
+					maxWidth?: number
 				},
 			) => {
 				const current = stack().at(-1)
@@ -121,6 +172,8 @@ export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
 						onClose: options?.onClose,
 						hints: options?.hints,
 						title: options?.title,
+						width: options?.width,
+						maxWidth: options?.maxWidth,
 					})
 				}
 			}
@@ -163,6 +216,8 @@ export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
 				current: () => stack().at(-1),
 				hints: () => stack().at(-1)?.hints ?? [],
 				title: () => stack().at(-1)?.title,
+				width: () => stack().at(-1)?.width,
+				maxWidth: () => stack().at(-1)?.maxWidth,
 				setHints: (hints: DialogHint[]) => {
 					setStack((s) => {
 						if (s.length === 0) return s
@@ -186,6 +241,36 @@ export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
 	},
 )
 
+function DialogHints(props: { hints: DialogHint[] }) {
+	const { colors, style } = useTheme()
+	const separator = () => style().statusBar.separator
+	const hintGap = () => (separator() ? ` ${separator()} ` : "   ")
+
+	return (
+		<Show when={props.hints.length > 0}>
+			<text wrapMode="word">
+				<For each={props.hints}>
+					{(hint, index) => (
+						<>
+							<span style={{ fg: colors().primary }}>{hint.key}</span>{" "}
+							<span style={{ fg: colors().textMuted }}>{hint.label}</span>
+							<Show when={index() < props.hints.length - 1}>
+								<span
+									style={{
+										fg: separator() ? colors().textMuted : undefined,
+									}}
+								>
+									{hintGap()}
+								</span>
+							</Show>
+						</>
+					)}
+				</For>
+			</text>
+		</Show>
+	)
+}
+
 function DialogBackdrop(props: { onClose: () => void; children: JSX.Element }) {
 	const renderer = useRenderer()
 	const { colors, style } = useTheme()
@@ -205,8 +290,6 @@ function DialogBackdrop(props: { onClose: () => void; children: JSX.Element }) {
 
 	const overlayColor = () =>
 		RGBA.fromInts(0, 0, 0, style().dialog.overlayOpacity)
-	const overlayWidth = () =>
-		dimensions().width - (style().adaptToTerminal ? 0 : 2)
 	const overlayHeight = () => Math.max(0, dimensions().height)
 
 	return (
@@ -223,12 +306,22 @@ function DialogBackdrop(props: { onClose: () => void; children: JSX.Element }) {
 		>
 			<box
 				flexDirection="column"
-				alignItems="center"
-				width={overlayWidth()}
+				width={dialog.width() ?? "50%"}
+				maxWidth={dialog.maxWidth()}
+				backgroundColor={colors().backgroundDialog}
+				paddingLeft={2}
+				paddingRight={2}
+				paddingTop={1}
+				paddingBottom={1}
 				gap={1}
 			>
+				<Show when={dialog.title()}>
+					<text fg={colors().text} attributes={TextAttributes.BOLD}>
+						{dialog.title()}
+					</text>
+				</Show>
 				{props.children}
-				<FooterHints hints={dialog.hints()} boxed title={dialog.title()} />
+				<DialogHints hints={dialog.hints()} />
 			</box>
 		</box>
 	)

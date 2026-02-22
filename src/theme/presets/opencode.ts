@@ -8,6 +8,7 @@ export const opencodeTheme: Theme = {
 		background: "#0a0a0a",
 		backgroundSecondary: "#141414",
 		backgroundElement: "#1e1e1e",
+		backgroundDialog: "#1a1a2e",
 
 		text: "#eeeeee",
 		textMuted: "#808080",

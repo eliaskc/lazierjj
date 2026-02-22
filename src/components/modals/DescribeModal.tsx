@@ -7,7 +7,6 @@ import { useKeyboard } from "@opentui/solid"
 import { createSignal, onMount } from "solid-js"
 import { useDialog } from "../../context/dialog"
 import { useTheme } from "../../context/theme"
-import { BorderBox } from "../BorderBox"
 
 interface DescribeModalProps {
 	initialSubject: string
@@ -64,26 +63,17 @@ export function DescribeModal(props: DescribeModalProps) {
 
 	const charCount = () => subject().length
 
-	const subjectTitleColor = () =>
-		focusedField() === "subject" ? colors().borderFocused : colors().border
-	const bodyTitleColor = () =>
-		focusedField() === "body" ? colors().borderFocused : colors().border
+	const sectionBorderColor = (field: "subject" | "body") =>
+		focusedField() === field ? colors().borderFocused : colors().border
 
 	return (
-		<box flexDirection="column" width="60%" maxWidth={90} gap={0}>
-			<BorderBox
+		<box flexDirection="column" gap={0}>
+			<box
+				flexDirection="column"
 				border
 				borderStyle={style().panel.borderStyle}
-				borderColor={
-					focusedField() === "subject"
-						? colors().borderFocused
-						: colors().border
-				}
-				backgroundColor={colors().background}
+				borderColor={sectionBorderColor("subject")}
 				height={3}
-				topLeft={
-					<text fg={subjectTitleColor()}>{`Subject─[${charCount()}]`}</text>
-				}
 			>
 				<input
 					ref={(r) => {
@@ -100,17 +90,14 @@ export function DescribeModal(props: DescribeModalProps) {
 					focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
 					width="100%"
 				/>
-			</BorderBox>
+			</box>
 
-			<BorderBox
+			<box
+				flexDirection="column"
 				border
 				borderStyle={style().panel.borderStyle}
-				borderColor={
-					focusedField() === "body" ? colors().borderFocused : colors().border
-				}
-				backgroundColor={colors().background}
+				borderColor={sectionBorderColor("body")}
 				height={10}
-				topLeft={<text fg={bodyTitleColor()}>Body</text>}
 			>
 				<textarea
 					ref={(r) => {
@@ -126,7 +113,9 @@ export function DescribeModal(props: DescribeModalProps) {
 					focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
 					flexGrow={1}
 				/>
-			</BorderBox>
+			</box>
+
+			<text fg={colors().textMuted}>{`${charCount()} chars`}</text>
 		</box>
 	)
 }

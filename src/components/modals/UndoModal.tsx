@@ -3,7 +3,6 @@ import { Show, createResource } from "solid-js"
 import { fetchOpLog } from "../../commander/operations"
 import { useTheme } from "../../context/theme"
 import { AnsiText } from "../AnsiText"
-import { BorderBox } from "../BorderBox"
 
 interface UndoModalProps {
 	type: "undo" | "redo" | "restore"
@@ -13,7 +12,7 @@ interface UndoModalProps {
 }
 
 export function UndoModal(props: UndoModalProps) {
-	const { colors, style } = useTheme()
+	const { colors } = useTheme()
 
 	const [fetchedDetails] = createResource(
 		() => !props.operationLines,
@@ -38,31 +37,14 @@ export function UndoModal(props: UndoModalProps) {
 		}
 	})
 
-	const title = () => {
-		if (props.type === "restore") return "Restore to this operation?"
-		return props.type === "undo"
-			? "Undo last operation?"
-			: "Redo last operation?"
-	}
-
 	return (
-		<BorderBox
-			border
-			borderStyle={style().panel.borderStyle}
-			borderColor={colors().borderFocused}
-			backgroundColor={colors().background}
-			width="60%"
-			maxWidth={90}
-			topLeft={<text fg={colors().text}>{title()}</text>}
-			paddingLeft={1}
-			paddingRight={1}
-		>
+		<box flexDirection="column">
 			<Show when={fetchedDetails.loading && !props.operationLines}>
 				<text fg={colors().textMuted}>Loading...</text>
 			</Show>
 			<Show when={!fetchedDetails.loading || props.operationLines}>
 				<AnsiText content={opDetails()} wrapMode="none" />
 			</Show>
-		</BorderBox>
+		</box>
 	)
 }

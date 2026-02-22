@@ -2,22 +2,17 @@ import { useKeyboard } from "@opentui/solid"
 import { createSignal } from "solid-js"
 import { type Commit, getRevisionId } from "../../commander/types"
 import { useDialog } from "../../context/dialog"
-import { useTheme } from "../../context/theme"
-import { BorderBox } from "../BorderBox"
 import { RevisionPicker } from "../RevisionPicker"
 
 interface RevisionPickerModalProps {
-	title: string
 	commits: Commit[]
 	defaultRevision?: string
-	width?: number | "auto" | `${number}%`
 	height?: number
 	onSelect: (revision: string) => void
 }
 
 export function RevisionPickerModal(props: RevisionPickerModalProps) {
 	const dialog = useDialog()
-	const { colors, style } = useTheme()
 
 	const [selectedRevision, setSelectedRevision] = createSignal(
 		props.defaultRevision ??
@@ -50,28 +45,14 @@ export function RevisionPickerModal(props: RevisionPickerModalProps) {
 	const pickerHeight = () => props.height ?? 12
 
 	return (
-		<box
-			flexDirection="column"
-			width={props.width ?? "60%"}
-			maxWidth={90}
-			gap={0}
-		>
-			<BorderBox
-				border
-				borderStyle={style().panel.borderStyle}
-				borderColor={colors().borderFocused}
-				backgroundColor={colors().background}
+		<box flexDirection="column" height={pickerHeight()}>
+			<RevisionPicker
+				commits={props.commits}
+				defaultRevision={props.defaultRevision}
+				focused={true}
+				onSelect={handleRevisionSelect}
 				height={pickerHeight()}
-				topLeft={<text fg={colors().borderFocused}>{props.title}</text>}
-			>
-				<RevisionPicker
-					commits={props.commits}
-					defaultRevision={props.defaultRevision}
-					focused={true}
-					onSelect={handleRevisionSelect}
-					height={pickerHeight() - 2}
-				/>
-			</BorderBox>
+			/>
 		</box>
 	)
 }
