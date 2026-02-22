@@ -359,7 +359,7 @@ function NoVcsScreen(props: NoVcsScreenProps) {
 						topLeft={<text fg={initBorderColor()}>Initialize</text>}
 						onMouseDown={() => setFocusedSection("init")}
 					>
-						<box paddingLeft={1} paddingRight={1}>
+						<box paddingX={1}>
 							<box
 								backgroundColor={
 									focusedSection() === "init"

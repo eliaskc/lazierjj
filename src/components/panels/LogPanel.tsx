@@ -1709,7 +1709,7 @@ export function LogPanel() {
 				>
 					{/* Error line */}
 					<Show when={errorContent()}>
-						<box paddingLeft={1} paddingRight={1} height={1} overflow="hidden">
+						<box paddingX={1} height={1} overflow="hidden">
 							<text fg={colors().error} wrapMode="none">
 								{errorContent()}
 							</text>
