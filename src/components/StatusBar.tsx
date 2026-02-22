@@ -141,7 +141,7 @@ export function StatusBar() {
 						<For each={contextCommands()}>
 							{(cmd, index) => (
 								<>
-									<span style={{ fg: colors().primary }}>
+									<span style={{ fg: colors().text }}>
 										{cmd.keybind ? keybind.print(cmd.keybind) : ""}
 									</span>{" "}
 									<span style={{ fg: colors().textMuted }}>{cmd.title}</span>
@@ -174,7 +174,7 @@ export function StatusBar() {
 												{commandGap}
 											</span>
 										</Show>
-										<span style={{ fg: colors().primary }}>
+										<span style={{ fg: colors().text }}>
 											{cmd.keybind ? keybind.print(cmd.keybind) : ""}
 										</span>{" "}
 										<span style={{ fg: colors().textMuted }}>{cmd.title}</span>

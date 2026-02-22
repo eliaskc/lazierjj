@@ -31,6 +31,7 @@ export const opencodeTheme: Theme = {
 		titleBar: "#1e1e1e",
 		titleBarFocused: "#fab283",
 		titleTextFocused: "#0a0a0a",
+		titleTextMuted: "#6b4a30",
 
 		scrollbarTrack: "#1e1e1e",
 		scrollbarThumb: "#484848",

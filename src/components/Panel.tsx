@@ -97,7 +97,10 @@ export function Panel(props: PanelProps) {
 											fg:
 												tab.id === props.activeTab
 													? titleColor()
-													: colors().textMuted,
+													: props.focused
+														? colors().titleTextMuted
+														: colors().textMuted,
+											bold: tab.id === props.activeTab,
 										}}
 									>
 										{tab.label}

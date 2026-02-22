@@ -33,6 +33,7 @@ export interface ThemeColors {
 	titleBar: string
 	titleBarFocused: string
 	titleTextFocused: string
+	titleTextMuted: string
 
 	scrollbarTrack: string
 	scrollbarThumb: string

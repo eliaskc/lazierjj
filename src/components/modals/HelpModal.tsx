@@ -462,9 +462,7 @@ export function HelpModal() {
 																	fg={
 																		isSelected(cmd)
 																			? colors().selectionText
-																			: isNavigatable(cmd)
-																				? colors().info
-																				: colors().textMuted
+																			: colors().textMuted
 																	}
 																	wrapMode="none"
 																>
