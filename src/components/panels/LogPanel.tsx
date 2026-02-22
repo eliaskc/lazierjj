@@ -18,6 +18,7 @@ import {
 import {
 	type Bookmark,
 	fetchNearestAncestorBookmarkNames,
+	isBookmarkBackwardsError,
 	jjBookmarkCreate,
 	jjBookmarkSet,
 } from "../../commander/bookmarks"
@@ -384,6 +385,22 @@ export function LogPanel() {
 			refresh()
 			loadOpLog()
 		}
+	}
+
+	const moveBookmark = async (
+		bookmarkName: string,
+		revision: string,
+		options?: { allowBackwards?: boolean },
+	): Promise<OperationResult> => {
+		const result = await globalLoading.run("Moving bookmark...", () =>
+			jjBookmarkSet(bookmarkName, revision, options),
+		)
+		commandLog.addEntry(result)
+		if (result.success) {
+			refresh()
+			loadOpLog()
+		}
+		return result
 	}
 
 	const findLocalBookmark = (name: string) =>
@@ -1482,10 +1499,12 @@ export function LogPanel() {
 							bookmarks={moveTargetBookmarks}
 							currentRevisionBookmarks={currentRevisionBookmarks}
 							changeId={commit.changeId}
-							onMove={(bookmark) => {
-								runOperation("Moving bookmark...", () =>
-									jjBookmarkSet(bookmark.name, revId),
-								)
+							onMove={async (bookmark, options) => {
+								const result = await moveBookmark(bookmark.name, revId, options)
+								if (!result.success && !isBookmarkBackwardsError(result)) {
+									dialog.close()
+								}
+								return result
 							}}
 							onCreate={(name) => {
 								runOperation("Creating bookmark...", () =>
@@ -1502,10 +1521,7 @@ export function LogPanel() {
 							{ text: commit.changeId.slice(0, 8), style: "target" },
 						],
 						...DIALOG_SIZE.form,
-						hints: [
-							{ key: "up/down", label: "navigate" },
-							{ key: "enter", label: "confirm" },
-						],
+						hints: [{ key: "enter", label: "confirm" }],
 					},
 				)
 			},

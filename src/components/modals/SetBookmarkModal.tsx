@@ -6,8 +6,12 @@ import {
 import { useKeyboard } from "@opentui/solid"
 import fuzzysort from "fuzzysort"
 import { For, Show, createEffect, createMemo, createSignal } from "solid-js"
-import type { Bookmark } from "../../commander/bookmarks"
-import { useDialog } from "../../context/dialog"
+import {
+	type Bookmark,
+	isBookmarkBackwardsError,
+} from "../../commander/bookmarks"
+import type { OperationResult } from "../../commander/operations"
+import { DIALOG_SIZE, useDialog } from "../../context/dialog"
 import { useTheme } from "../../context/theme"
 import { FUZZY_THRESHOLD, scrollIntoView } from "../../utils/scroll"
 
@@ -20,7 +24,10 @@ interface SetBookmarkModalProps {
 	bookmarks: Bookmark[]
 	currentRevisionBookmarks?: Bookmark[]
 	changeId: string
-	onMove: (bookmark: Bookmark) => void
+	onMove: (
+		bookmark: Bookmark,
+		options?: { allowBackwards?: boolean },
+	) => Promise<OperationResult>
 	onCreate: (name: string) => void
 }
 
@@ -177,7 +184,7 @@ export function SetBookmarkModal(props: SetBookmarkModalProps) {
 		}
 	}
 
-	const handleSubmit = () => {
+	const handleSubmit = async () => {
 		setError(null)
 
 		if (isCreateSelected()) {
@@ -195,8 +202,30 @@ export function SetBookmarkModal(props: SetBookmarkModalProps) {
 		} else {
 			const bookmark = selectedBookmark()
 			if (bookmark) {
-				dialog.close()
-				props.onMove(bookmark)
+				const result = await props.onMove(bookmark)
+				if (isBookmarkBackwardsError(result)) {
+					const confirmed = await dialog.confirm({
+						...DIALOG_SIZE.confirm,
+						message: [
+							{ text: bookmark.name, style: "target" },
+							" would move backwards. ",
+							{ text: "Move", style: "action" },
+							" anyway?",
+						],
+					})
+					if (!confirmed) return
+					const retryResult = await props.onMove(bookmark, {
+						allowBackwards: true,
+					})
+					if (retryResult.success) {
+						dialog.close()
+					}
+					return
+				}
+
+				if (result.success) {
+					dialog.close()
+				}
 			}
 		}
 	}

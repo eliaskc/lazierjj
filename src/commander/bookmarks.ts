@@ -226,13 +226,23 @@ export async function jjBookmarkForget(name: string): Promise<OperationResult> {
 export async function jjBookmarkSet(
 	name: string,
 	revision: string,
+	options?: { allowBackwards?: boolean },
 ): Promise<OperationResult> {
 	const args = ["bookmark", "set", name, "-r", revision]
+	if (options?.allowBackwards) {
+		args.push("--allow-backwards")
+	}
 	const result = await execute(args)
 	return {
 		...result,
 		command: `jj ${args.join(" ")}`,
 	}
+}
+
+export function isBookmarkBackwardsError(result: OperationResult): boolean {
+	if (result.success) return false
+	const combined = `${result.stdout}\n${result.stderr}`
+	return /allow-backwards/i.test(combined) || /backward/i.test(combined)
 }
 
 export async function fetchNearestAncestorBookmarkNames(
