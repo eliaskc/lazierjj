@@ -92,6 +92,12 @@ export function CommandLogPanel() {
 				focused={isFocused()}
 				stickyScroll={!isFocused()}
 				stickyStart="bottom"
+				verticalScrollbarOptions={{
+					trackOptions: {
+						backgroundColor: colors().scrollbarTrack,
+						foregroundColor: colors().scrollbarThumb,
+					},
+				}}
 			>
 				<Show
 					when={commandLog.entries().length > 0}
