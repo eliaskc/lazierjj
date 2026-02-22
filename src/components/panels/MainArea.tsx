@@ -380,7 +380,7 @@ export function MainArea() {
 	})
 
 	const renderRepoInfo = () => (
-		<text fg={isFocused() ? colors().borderFocused : colors().border}>
+		<text fg={isFocused() ? colors().borderFocused : colors().textMuted}>
 			{repoInfo().repoName}
 		</text>
 	)

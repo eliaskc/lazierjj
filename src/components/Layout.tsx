@@ -10,6 +10,24 @@ import { CommandLogPanel } from "./panels/CommandLogPanel"
 import { LogPanel } from "./panels/LogPanel"
 import { MainArea } from "./panels/MainArea"
 
+function VerticalDivider() {
+	const { colors } = useTheme()
+	return (
+		<box width={1} paddingTop={1} paddingBottom={1} overflow="hidden">
+			<text fg={colors().scrollbarThumb}>{"│\n".repeat(300)}</text>
+		</box>
+	)
+}
+
+function HorizontalDivider() {
+	const { colors } = useTheme()
+	return (
+		<box height={1} paddingLeft={2} paddingRight={1} overflow="hidden">
+			<text fg={colors().scrollbarThumb}>{"─".repeat(500)}</text>
+		</box>
+	)
+}
+
 function NormalLayout() {
 	const dimmer = useDimmer()
 
@@ -21,18 +39,21 @@ function NormalLayout() {
 						<LogPanel />
 					</Dimmer>
 				</box>
+				<HorizontalDivider />
 				<box flexGrow={1} flexBasis={0}>
 					<Dimmer dimmed={dimmer.isDimmed("refs")} grow>
 						<BookmarksPanel />
 					</Dimmer>
 				</box>
 			</box>
+			<VerticalDivider />
 			<box flexGrow={1} flexBasis={0} flexDirection="column">
 				<box flexGrow={1}>
 					<Dimmer dimmed={dimmer.isDimmed("detail")} grow>
 						<MainArea />
 					</Dimmer>
 				</box>
+				<HorizontalDivider />
 				<Dimmer dimmed={dimmer.isDimmed("commandlog")}>
 					<CommandLogPanel />
 				</Dimmer>
@@ -62,6 +83,7 @@ function DiffLayout() {
 					</Dimmer>
 				</Show>
 			</box>
+			<VerticalDivider />
 			<box flexGrow={4} flexBasis={0} flexDirection="column">
 				<box flexGrow={1}>
 					<Dimmer dimmed={dimmer.isDimmed("detail")} grow>

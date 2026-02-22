@@ -5,7 +5,7 @@ import { opencodeTheme } from "../theme/presets/opencode"
 import type { Theme, ThemeColors, ThemeStyle } from "../theme/types"
 import { createSimpleContext } from "./helper"
 
-const ACTIVE_THEME: "lazygit" | "opencode" = "lazygit"
+const ACTIVE_THEME: "lazygit" | "opencode" = "opencode"
 
 const themes = {
 	lazygit: lazygitTheme,

@@ -4,10 +4,9 @@ import { useCommand } from "../../context/command"
 import { useCommandLog } from "../../context/commandlog"
 import { useFocus } from "../../context/focus"
 import { useTheme } from "../../context/theme"
-import { BorderBox } from "../BorderBox"
 
 export function CommandLogPanel() {
-	const { colors, style } = useTheme()
+	const { colors } = useTheme()
 	const commandLog = useCommandLog()
 	const focus = useFocus()
 	const command = useCommand()
@@ -67,27 +66,22 @@ export function CommandLogPanel() {
 		},
 	])
 
-	const renderTitle = () => (
-		<text>
-			<Show
-				when={isFocused()}
-				fallback={<span style={{ fg: colors().border }}>[4]─Command log</span>}
-			>
-				<span style={{ fg: colors().borderFocused }}>[4]─Command log</span>
-			</Show>
-		</text>
-	)
+	const titleColor = () =>
+		isFocused() ? colors().borderFocused : colors().textMuted
 
 	return (
-		<BorderBox
-			topLeft={renderTitle}
-			border
-			borderStyle={style().panel.borderStyle}
-			borderColor={isFocused() ? colors().borderFocused : colors().border}
+		<box
+			flexDirection="column"
 			height={isFocused() ? 15 : 6}
+			paddingLeft={2}
 			overflow="hidden"
+			gap={0}
 			onMouseDown={handleMouseDown}
 		>
+			<box flexDirection="row" height={1} flexShrink={0}>
+				<text fg={titleColor()}>4 Command log</text>
+			</box>
+			<box height={1} flexShrink={0} />
 			<scrollbox
 				ref={scrollRef}
 				flexGrow={1}
@@ -113,6 +107,6 @@ export function CommandLogPanel() {
 					</For>
 				</Show>
 			</scrollbox>
-		</BorderBox>
+		</box>
 	)
 }
