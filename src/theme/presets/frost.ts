@@ -33,6 +33,8 @@ export const frostTheme: Theme = {
 		titleTextFocused: "#0a0a0a",
 		titleTextMuted: "#2a4a5a",
 
+		statusBarKey: "#7dcfff",
+
 		scrollbarTrack: "#1a1a24",
 		scrollbarThumb: "#3b4261",
 

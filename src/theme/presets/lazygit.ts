@@ -33,6 +33,8 @@ export const lazygitTheme: Theme = {
 		titleTextFocused: "#0a0a0a",
 		titleTextMuted: "#2a5a20",
 
+		statusBarKey: "#7FD962",
+
 		scrollbarTrack: "#303030",
 		scrollbarThumb: "#606060",
 

@@ -35,6 +35,8 @@ export interface ThemeColors {
 	titleTextFocused: string
 	titleTextMuted: string
 
+	statusBarKey: string
+
 	scrollbarTrack: string
 	scrollbarThumb: string
 
