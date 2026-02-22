@@ -1,10 +1,19 @@
 import {
+	type InputRenderable,
 	RGBA,
 	type ScrollBoxRenderable,
-	type TextareaRenderable,
 } from "@opentui/core"
 import { useKeyboard } from "@opentui/solid"
-import { BorderBox } from "../BorderBox"
+
+const HELP_COLUMN_WIDTH = 32
+const HELP_SCROLLBAR_GUTTER = 2
+
+export function helpContentWidth(columns: number) {
+	const colGap = columns === 3 ? 4 : 2
+	return (
+		columns * HELP_COLUMN_WIDTH + (columns - 1) * colGap + HELP_SCROLLBAR_GUTTER
+	)
+}
 
 const SINGLE_LINE_KEYBINDINGS = [
 	{ name: "return", action: "submit" as const },
@@ -117,7 +126,7 @@ export function HelpModal() {
 	const [filter, setFilter] = createSignal("")
 	const [selectedIndex, setSelectedIndex] = createSignal(-1)
 	const [scrollTop, setScrollTop] = createSignal(0)
-	let searchInputRef: TextareaRenderable | undefined
+	let searchInputRef: InputRenderable | undefined
 	let scrollRef: ScrollBoxRenderable | undefined
 
 	const columnCount = () => layout.helpModalColumns()
@@ -382,35 +391,13 @@ export function HelpModal() {
 
 	const isMatched = (cmd: CommandOption) => matchedIds().has(cmd.id)
 	const isSelected = (cmd: CommandOption) => selectedCommand()?.id === cmd.id
-
-	const columnWidth = 32
-	const modalPadding = 4
-	const contentPaddingRight = 4
 	const columnGap = () => (columnCount() === 3 ? 4 : 2)
-	const totalColumnsWidth = () => columnCount() * columnWidth
-	const totalGapsWidth = () => (columnCount() - 1) * columnGap()
-	const modalWidth = () =>
-		totalColumnsWidth() +
-		totalGapsWidth() +
-		2 * modalPadding +
-		contentPaddingRight
+	const modalWidth = () => helpContentWidth(columnCount())
 
 	return (
-		<BorderBox
-			border
-			borderStyle={style().panel.borderStyle}
-			borderColor={colors().borderFocused}
-			backgroundColor={colors().background}
-			paddingLeft={modalPadding}
-			paddingRight={modalPadding}
-			paddingTop={2}
-			paddingBottom={2}
-			width={modalWidth()}
-			height="80%"
-			topLeft={<text fg={colors().borderFocused}>[esc / ?]─Commands</text>}
-		>
-			<box flexDirection="row" marginBottom={2}>
-				<textarea
+		<box flexDirection="column" width={modalWidth()} height="80%">
+			<box height={1} flexShrink={0} overflow="hidden">
+				<input
 					ref={(r) => {
 						searchInputRef = r
 						setTimeout(() => {
@@ -423,16 +410,16 @@ export function HelpModal() {
 					}}
 					onSubmit={() => executeSelected()}
 					keyBindings={SINGLE_LINE_KEYBINDINGS}
-					wrapMode="none"
-					scrollMargin={0}
 					placeholder="Search"
-					flexGrow={1}
+					placeholderColor={colors().textMuted}
 					cursorColor={colors().primary}
 					textColor={colors().textMuted}
 					focusedTextColor={colors().text}
 					focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
+					width="100%"
 				/>
 			</box>
+			<box height={1} flexShrink={0} />
 
 			<scrollbox
 				ref={scrollRef}
@@ -440,7 +427,11 @@ export function HelpModal() {
 				scrollX={false}
 				horizontalScrollbarOptions={{ visible: false }}
 			>
-				<box flexDirection="row" gap={columnGap()} paddingRight={4}>
+				<box
+					flexDirection="row"
+					gap={columnGap()}
+					paddingRight={HELP_SCROLLBAR_GUTTER}
+				>
 					<For each={filteredColumns()}>
 						{(column) => (
 							<box flexDirection="column" width={32}>
@@ -476,9 +467,7 @@ export function HelpModal() {
 																	fg={
 																		isSelected(cmd)
 																			? colors().selectionText
-																			: isNavigatable(cmd)
-																				? colors().info
-																				: colors().textMuted
+																			: colors().textMuted
 																	}
 																	wrapMode="none"
 																>
@@ -497,6 +486,6 @@ export function HelpModal() {
 					</For>
 				</box>
 			</scrollbox>
-		</BorderBox>
+		</box>
 	)
 }

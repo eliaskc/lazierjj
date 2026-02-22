@@ -3,7 +3,6 @@ import { useCommand } from "../context/command"
 import { useFocus } from "../context/focus"
 import { useTheme } from "../context/theme"
 import type { Context, Panel as PanelType } from "../context/types"
-import { BorderBox } from "./BorderBox"
 
 interface Tab {
 	id: string
@@ -27,7 +26,7 @@ interface PanelProps {
 }
 
 export function Panel(props: PanelProps) {
-	const { colors, style } = useTheme()
+	const { colors } = useTheme()
 	const command = useCommand()
 	const focus = useFocus()
 
@@ -69,59 +68,66 @@ export function Panel(props: PanelProps) {
 		]
 	})
 
+	const resolveCorner = (content: CornerContent | undefined) =>
+		typeof content === "function" ? content() : content
+
 	const renderTitle = () => {
+		const titleBg = () => (props.focused ? colors().titleBarFocused : undefined)
+		const titleColor = () =>
+			props.focused ? colors().titleTextFocused : colors().textMuted
+
 		if (hasTabs()) {
 			return (
-				<text>
-					<Show
-						when={props.focused}
-						fallback={
-							<span style={{ fg: colors().border }}>[{props.hotkey}]</span>
-						}
-					>
-						<span style={{ fg: colors().borderFocused }}>[{props.hotkey}]</span>
-					</Show>
-					<span style={{ fg: colors().border }}>─</span>
-					<For each={props.tabs}>
-						{(tab, i) => (
-							<>
-								<Show when={i() > 0}>
-									<span style={{ fg: colors().border }}> </span>
-								</Show>
-								<span
-									style={{
-										fg:
-											tab.id === props.activeTab
-												? props.focused
-													? colors().borderFocused
-													: colors().border
-												: colors().border,
-									}}
-								>
-									{tab.label}
-								</span>
-							</>
-						)}
-					</For>
-				</text>
+				<box
+					flexDirection="row"
+					height={1}
+					flexShrink={0}
+					backgroundColor={titleBg()}
+				>
+					<text>
+						<span style={{ fg: titleColor() }}>{props.hotkey} </span>
+						<For each={props.tabs}>
+							{(tab, i) => (
+								<>
+									<Show when={i() > 0}>
+										<span style={{ fg: colors().textMuted }}> </span>
+									</Show>
+									<span
+										style={{
+											fg:
+												tab.id === props.activeTab
+													? titleColor()
+													: props.focused
+														? colors().titleTextMuted
+														: colors().textMuted,
+											bold: tab.id === props.activeTab,
+										}}
+									>
+										{tab.label}
+									</span>
+								</>
+							)}
+						</For>
+					</text>
+					<box flexGrow={1} />
+					<Show when={props.topRight}>{resolveCorner(props.topRight)}</Show>
+				</box>
 			)
 		}
 
 		return (
-			<text>
-				<Show
-					when={props.focused}
-					fallback={
-						<span style={{ fg: colors().border }}>
-							[{props.hotkey}]─{props.title}
-						</span>
-					}
-				>
-					<span style={{ fg: colors().borderFocused }}>
-						[{props.hotkey}]─{props.title}
-					</span>
-				</Show>
-			</text>
+			<box
+				flexDirection="row"
+				height={1}
+				flexShrink={0}
+				backgroundColor={titleBg()}
+			>
+				<text fg={titleColor()}>
+					{props.hotkey} {props.title}
+				</text>
+				<box flexGrow={1} />
+				<Show when={props.topRight}>{resolveCorner(props.topRight)}</Show>
+			</box>
 		)
 	}
 
@@ -132,19 +138,16 @@ export function Panel(props: PanelProps) {
 	}
 
 	return (
-		<BorderBox
-			topLeft={renderTitle}
-			topRight={props.topRight}
-			border
-			borderStyle={style().panel.borderStyle}
-			borderColor={props.focused ? colors().borderFocused : colors().border}
+		<box
 			flexGrow={1}
+			flexDirection="column"
 			height="100%"
 			overflow={props.overflow ?? "hidden"}
 			gap={0}
 			onMouseDown={handleMouseDown}
 		>
+			{renderTitle()}
 			{props.children}
-		</BorderBox>
+		</box>
 	)
 }

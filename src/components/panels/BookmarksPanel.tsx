@@ -31,7 +31,7 @@ import {
 import { getRevisionId } from "../../commander/types"
 import { useCommand } from "../../context/command"
 import { useCommandLog } from "../../context/commandlog"
-import { useDialog } from "../../context/dialog"
+import { DIALOG_SIZE, useDialog } from "../../context/dialog"
 import { useDimmer } from "../../context/dimmer"
 import { useFocus } from "../../context/focus"
 import { useKeybind } from "../../context/keybind"
@@ -126,7 +126,14 @@ export function BookmarksPanel() {
 
 		if (needsPush) {
 			const confirmed = await dialog.confirm({
-				message: `Bookmark "${bookmark.name}" isn't pushed. Push before opening PR?`,
+				...DIALOG_SIZE.confirmWide,
+				message: [
+					"Bookmark ",
+					{ text: bookmark.name, style: "target" },
+					" isn't pushed. ",
+					{ text: "Push", style: "action" },
+					" before opening PR?",
+				],
 			})
 			if (!confirmed) return
 			const pushResult = await globalLoading.run("Pushing...", () =>
@@ -614,7 +621,13 @@ export function BookmarksPanel() {
 				const result = await jjEdit(bookmark.name)
 				if (isImmutableError(result)) {
 					const confirmed = await dialog.confirm({
-						message: "Commit is immutable. Edit anyway?",
+						...DIALOG_SIZE.confirm,
+						message: [
+							{ text: bookmark.name, style: "target" },
+							" is immutable. ",
+							{ text: "Edit", style: "action" },
+							" anyway?",
+						],
 					})
 					if (confirmed) {
 						await runOperation("Editing...", () =>
@@ -665,7 +678,6 @@ export function BookmarksPanel() {
 				dialog.open(
 					() => (
 						<BookmarkNameModal
-							title="Create Bookmark"
 							commits={commits()}
 							defaultRevision={
 								workingCopy ? getRevisionId(workingCopy) : undefined
@@ -679,6 +691,8 @@ export function BookmarksPanel() {
 					),
 					{
 						id: "bookmark-create",
+						title: "Create Bookmark",
+						...DIALOG_SIZE.form,
 						hints: [
 							{ key: "tab", label: "switch field" },
 							{ key: "enter", label: "save" },
@@ -701,7 +715,13 @@ export function BookmarksPanel() {
 				const currentIndex = selectedBookmarkIndex()
 				const totalBookmarks = localBookmarks().length
 				const confirmed = await dialog.confirm({
-					message: `Delete bookmark "${bookmark.name}"?`,
+					...DIALOG_SIZE.confirm,
+					message: [
+						{ text: "Delete", style: "action" },
+						" bookmark ",
+						{ text: bookmark.name, style: "target" },
+						"?",
+					],
 				})
 				if (confirmed) {
 					await runOperation("Deleting bookmark...", () =>
@@ -728,7 +748,6 @@ export function BookmarksPanel() {
 				dialog.open(
 					() => (
 						<BookmarkNameModal
-							title="Rename Bookmark"
 							initialValue={bookmark.name}
 							onSave={(newName) => {
 								runOperation("Renaming bookmark...", () =>
@@ -739,6 +758,12 @@ export function BookmarksPanel() {
 					),
 					{
 						id: "bookmark-rename",
+						title: [
+							{ text: "Rename", style: "action" },
+							" ",
+							{ text: bookmark.name, style: "target" },
+						],
+						...DIALOG_SIZE.form,
 						hints: [{ key: "enter", label: "save" }],
 					},
 				)
@@ -757,7 +782,14 @@ export function BookmarksPanel() {
 				const bookmark = selectedBookmark()
 				if (!bookmark) return
 				const confirmed = await dialog.confirm({
-					message: `Forget bookmark "${bookmark.name}"? (local only)`,
+					...DIALOG_SIZE.confirm,
+					message: [
+						{ text: "Forget", style: "action" },
+						" bookmark ",
+						{ text: bookmark.name, style: "target" },
+						"? ",
+						{ text: "(local only)", style: "muted" },
+					],
 				})
 				if (confirmed) {
 					await runOperation("Forgetting bookmark...", () =>
@@ -781,7 +813,6 @@ export function BookmarksPanel() {
 				dialog.open(
 					() => (
 						<RevisionPickerModal
-							title={`Move "${bookmark.name}" to`}
 							commits={commits()}
 							defaultRevision={bookmark.changeId}
 							onSelect={(revision) => {
@@ -793,6 +824,13 @@ export function BookmarksPanel() {
 					),
 					{
 						id: "bookmark-move",
+						title: [
+							{ text: "Move", style: "action" },
+							" ",
+							{ text: bookmark.name, style: "target" },
+							" to",
+						],
+						...DIALOG_SIZE.form,
 						hints: [{ key: "enter", label: "confirm" }],
 					},
 				)

@@ -43,7 +43,7 @@ import { profileLog } from "../../utils/profiler"
 
 const UNIFIED_RIGHT_PADDING = 0
 const SPLIT_RIGHT_PADDING = 0
-const SCROLLBAR_GUTTER = 0
+const SCROLLBAR_GUTTER = 1
 const HORIZONTAL_SCROLL_STEP = 5
 
 let sessionViewStyleOverride: DiffViewStyle | null = null
@@ -380,7 +380,7 @@ export function MainArea() {
 	})
 
 	const renderRepoInfo = () => (
-		<text fg={isFocused() ? colors().borderFocused : colors().border}>
+		<text fg={isFocused() ? colors().borderFocused : colors().textMuted}>
 			{repoInfo().repoName}
 		</text>
 	)
@@ -941,69 +941,71 @@ export function MainArea() {
 					horizontalScrollbarOptions={{ visible: false }}
 					onMouseScroll={handleHorizontalScroll}
 				>
-					<box ref={headerRef} flexDirection="column" flexShrink={0}>
-						<Show when={activeCommit()}>
-							{(commit: () => Commit) => (
-								<Show
-									when={viewMode() !== "files"}
-									fallback={
-										<MinimalCommitHeader
+					<box flexDirection="column" paddingRight={1}>
+						<box ref={headerRef} flexDirection="column" flexShrink={0}>
+							<Show when={activeCommit()}>
+								{(commit: () => Commit) => (
+									<Show
+										when={viewMode() !== "files"}
+										fallback={
+											<MinimalCommitHeader
+												commit={commit()}
+												details={commitDetails()}
+											/>
+										}
+									>
+										<CommitHeader
 											commit={commit()}
 											details={commitDetails()}
+											stats={diffStats()}
+											maxWidth={Math.max(1, viewportWidth())}
 										/>
-									}
-								>
-									<CommitHeader
-										commit={commit()}
-										details={commitDetails()}
-										stats={diffStats()}
-										maxWidth={Math.max(1, viewportWidth())}
-									/>
-								</Show>
-							)}
+									</Show>
+								)}
+							</Show>
+						</box>
+						<Show when={parsedDiffError()}>
+							<text fg={colors().error}>Error: {parsedDiffError()}</text>
+						</Show>
+						<Show when={!parsedDiffError()}>
+							<Show when={useJjFormatter()}>
+								<AnsiText
+									content={rawDiffOutput()}
+									wrapMode="none"
+									cropStart={scrollLeft()}
+									cropWidth={Math.max(1, viewportWidth())}
+								/>
+							</Show>
+							<Show when={!useJjFormatter() && parsedFiles().length > 0}>
+								<box flexDirection="column">
+									<Show when={viewStyle() === "unified"}>
+										<VirtualizedUnifiedView
+											files={parsedFiles()}
+											activeFileId={null}
+											currentHunkId={activeHunkId()}
+											scrollTop={adjustedScrollTop()}
+											viewportHeight={viewportHeight()}
+											viewportWidth={viewportWidth()}
+											wrapEnabled={wrapEnabled()}
+											scrollLeft={scrollLeft()}
+										/>
+									</Show>
+									<Show when={viewStyle() === "split"}>
+										<VirtualizedSplitView
+											files={parsedFiles()}
+											activeFileId={null}
+											currentHunkId={activeHunkId()}
+											scrollTop={adjustedScrollTop()}
+											viewportHeight={viewportHeight()}
+											viewportWidth={viewportWidth()}
+											wrapEnabled={wrapEnabled()}
+											scrollLeft={scrollLeft()}
+										/>
+									</Show>
+								</box>
+							</Show>
 						</Show>
 					</box>
-					<Show when={parsedDiffError()}>
-						<text fg={colors().error}>Error: {parsedDiffError()}</text>
-					</Show>
-					<Show when={!parsedDiffError()}>
-						<Show when={useJjFormatter()}>
-							<AnsiText
-								content={rawDiffOutput()}
-								wrapMode="none"
-								cropStart={scrollLeft()}
-								cropWidth={Math.max(1, viewportWidth())}
-							/>
-						</Show>
-						<Show when={!useJjFormatter() && parsedFiles().length > 0}>
-							<box flexDirection="column">
-								<Show when={viewStyle() === "unified"}>
-									<VirtualizedUnifiedView
-										files={parsedFiles()}
-										activeFileId={null}
-										currentHunkId={activeHunkId()}
-										scrollTop={adjustedScrollTop()}
-										viewportHeight={viewportHeight()}
-										viewportWidth={viewportWidth()}
-										wrapEnabled={wrapEnabled()}
-										scrollLeft={scrollLeft()}
-									/>
-								</Show>
-								<Show when={viewStyle() === "split"}>
-									<VirtualizedSplitView
-										files={parsedFiles()}
-										activeFileId={null}
-										currentHunkId={activeHunkId()}
-										scrollTop={adjustedScrollTop()}
-										viewportHeight={viewportHeight()}
-										viewportWidth={viewportWidth()}
-										wrapEnabled={wrapEnabled()}
-										scrollLeft={scrollLeft()}
-									/>
-								</Show>
-							</box>
-						</Show>
-					</Show>
 				</scrollbox>
 			</Show>
 		</Panel>

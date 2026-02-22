@@ -8,15 +8,14 @@ export const opencodeTheme: Theme = {
 		background: "#0a0a0a",
 		backgroundSecondary: "#141414",
 		backgroundElement: "#1e1e1e",
-
 		text: "#eeeeee",
 		textMuted: "#808080",
 
 		border: "#808080",
 		borderFocused: "#eeeeee",
 
-		selectionBackground: "#1e1e1e",
-		selectionText: "#fab283",
+		selectionBackground: "#0A1D4D",
+		selectionText: "#ffffff",
 
 		success: "#12c905",
 		warning: "#fcd53a",
@@ -26,6 +25,12 @@ export const opencodeTheme: Theme = {
 		purple: "#9d7cd8",
 		orange: "#f5a742",
 		green: "#7fd88f",
+
+		titleBarFocused: "#fab283",
+		titleTextFocused: "#0a0a0a",
+		titleTextMuted: "#6b4a30",
+
+		statusBarKey: "#eeeeee",
 
 		scrollbarTrack: "#1e1e1e",
 		scrollbarThumb: "#484848",

@@ -50,7 +50,7 @@ import {
 import { type Commit, getRevisionId } from "../../commander/types"
 import { useCommand } from "../../context/command"
 import { useCommandLog } from "../../context/commandlog"
-import { useDialog } from "../../context/dialog"
+import { DIALOG_SIZE, useDialog } from "../../context/dialog"
 import { useDimmer } from "../../context/dimmer"
 import { useFocus } from "../../context/focus"
 import { useKeybind } from "../../context/keybind"
@@ -438,7 +438,6 @@ export function LogPanel() {
 		dialog.open(
 			() => (
 				<BookmarkNameModal
-					title="Create bookmark to open PR"
 					initialValue={`push-${commit.changeId.slice(0, 8)}`}
 					onSave={(name) => {
 						void createBookmarkPushAndOpen(commit, name)
@@ -447,6 +446,8 @@ export function LogPanel() {
 			),
 			{
 				id: "open-pr-create-bookmark",
+				title: "Create bookmark to open PR",
+				...DIALOG_SIZE.form,
 				hints: [{ key: "enter", label: "continue" }],
 			},
 		)
@@ -490,7 +491,14 @@ export function LogPanel() {
 		if (needsPush) {
 			if (options?.confirmPush !== false) {
 				const confirmed = await dialog.confirm({
-					message: `Bookmark "${bookmark.name}" isn't pushed. Push before opening PR?`,
+					...DIALOG_SIZE.confirmWide,
+					message: [
+						"Bookmark ",
+						{ text: bookmark.name, style: "target" },
+						" isn't pushed. ",
+						{ text: "Push", style: "action" },
+						" before opening PR?",
+					],
 				})
 				if (!confirmed) return
 			}
@@ -967,7 +975,11 @@ export function LogPanel() {
 					),
 					{
 						id: "new-menu",
-						title: `New at ${commit.changeId.slice(0, 8)}`,
+						title: [
+							{ text: "New", style: "action" },
+							" at ",
+							{ text: commit.changeId.slice(0, 8), style: "target" },
+						],
 						hints: [
 							{ key: "a", label: "after" },
 							{ key: "b", label: "before" },
@@ -1033,7 +1045,13 @@ export function LogPanel() {
 				const result = await jjEdit(revId)
 				if (isImmutableError(result)) {
 					const confirmed = await dialog.confirm({
-						message: "Commit is immutable. Edit anyway?",
+						...DIALOG_SIZE.confirm,
+						message: [
+							{ text: commit.changeId.slice(0, 8), style: "target" },
+							" is immutable. ",
+							{ text: "Edit", style: "action" },
+							" anyway?",
+						],
 					})
 					if (confirmed) {
 						await runOperation("Editing...", () =>
@@ -1085,7 +1103,13 @@ export function LogPanel() {
 									let ignoreImmutable = false
 									if (commit.immutable) {
 										const confirmed = await dialog.confirm({
-											message: "Commit is immutable. Squash anyway?",
+											...DIALOG_SIZE.confirm,
+											message: [
+												{ text: commit.changeId.slice(0, 8), style: "target" },
+												" is immutable. ",
+												{ text: "Squash", style: "action" },
+												" anyway?",
+											],
 										})
 										if (!confirmed) return
 										ignoreImmutable = true
@@ -1114,7 +1138,14 @@ export function LogPanel() {
 									})
 									if (isImmutableError(result)) {
 										const confirmed = await dialog.confirm({
-											message: "Target is immutable. Squash anyway?",
+											...DIALOG_SIZE.confirm,
+											message: [
+												"Target ",
+												{ text: target.slice(0, 8), style: "target" },
+												" is immutable. ",
+												{ text: "Squash", style: "action" },
+												" anyway?",
+											],
 										})
 										if (confirmed) {
 											await runOperation("Squashing...", () =>
@@ -1139,6 +1170,13 @@ export function LogPanel() {
 					),
 					{
 						id: "squash",
+						title: [
+							{ text: "Squash", style: "action" },
+							" ",
+							{ text: commit.changeId.slice(0, 8), style: "target" },
+							" into",
+						],
+						...DIALOG_SIZE.picker,
 						hints: [
 							{ key: "u", label: "use dest msg" },
 							{ key: "K", label: "keep emptied" },
@@ -1174,7 +1212,14 @@ export function LogPanel() {
 								})
 								if (isImmutableError(result)) {
 									const confirmed = await dialog.confirm({
-										message: "Target is immutable. Rebase anyway?",
+										...DIALOG_SIZE.confirm,
+										message: [
+											"Target ",
+											{ text: destination.slice(0, 8), style: "target" },
+											" is immutable. ",
+											{ text: "Rebase", style: "action" },
+											" anyway?",
+										],
 									})
 									if (confirmed) {
 										await runOperation("Rebasing...", () =>
@@ -1198,6 +1243,13 @@ export function LogPanel() {
 					),
 					{
 						id: "rebase",
+						title: [
+							{ text: "Rebase", style: "action" },
+							" ",
+							{ text: commit.changeId.slice(0, 8), style: "target" },
+							" onto",
+						],
+						...DIALOG_SIZE.picker,
 						hints: [
 							{ key: "s", label: "descendants" },
 							{ key: "b", label: "branch" },
@@ -1224,7 +1276,12 @@ export function LogPanel() {
 
 				if (commit.empty) {
 					await dialog.confirm({
-						message: "Cannot split an empty commit.",
+						...DIALOG_SIZE.confirm,
+						message: [
+							"Cannot ",
+							{ text: "split", style: "action" },
+							" an empty commit.",
+						],
 					})
 					return
 				}
@@ -1233,7 +1290,13 @@ export function LogPanel() {
 				let ignoreImmutable = false
 				if (commit.immutable) {
 					const confirmed = await dialog.confirm({
-						message: "Commit is immutable. Split anyway?",
+						...DIALOG_SIZE.confirm,
+						message: [
+							{ text: commit.changeId.slice(0, 8), style: "target" },
+							" is immutable. ",
+							{ text: "Split", style: "action" },
+							" anyway?",
+						],
 					})
 					if (!confirmed) return
 					ignoreImmutable = true
@@ -1263,7 +1326,13 @@ export function LogPanel() {
 				let ignoreImmutable = false
 				if (commit.immutable) {
 					const confirmed = await dialog.confirm({
-						message: "Commit is immutable. Describe anyway?",
+						...DIALOG_SIZE.confirm,
+						message: [
+							{ text: commit.changeId.slice(0, 8), style: "target" },
+							" is immutable. ",
+							{ text: "Describe", style: "action" },
+							" anyway?",
+						],
 					})
 					if (!confirmed) return
 					ignoreImmutable = true
@@ -1286,6 +1355,12 @@ export function LogPanel() {
 					),
 					{
 						id: "describe",
+						title: [
+							{ text: "Describe", style: "action" },
+							" ",
+							{ text: commit.changeId.slice(0, 8), style: "target" },
+						],
+						...DIALOG_SIZE.describe,
 						hints: [
 							{ key: "tab", label: "switch field" },
 							{ key: "enter", label: "save" },
@@ -1327,14 +1402,26 @@ export function LogPanel() {
 				const commit = selectedCommit()
 				if (!commit) return
 				const confirmed = await dialog.confirm({
-					message: `Abandon change ${commit.changeId.slice(0, 8)}?`,
+					...DIALOG_SIZE.confirm,
+					message: [
+						{ text: "Abandon", style: "action" },
+						" change ",
+						{ text: commit.changeId.slice(0, 8), style: "target" },
+						"?",
+					],
 				})
 				if (!confirmed) return
 				const revId = getRevisionId(commit)
 				const result = await jjAbandon(revId)
 				if (isImmutableError(result)) {
 					const immutableConfirmed = await dialog.confirm({
-						message: "Commit is immutable. Abandon anyway?",
+						...DIALOG_SIZE.confirm,
+						message: [
+							{ text: commit.changeId.slice(0, 8), style: "target" },
+							" is immutable. ",
+							{ text: "Abandon", style: "action" },
+							" anyway?",
+						],
 					})
 					if (immutableConfirmed) {
 						await runOperation("Abandoning...", () =>
@@ -1392,7 +1479,6 @@ export function LogPanel() {
 				dialog.open(
 					() => (
 						<SetBookmarkModal
-							title={`Set bookmark on ${commit.changeId.slice(0, 8)}`}
 							bookmarks={moveTargetBookmarks}
 							currentRevisionBookmarks={currentRevisionBookmarks}
 							changeId={commit.changeId}
@@ -1410,6 +1496,12 @@ export function LogPanel() {
 					),
 					{
 						id: "set-bookmark",
+						title: [
+							{ text: "Set bookmark", style: "action" },
+							" on ",
+							{ text: commit.changeId.slice(0, 8), style: "target" },
+						],
+						...DIALOG_SIZE.form,
 						hints: [
 							{ key: "up/down", label: "navigate" },
 							{ key: "enter", label: "confirm" },
@@ -1464,6 +1556,8 @@ export function LogPanel() {
 					),
 					{
 						id: "restore-modal",
+						title: "Restore to this operation?",
+						...DIALOG_SIZE.form,
 						hints: [
 							{ key: "y", label: "confirm" },
 							{ key: "n", label: "cancel" },
@@ -1537,7 +1631,14 @@ export function LogPanel() {
 				const node = file.node
 				const pathType = node.isDirectory ? "folder" : "file"
 				const confirmed = await dialog.confirm({
-					message: `Restore ${pathType} "${node.path}"? This will discard changes.`,
+					...DIALOG_SIZE.confirmExtraWide,
+					message: [
+						{ text: "Restore", style: "action" },
+						` ${pathType} `,
+						{ text: node.path, style: "target" },
+						"? ",
+						{ text: "This will discard changes.", style: "muted" },
+					],
 				})
 				if (confirmed) {
 					await runOperation("Restoring...", () => jjRestore([node.path]))

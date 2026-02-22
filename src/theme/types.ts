@@ -28,6 +28,12 @@ export interface ThemeColors {
 	orange: string
 	green: string
 
+	titleBarFocused: string
+	titleTextFocused: string
+	titleTextMuted: string
+
+	statusBarKey: string
+
 	scrollbarTrack: string
 	scrollbarThumb: string
 

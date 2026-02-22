@@ -1,16 +1,17 @@
 import { useRenderer } from "@opentui/solid"
-import { type Accessor, createSignal, onMount } from "solid-js"
+import { type Accessor, createEffect, createSignal } from "solid-js"
+import { readConfig } from "../config"
 import { lazygitTheme } from "../theme/presets/lazygit"
 import { opencodeTheme } from "../theme/presets/opencode"
 import type { Theme, ThemeColors, ThemeStyle } from "../theme/types"
 import { createSimpleContext } from "./helper"
 
-const ACTIVE_THEME: "lazygit" | "opencode" = "lazygit"
-
 const themes = {
 	lazygit: lazygitTheme,
 	opencode: opencodeTheme,
 }
+
+type ThemeName = keyof typeof themes
 
 function parseHexColor(
 	hex: string,
@@ -39,22 +40,26 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
 	name: "Theme",
 	init: () => {
 		const renderer = useRenderer()
-		const [theme, setTheme] = createSignal<Theme>(themes[ACTIVE_THEME])
+		const [theme, setTheme] = createSignal<Theme>(themes[readConfig().ui.theme])
 		const [terminalBg, setTerminalBg] = createSignal<string | null>(null)
 		const [isDark, setIsDark] = createSignal(true)
 
-		onMount(async () => {
-			try {
-				const palette = await renderer.getPalette({ timeout: 1000 })
-				if (palette.defaultBackground) {
-					setTerminalBg(palette.defaultBackground)
-					const rgb = parseHexColor(palette.defaultBackground)
-					if (rgb) {
-						const luminance = calculateLuminance(rgb.r, rgb.g, rgb.b)
-						setIsDark(luminance <= 0.5)
+		createEffect(() => {
+			if (!theme().style.adaptToTerminal || terminalBg()) return
+
+			void (async () => {
+				try {
+					const palette = await renderer.getPalette({ timeout: 1000 })
+					if (palette.defaultBackground) {
+						setTerminalBg(palette.defaultBackground)
+						const rgb = parseHexColor(palette.defaultBackground)
+						if (rgb) {
+							const luminance = calculateLuminance(rgb.r, rgb.g, rgb.b)
+							setIsDark(luminance <= 0.5)
+						}
 					}
-				}
-			} catch {}
+				} catch {}
+			})()
 		})
 
 		const colors: Accessor<ThemeColors> = () => {
@@ -76,7 +81,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
 
 		const style: Accessor<ThemeStyle> = () => theme().style
 
-		const setThemeByName = (name: "lazygit" | "opencode") => {
+		const setThemeByName = (name: ThemeName) => {
 			setTheme(themes[name])
 		}
 

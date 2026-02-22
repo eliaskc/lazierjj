@@ -97,13 +97,7 @@ export function StatusBar() {
 	const commandGap = separator() ? ` ${separator()} ` : "   "
 
 	return (
-		<box
-			height={1}
-			flexShrink={0}
-			paddingLeft={1}
-			paddingRight={1}
-			flexDirection="row"
-		>
+		<box height={1} flexShrink={0} flexDirection="row">
 			<Show when={loading.isLoading()}>
 				<text>
 					<span style={{ fg: colors().warning }}>
@@ -147,7 +141,7 @@ export function StatusBar() {
 						<For each={contextCommands()}>
 							{(cmd, index) => (
 								<>
-									<span style={{ fg: colors().primary }}>
+									<span style={{ fg: colors().statusBarKey }}>
 										{cmd.keybind ? keybind.print(cmd.keybind) : ""}
 									</span>{" "}
 									<span style={{ fg: colors().textMuted }}>{cmd.title}</span>
@@ -180,7 +174,7 @@ export function StatusBar() {
 												{commandGap}
 											</span>
 										</Show>
-										<span style={{ fg: colors().primary }}>
+										<span style={{ fg: colors().statusBarKey }}>
 											{cmd.keybind ? keybind.print(cmd.keybind) : ""}
 										</span>{" "}
 										<span style={{ fg: colors().textMuted }}>{cmd.title}</span>

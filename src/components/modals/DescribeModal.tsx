@@ -7,7 +7,6 @@ import { useKeyboard } from "@opentui/solid"
 import { createSignal, onMount } from "solid-js"
 import { useDialog } from "../../context/dialog"
 import { useTheme } from "../../context/theme"
-import { BorderBox } from "../BorderBox"
 
 interface DescribeModalProps {
 	initialSubject: string
@@ -17,7 +16,7 @@ interface DescribeModalProps {
 
 export function DescribeModal(props: DescribeModalProps) {
 	const dialog = useDialog()
-	const { colors, style } = useTheme()
+	const { colors } = useTheme()
 
 	const [subject, setSubject] = createSignal(props.initialSubject)
 	const [body, setBody] = createSignal(props.initialBody)
@@ -64,32 +63,15 @@ export function DescribeModal(props: DescribeModalProps) {
 
 	const charCount = () => subject().length
 
-	const subjectTitleColor = () =>
-		focusedField() === "subject" ? colors().borderFocused : colors().border
-	const bodyTitleColor = () =>
-		focusedField() === "body" ? colors().borderFocused : colors().border
-
 	return (
-		<box flexDirection="column" width="60%" maxWidth={90} gap={0}>
-			<BorderBox
-				border
-				borderStyle={style().panel.borderStyle}
-				borderColor={
-					focusedField() === "subject"
-						? colors().borderFocused
-						: colors().border
-				}
-				backgroundColor={colors().background}
-				height={3}
-				topLeft={
-					<text fg={subjectTitleColor()}>{`Subject─[${charCount()}]`}</text>
-				}
-			>
+		<box flexDirection="column" gap={1}>
+			<box flexDirection="row" width="100%">
 				<input
 					ref={(r) => {
 						subjectRef = r
 					}}
 					value={props.initialSubject}
+					placeholder="Subject"
 					onContentChange={() => {
 						if (subjectRef) setSubject(subjectRef.plainText)
 					}}
@@ -98,35 +80,30 @@ export function DescribeModal(props: DescribeModalProps) {
 					textColor={colors().text}
 					focusedTextColor={colors().text}
 					focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
-					width="100%"
-				/>
-			</BorderBox>
-
-			<BorderBox
-				border
-				borderStyle={style().panel.borderStyle}
-				borderColor={
-					focusedField() === "body" ? colors().borderFocused : colors().border
-				}
-				backgroundColor={colors().background}
-				height={10}
-				topLeft={<text fg={bodyTitleColor()}>Body</text>}
-			>
-				<textarea
-					ref={(r) => {
-						bodyRef = r
-					}}
-					initialValue={props.initialBody}
-					onContentChange={() => {
-						if (bodyRef) setBody(bodyRef.plainText)
-					}}
-					cursorColor={colors().primary}
-					textColor={colors().text}
-					focusedTextColor={colors().text}
-					focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
 					flexGrow={1}
+					flexShrink={1}
 				/>
-			</BorderBox>
+				<box width={5} flexShrink={0} paddingLeft={1}>
+					<text fg={colors().textMuted}>{charCount()}</text>
+				</box>
+			</box>
+
+			<textarea
+				ref={(r) => {
+					bodyRef = r
+				}}
+				initialValue={props.initialBody}
+				placeholder="Body"
+				onContentChange={() => {
+					if (bodyRef) setBody(bodyRef.plainText)
+				}}
+				cursorColor={colors().primary}
+				textColor={colors().text}
+				focusedTextColor={colors().text}
+				focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
+				flexGrow={1}
+				height={8}
+			/>
 		</box>
 	)
 }

@@ -18,7 +18,7 @@ import {
 import { ErrorScreen } from "./components/ErrorScreen"
 import { LayoutGrid } from "./components/Layout"
 import { WhatsNewScreen } from "./components/WhatsNewScreen"
-import { HelpModal } from "./components/modals/HelpModal"
+import { HelpModal, helpContentWidth } from "./components/modals/HelpModal"
 import { RecentReposModal } from "./components/modals/RecentReposModal"
 import { UndoModal } from "./components/modals/UndoModal"
 
@@ -31,7 +31,12 @@ import {
 } from "./config"
 import { CommandProvider, useCommand } from "./context/command"
 import { CommandLogProvider, useCommandLog } from "./context/commandlog"
-import { DialogContainer, DialogProvider, useDialog } from "./context/dialog"
+import {
+	DIALOG_SIZE,
+	DialogContainer,
+	DialogProvider,
+	useDialog,
+} from "./context/dialog"
 import { DimmerProvider } from "./context/dimmer"
 import { FocusProvider, type Panel, useFocus } from "./context/focus"
 import { KeybindProvider } from "./context/keybind"
@@ -70,7 +75,7 @@ function AppContent() {
 	const commandLog = useCommandLog()
 	const globalLoading = useLoading()
 	const layout = useLayout()
-	const { colors, style, setTheme } = useTheme()
+	const { setTheme } = useTheme()
 	const [whatsNewChanges, setWhatsNewChanges] = createSignal<
 		VersionBlock[] | null
 	>(null)
@@ -137,7 +142,6 @@ function AppContent() {
 	}
 
 	onMount(() => {
-		setTheme(readConfig().ui.theme)
 		const unsubscribeConfig = onConfigChange((config) => {
 			setTheme(config.ui.theme)
 		})
@@ -265,10 +269,15 @@ function AppContent() {
 			keybind: "help",
 			context: "global",
 			type: "action",
-			onSelect: () =>
+			onSelect: () => {
+				const dialogPadding = 4
 				dialog.toggle("help", () => <HelpModal />, {
+					title: "Commands",
+					width: () =>
+						helpContentWidth(layout.helpModalColumns()) + dialogPadding,
 					hints: [{ key: "enter", label: "execute" }],
-				}),
+				})
+			},
 		},
 		{
 			id: "global.switch_repository",
@@ -288,6 +297,8 @@ function AppContent() {
 						/>
 					),
 					{
+						title: "Recent repositories",
+						...DIALOG_SIZE.form,
 						hints: [
 							{ key: "j/k", label: "select" },
 							{ key: "1-9", label: "open" },
@@ -424,6 +435,8 @@ function AppContent() {
 					),
 					{
 						id: "undo-modal",
+						title: "Undo last operation?",
+						...DIALOG_SIZE.form,
 						hints: [
 							{ key: "y", label: "confirm" },
 							{ key: "n", label: "cancel" },
@@ -459,6 +472,8 @@ function AppContent() {
 					),
 					{
 						id: "redo-modal",
+						title: "Redo last operation?",
+						...DIALOG_SIZE.form,
 						hints: [
 							{ key: "y", label: "confirm" },
 							{ key: "n", label: "cancel" },

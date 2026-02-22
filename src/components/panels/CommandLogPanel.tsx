@@ -4,10 +4,10 @@ import { useCommand } from "../../context/command"
 import { useCommandLog } from "../../context/commandlog"
 import { useFocus } from "../../context/focus"
 import { useTheme } from "../../context/theme"
-import { BorderBox } from "../BorderBox"
+import { Panel } from "../Panel"
 
 export function CommandLogPanel() {
-	const { colors, style } = useTheme()
+	const { colors } = useTheme()
 	const commandLog = useCommandLog()
 	const focus = useFocus()
 	const command = useCommand()
@@ -16,10 +16,6 @@ export function CommandLogPanel() {
 	const [scrollTop, setScrollTop] = createSignal(0)
 
 	const isFocused = () => focus.isPanel("commandlog")
-
-	const handleMouseDown = () => {
-		focus.setPanel("commandlog")
-	}
 
 	command.register(() => [
 		{
@@ -67,52 +63,50 @@ export function CommandLogPanel() {
 		},
 	])
 
-	const renderTitle = () => (
-		<text>
-			<Show
-				when={isFocused()}
-				fallback={<span style={{ fg: colors().border }}>[4]─Command log</span>}
-			>
-				<span style={{ fg: colors().borderFocused }}>[4]─Command log</span>
-			</Show>
-		</text>
-	)
-
 	return (
-		<BorderBox
-			topLeft={renderTitle}
-			border
-			borderStyle={style().panel.borderStyle}
-			borderColor={isFocused() ? colors().borderFocused : colors().border}
-			height={isFocused() ? 15 : 6}
-			overflow="hidden"
-			onMouseDown={handleMouseDown}
-		>
-			<scrollbox
-				ref={scrollRef}
-				flexGrow={1}
+		<box height={isFocused() ? 15 : 6} overflow="hidden">
+			<Panel
+				title="Command log"
+				hotkey="4"
 				focused={isFocused()}
-				stickyScroll={!isFocused()}
-				stickyStart="bottom"
+				panelId="commandlog"
 			>
-				<Show
-					when={commandLog.entries().length > 0}
-					fallback={
-						<text fg={colors().textMuted}>No commands executed yet</text>
-					}
+				<scrollbox
+					ref={scrollRef}
+					flexGrow={1}
+					focused={isFocused()}
+					stickyScroll={!isFocused()}
+					stickyStart="bottom"
+					verticalScrollbarOptions={{
+						trackOptions: {
+							backgroundColor: colors().scrollbarTrack,
+							foregroundColor: colors().scrollbarThumb,
+						},
+					}}
 				>
-					<For each={commandLog.entries()}>
-						{(entry) => (
-							<box flexDirection="column">
-								<text fg={colors().textMuted}>$ {entry.command}</text>
-								<text fg={entry.success ? colors().success : colors().error}>
-									{entry.output}
-								</text>
-							</box>
-						)}
-					</For>
-				</Show>
-			</scrollbox>
-		</BorderBox>
+					<box flexDirection="column" paddingRight={1}>
+						<Show
+							when={commandLog.entries().length > 0}
+							fallback={
+								<text fg={colors().textMuted}>No commands executed yet</text>
+							}
+						>
+							<For each={commandLog.entries()}>
+								{(entry) => (
+									<box flexDirection="column">
+										<text fg={colors().textMuted}>$ {entry.command}</text>
+										<text
+											fg={entry.success ? colors().success : colors().error}
+										>
+											{entry.output}
+										</text>
+									</box>
+								)}
+							</For>
+						</Show>
+					</box>
+				</scrollbox>
+			</Panel>
+		</box>
 	)
 }

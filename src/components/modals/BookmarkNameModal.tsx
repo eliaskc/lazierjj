@@ -4,7 +4,6 @@ import { Show, createSignal, onMount } from "solid-js"
 import { type Commit, getRevisionId } from "../../commander/types"
 import { useDialog } from "../../context/dialog"
 import { useTheme } from "../../context/theme"
-import { BorderBox } from "../BorderBox"
 import { RevisionPicker } from "../RevisionPicker"
 
 const SINGLE_LINE_KEYBINDINGS = [
@@ -13,19 +12,17 @@ const SINGLE_LINE_KEYBINDINGS = [
 ]
 
 interface BookmarkNameModalProps {
-	title: string
 	commits?: Commit[]
 	defaultRevision?: string
 	initialValue?: string
 	placeholder?: string
-	width?: number | "auto" | `${number}%`
 	height?: number
 	onSave: (name: string, revision?: string) => void
 }
 
 export function BookmarkNameModal(props: BookmarkNameModalProps) {
 	const dialog = useDialog()
-	const { colors, style } = useTheme()
+	const { colors } = useTheme()
 
 	const hasRevisionPicker = () => (props.commits?.length ?? 0) > 0
 
@@ -108,90 +105,44 @@ export function BookmarkNameModal(props: BookmarkNameModalProps) {
 
 	const pickerHeight = () => props.height ?? 10
 
-	const nameTitleColor = () =>
-		focusedField() === "name" || !hasRevisionPicker()
-			? colors().borderFocused
-			: colors().border
-	const revisionTitleColor = () =>
-		focusedField() === "picker" ? colors().borderFocused : colors().border
-
 	return (
-		<box
-			flexDirection="column"
-			width={props.width ?? "60%"}
-			maxWidth={90}
-			gap={0}
-		>
-			<BorderBox
-				border
-				borderStyle={style().panel.borderStyle}
-				borderColor={
-					focusedField() === "name" || !hasRevisionPicker()
-						? colors().borderFocused
-						: colors().border
-				}
-				backgroundColor={colors().background}
-				height={3}
-				topLeft={<text fg={nameTitleColor()}>{props.title}</text>}
-			>
-				<textarea
-					ref={(r) => {
-						inputRef = r
-					}}
-					initialValue={props.initialValue ?? ""}
-					placeholder={generatedName()}
-					onContentChange={() => {
-						if (inputRef) {
-							setName(inputRef.plainText)
-							setError(null)
-						}
-					}}
-					onSubmit={handleSave}
-					keyBindings={SINGLE_LINE_KEYBINDINGS}
-					wrapMode="none"
-					scrollMargin={0}
-					cursorColor={colors().primary}
-					textColor={colors().text}
-					focusedTextColor={colors().text}
-					focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
-					flexGrow={1}
-				/>
-			</BorderBox>
+		<box flexDirection="column" gap={1}>
+			<textarea
+				ref={(r) => {
+					inputRef = r
+				}}
+				initialValue={props.initialValue ?? ""}
+				placeholder={generatedName() || "Name"}
+				placeholderColor={colors().textMuted}
+				onContentChange={() => {
+					if (inputRef) {
+						setName(inputRef.plainText)
+						setError(null)
+					}
+				}}
+				onSubmit={handleSave}
+				keyBindings={SINGLE_LINE_KEYBINDINGS}
+				wrapMode="none"
+				scrollMargin={0}
+				cursorColor={colors().primary}
+				textColor={colors().text}
+				focusedTextColor={colors().text}
+				focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
+				flexGrow={1}
+			/>
 
 			<Show when={error()}>
-				<box
-					border
-					borderStyle={style().panel.borderStyle}
-					borderColor={colors().error}
-					backgroundColor={colors().background}
-					padding={0}
-					paddingLeft={1}
-				>
-					<text fg={colors().error}>{error()}</text>
-				</box>
+				<text fg={colors().error}>{error()}</text>
 			</Show>
 
 			<Show when={hasRevisionPicker()}>
-				<BorderBox
-					border
-					borderStyle={style().panel.borderStyle}
-					borderColor={
-						focusedField() === "picker"
-							? colors().borderFocused
-							: colors().border
-					}
-					backgroundColor={colors().background}
+				<RevisionPicker
+					commits={props.commits ?? []}
+					defaultRevision={props.defaultRevision}
+					focused={focusedField() === "picker"}
+					onSelect={handleRevisionSelect}
 					height={pickerHeight()}
-					topLeft={<text fg={revisionTitleColor()}>Revision</text>}
-				>
-					<RevisionPicker
-						commits={props.commits ?? []}
-						defaultRevision={props.defaultRevision}
-						focused={focusedField() === "picker"}
-						onSelect={handleRevisionSelect}
-						height={pickerHeight() - 2}
-					/>
-				</BorderBox>
+				/>
 			</Show>
 		</box>
 	)

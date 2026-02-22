@@ -14,14 +14,13 @@ import { getRepoPath } from "../../repo"
 import { createDoubleClickDetector } from "../../utils/double-click"
 import type { RecentRepo } from "../../utils/state"
 import { formatRelativeTime, getRecentRepos } from "../../utils/state"
-import { BorderBox } from "../BorderBox"
 
 interface RecentReposModalProps {
 	onSelect: (path: string) => void
 }
 
 export function RecentReposModal(props: RecentReposModalProps) {
-	const { colors, style } = useTheme()
+	const { colors } = useTheme()
 	const dialog = useDialog()
 	const currentPath = getRepoPath()
 	const repos = getRecentRepos().filter((r) => r.path !== currentPath)
@@ -64,7 +63,6 @@ export function RecentReposModal(props: RecentReposModalProps) {
 		scrollToIndex(selectedIndex())
 	})
 
-	// Trigger re-render of timestamps every 30 seconds
 	const [timestampTick, setTimestampTick] = createSignal(0)
 	onMount(() => {
 		const interval = setInterval(() => setTimestampTick((t) => t + 1), 30000)
@@ -104,29 +102,17 @@ export function RecentReposModal(props: RecentReposModalProps) {
 		}
 	})
 
+	const listHeight = () => Math.min(repos.length + 2, 12)
+
 	return (
-		<BorderBox
-			border
-			borderStyle={style().panel.borderStyle}
-			borderColor={colors().borderFocused}
-			backgroundColor={colors().background}
-			width={70}
-			height={Math.min(repos.length + 4, 14)}
-			topLeft={<text fg={colors().borderFocused}>Recent repositories</text>}
-		>
+		<box flexDirection="column" height={listHeight()}>
 			<Show
 				when={repos.length > 0}
-				fallback={
-					<box padding={1}>
-						<text fg={colors().textMuted}>No recent repositories</text>
-					</box>
-				}
+				fallback={<text fg={colors().textMuted}>No recent repositories</text>}
 			>
 				<scrollbox
 					ref={scrollRef}
 					flexGrow={1}
-					paddingLeft={1}
-					paddingRight={1}
 					scrollbarOptions={{ visible: false }}
 				>
 					<For each={repos}>
@@ -179,6 +165,6 @@ export function RecentReposModal(props: RecentReposModalProps) {
 					</For>
 				</scrollbox>
 			</Show>
-		</BorderBox>
+		</box>
 	)
 }
