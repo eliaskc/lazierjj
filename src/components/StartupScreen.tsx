@@ -1,4 +1,4 @@
-import type { ScrollBoxRenderable } from "@opentui/core"
+import { type ScrollBoxRenderable, TextAttributes } from "@opentui/core"
 import { useKeyboard, useRenderer } from "@opentui/solid"
 import {
 	For,
@@ -12,7 +12,6 @@ import { useTheme } from "../context/theme"
 import { createDoubleClickDetector } from "../utils/double-click"
 import type { RecentRepo } from "../utils/state"
 import { formatRelativeTime } from "../utils/state"
-import { BorderBox } from "./BorderBox"
 import { FooterHints } from "./FooterHints"
 import { WaveBackground } from "./WaveBackground"
 
@@ -22,7 +21,7 @@ interface GitRepoScreenProps {
 }
 
 function GitRepoScreen(props: GitRepoScreenProps) {
-	const { colors, style } = useTheme()
+	const { colors } = useTheme()
 	const options = [
 		{ label: "jj git init", colocate: false },
 		{ label: "jj git init --colocate", colocate: true },
@@ -62,68 +61,66 @@ function GitRepoScreen(props: GitRepoScreenProps) {
 			justifyContent="center"
 			alignItems="center"
 		>
-			<box flexDirection="column" alignItems="center" gap={1}>
-				<BorderBox
-					border
-					borderStyle={style().panel.borderStyle}
-					borderColor={colors().borderFocused}
-					backgroundColor={colors().background}
-					width={70}
-					topLeft={<text fg={colors().borderFocused}>Setup</text>}
-				>
-					<box flexDirection="column" padding={1}>
-						<box>
-							<text fg={colors().warning}>Not a jj repository</text>
-						</box>
-						<box>
-							<text fg={colors().textMuted}>
-								Git repository detected in this directory
-							</text>
-						</box>
-						<box height={1} />
-						<For each={options}>
-							{(option, index) => {
-								const isSelected = () => index() === selectedIndex()
-								const handleDoubleClick = createDoubleClickDetector(() =>
-									props.onInit(option.colocate),
-								)
-								return (
-									<box
-										backgroundColor={
-											isSelected() ? colors().selectionBackground : undefined
-										}
-										onMouseDown={() => {
-											setSelectedIndex(index())
-											handleDoubleClick()
-										}}
-									>
-										<text>
-											<span
-												style={{
-													fg: isSelected()
-														? colors().primary
-														: colors().textMuted,
-												}}
-											>
-												{option.label}
-											</span>
-										</text>
-									</box>
-								)
-							}}
-						</For>
-						<box height={1} />
-						<text fg={colors().textMuted}>
-							Tip: --colocate keeps .git as the source of truth
-						</text>
-					</box>
-				</BorderBox>
+			<box
+				flexDirection="column"
+				backgroundColor={colors().background}
+				width={70}
+				paddingLeft={2}
+				paddingRight={2}
+				paddingTop={1}
+				paddingBottom={1}
+				gap={1}
+			>
+				<text fg={colors().text} attributes={TextAttributes.BOLD}>
+					Setup
+				</text>
+				<box flexDirection="column">
+					<text fg={colors().warning}>Not a jj repository</text>
+					<text fg={colors().textMuted}>
+						Git repository detected in this directory
+					</text>
+				</box>
+				<box flexDirection="column">
+					<For each={options}>
+						{(option, index) => {
+							const isSelected = () => index() === selectedIndex()
+							const handleDoubleClick = createDoubleClickDetector(() =>
+								props.onInit(option.colocate),
+							)
+							return (
+								<box
+									backgroundColor={
+										isSelected() ? colors().selectionBackground : undefined
+									}
+									onMouseDown={() => {
+										setSelectedIndex(index())
+										handleDoubleClick()
+									}}
+								>
+									<text>
+										<span
+											style={{
+												fg: isSelected()
+													? colors().primary
+													: colors().textMuted,
+											}}
+										>
+											{option.label}
+										</span>
+									</text>
+								</box>
+							)
+						}}
+					</For>
+				</box>
+				<text fg={colors().textMuted}>
+					Tip: --colocate keeps .git as the source of truth
+				</text>
 				<FooterHints
 					hints={[
 						{ key: "enter", label: "run" },
 						{ key: "q", label: "quit" },
 					]}
-					boxed
 				/>
 			</box>
 		</box>
@@ -138,7 +135,7 @@ interface NoVcsScreenProps {
 }
 
 function NoVcsScreen(props: NoVcsScreenProps) {
-	const { colors, style } = useTheme()
+	const { colors } = useTheme()
 	type FocusedSection = "repos" | "init"
 	const [focusedSection, setFocusedSection] = createSignal<FocusedSection>(
 		props.recentRepos.length > 0 ? "repos" : "init",
@@ -236,11 +233,6 @@ function NoVcsScreen(props: NoVcsScreenProps) {
 		}
 	})
 
-	const reposBorderColor = () =>
-		focusedSection() === "repos" ? colors().borderFocused : colors().border
-	const initBorderColor = () =>
-		focusedSection() === "init" ? colors().borderFocused : colors().border
-
 	const handleInitDoubleClick = createDoubleClickDetector(() => props.onInit())
 
 	return (
@@ -255,144 +247,128 @@ function NoVcsScreen(props: NoVcsScreenProps) {
 			justifyContent="center"
 			alignItems="center"
 		>
-			<box flexDirection="column" alignItems="center" gap={1}>
-				<box flexDirection="column" width={70} gap={1}>
-					{/* Recent repos section */}
-					<BorderBox
-						border
-						borderStyle={style().panel.borderStyle}
-						borderColor={reposBorderColor()}
-						backgroundColor={colors().background}
-						height={Math.min(props.recentRepos.length + 7, 17)}
-						topLeft={<text fg={reposBorderColor()}>Setup</text>}
+			<box
+				flexDirection="column"
+				backgroundColor={colors().background}
+				width={70}
+				paddingLeft={2}
+				paddingRight={2}
+				paddingTop={1}
+				paddingBottom={1}
+				gap={1}
+			>
+				<text fg={colors().text} attributes={TextAttributes.BOLD}>
+					Setup
+				</text>
+				<box flexDirection="column">
+					<text fg={colors().warning}>Not a jj repository</text>
+					<text fg={colors().textMuted}>
+						No version control found in this directory
+					</text>
+				</box>
+				<Show
+					when={props.recentRepos.length > 0}
+					fallback={<text fg={colors().textMuted}>No recent repositories</text>}
+				>
+					<box
+						flexDirection="column"
 						onMouseDown={() => setFocusedSection("repos")}
 					>
-						<box flexDirection="column" padding={1}>
-							<box>
-								<text fg={colors().warning}>Not a jj repository</text>
-							</box>
-							<box>
-								<text fg={colors().textMuted}>
-									No version control found in this directory
-								</text>
-							</box>
-							<box height={1} />
-							<Show
-								when={props.recentRepos.length > 0}
-								fallback={
-									<text fg={colors().textMuted}>No recent repositories</text>
-								}
+						<text fg={colors().textMuted}>Recent repositories:</text>
+						<box height={Math.min(props.recentRepos.length, 10)}>
+							<scrollbox
+								ref={scrollRef}
+								flexGrow={1}
+								scrollbarOptions={{ visible: false }}
 							>
-								<text fg={colors().textMuted}>Recent repositories:</text>
-								<scrollbox
-									ref={scrollRef}
-									flexGrow={1}
-									scrollbarOptions={{ visible: false }}
-								>
-									<For each={props.recentRepos}>
-										{(repo, index) => {
-											const isSelected = () =>
-												focusedSection() === "repos" &&
-												index() === selectedRepoIndex()
-											const num = index() + 1
-											// Shorten home directory
-											const displayPath = repo.path.replace(
-												new RegExp(`^${process.env.HOME}`),
-												"~",
-											)
-											const handleDoubleClick = createDoubleClickDetector(() =>
-												props.onSelectRepo(repo.path),
-											)
-											return (
-												<box
-													flexDirection="row"
-													backgroundColor={
-														isSelected()
-															? colors().selectionBackground
-															: undefined
-													}
-													onMouseDown={() => {
-														setFocusedSection("repos")
-														setSelectedRepoIndex(index())
-														handleDoubleClick()
-													}}
-												>
-													<text wrapMode="none">
-														<span
-															style={{
-																fg: isSelected()
-																	? colors().primary
-																	: colors().textMuted,
-															}}
-														>
-															{num}.{" "}
-														</span>
-														<span
-															style={{
-																fg: isSelected()
-																	? colors().primary
-																	: colors().textMuted,
-															}}
-														>
-															{displayPath}
-														</span>
-													</text>
-													<box flexGrow={1} />
-													<text fg={colors().textMuted}>
-														{getTimestamp(repo.lastOpened)}
-													</text>
-												</box>
-											)
-										}}
-									</For>
-								</scrollbox>
-							</Show>
+								<For each={props.recentRepos}>
+									{(repo, index) => {
+										const isSelected = () =>
+											focusedSection() === "repos" &&
+											index() === selectedRepoIndex()
+										const num = index() + 1
+										const displayPath = repo.path.replace(
+											new RegExp(`^${process.env.HOME}`),
+											"~",
+										)
+										const handleDoubleClick = createDoubleClickDetector(() =>
+											props.onSelectRepo(repo.path),
+										)
+										return (
+											<box
+												flexDirection="row"
+												backgroundColor={
+													isSelected()
+														? colors().selectionBackground
+														: undefined
+												}
+												onMouseDown={() => {
+													setFocusedSection("repos")
+													setSelectedRepoIndex(index())
+													handleDoubleClick()
+												}}
+											>
+												<text wrapMode="none">
+													<span
+														style={{
+															fg: isSelected()
+																? colors().primary
+																: colors().textMuted,
+														}}
+													>
+														{num}.{" "}
+													</span>
+													<span
+														style={{
+															fg: isSelected()
+																? colors().text
+																: colors().textMuted,
+														}}
+													>
+														{displayPath}
+													</span>
+												</text>
+												<box flexGrow={1} />
+												<text fg={colors().textMuted}>
+													{getTimestamp(repo.lastOpened)}
+												</text>
+											</box>
+										)
+									}}
+								</For>
+							</scrollbox>
 						</box>
-					</BorderBox>
-
-					{/* Init section */}
-					<BorderBox
-						border
-						borderStyle={style().panel.borderStyle}
-						borderColor={initBorderColor()}
-						backgroundColor={colors().background}
-						topLeft={<text fg={initBorderColor()}>Initialize</text>}
-						onMouseDown={() => setFocusedSection("init")}
-					>
-						<box paddingX={1}>
-							<box
-								backgroundColor={
+					</box>
+				</Show>
+				<box
+					backgroundColor={
+						focusedSection() === "init"
+							? colors().selectionBackground
+							: undefined
+					}
+					onMouseDown={() => {
+						setFocusedSection("init")
+						handleInitDoubleClick()
+					}}
+				>
+					<text>
+						<span
+							style={{
+								fg:
 									focusedSection() === "init"
-										? colors().selectionBackground
-										: undefined
-								}
-								onMouseDown={() => {
-									setFocusedSection("init")
-									handleInitDoubleClick()
-								}}
-							>
-								<text>
-									<span
-										style={{
-											fg:
-												focusedSection() === "init"
-													? colors().primary
-													: colors().textMuted,
-										}}
-									>
-										jj init
-									</span>
-								</text>
-							</box>
-						</box>
-					</BorderBox>
+										? colors().primary
+										: colors().textMuted,
+							}}
+						>
+							jj init
+						</span>
+					</text>
 				</box>
 				<FooterHints
 					hints={[
 						{ key: "enter", label: "run" },
 						{ key: "q", label: "quit" },
 					]}
-					boxed
 				/>
 			</box>
 		</box>

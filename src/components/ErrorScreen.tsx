@@ -1,8 +1,8 @@
+import { TextAttributes } from "@opentui/core"
 import { useKeyboard } from "@opentui/solid"
 import { For, Show, createSignal } from "solid-js"
 import { useTheme } from "../context/theme"
 import { type ParsedJjError, parseJjError } from "../utils/error-parser"
-import { BorderBox } from "./BorderBox"
 import { FooterHints } from "./FooterHints"
 import { WaveBackground } from "./WaveBackground"
 
@@ -14,7 +14,7 @@ export interface ErrorScreenProps {
 }
 
 export function ErrorScreen(props: ErrorScreenProps) {
-	const { colors, style } = useTheme()
+	const { colors } = useTheme()
 	const [isFixing, setIsFixing] = createSignal(false)
 	const [isRetrying, setIsRetrying] = createSignal(false)
 	const [attempts, setAttempts] = createSignal(1)
@@ -92,116 +92,114 @@ export function ErrorScreen(props: ErrorScreenProps) {
 	return (
 		<box flexGrow={1} width="100%" height="100%">
 			<WaveBackground peakColor={colors().error} peakOpacity={0.7} />
-			<Show when={true}>
+			<box
+				position="absolute"
+				left={0}
+				top={0}
+				width="100%"
+				height="100%"
+				flexGrow={1}
+				flexDirection="column"
+				justifyContent="center"
+				alignItems="center"
+			>
 				<box
-					position="absolute"
-					left={0}
-					top={0}
-					width="100%"
-					height="100%"
-					flexGrow={1}
 					flexDirection="column"
-					justifyContent="center"
-					alignItems="center"
+					backgroundColor={colors().background}
+					width={70}
+					paddingLeft={2}
+					paddingRight={2}
+					paddingTop={1}
+					paddingBottom={1}
+					gap={1}
 				>
-					{/* Error modal */}
-					<box flexDirection="column" alignItems="center" gap={1}>
-						<BorderBox
-							border
-							borderStyle={style().panel.borderStyle}
-							borderColor={colors().error}
-							backgroundColor={colors().background}
-							width={70}
-							topLeft={<text fg={colors().error}>Error</text>}
-						>
-							<box flexDirection="column" padding={1}>
-								{/* Error title with attempt counter */}
-								<text fg={colors().error}>
-									{attempts() > 1
-										? `${parsedError().title} [${attempts()}]`
-										: parsedError().title}
-								</text>
-								<box height={1} />
+					<text fg={colors().error} attributes={TextAttributes.BOLD}>
+						Error
+					</text>
+					<box flexDirection="column">
+						<text fg={colors().error}>
+							{attempts() > 1
+								? `${parsedError().title} [${attempts()}]`
+								: parsedError().title}
+						</text>
+					</box>
 
-								{/* Hints */}
-								<Show when={parsedError().hints.length > 0}>
-									<For each={parsedError().hints}>
-										{(hint) => (
-											<text fg={colors().warning} wrapMode="word">
-												{hint}
-											</text>
-										)}
-									</For>
-									<box height={1} />
-								</Show>
+					<Show when={parsedError().hints.length > 0}>
+						<box flexDirection="column">
+							<For each={parsedError().hints}>
+								{(hint) => (
+									<text fg={colors().warning} wrapMode="word">
+										{hint}
+									</text>
+								)}
+							</For>
+						</box>
+					</Show>
 
-								{/* URLs */}
-								<Show when={parsedError().urls.length > 0}>
-									<text fg={colors().textMuted}>More info:</text>
-									<For each={parsedError().urls}>
-										{(url) => (
-											<text fg={colors().primary} wrapMode="none">
-												{url}
-											</text>
-										)}
-									</For>
-									<box height={1} />
-								</Show>
+					<Show when={parsedError().urls.length > 0}>
+						<box flexDirection="column">
+							<text fg={colors().textMuted}>More info:</text>
+							<For each={parsedError().urls}>
+								{(url) => (
+									<text fg={colors().primary} wrapMode="none">
+										{url}
+									</text>
+								)}
+							</For>
+						</box>
+					</Show>
 
-								{/* Actions */}
-								<Show when={canFix()}>
-									<box
-										backgroundColor={
-											selectedAction() === "fix" && !isLoading()
-												? colors().selectionBackground
-												: undefined
-										}
-									>
-										<text
-											fg={
-												isLoading()
-													? colors().textMuted
-													: selectedAction() === "fix"
-														? colors().primary
-														: colors().textMuted
-											}
-										>
-											{isFixing() ? "Running..." : parsedError().fixCommand}
-										</text>
-									</box>
-								</Show>
-
-								<box
-									backgroundColor={
-										selectedAction() === "retry" && !isLoading()
-											? colors().selectionBackground
-											: undefined
+					<box flexDirection="column">
+						<Show when={canFix()}>
+							<box
+								backgroundColor={
+									selectedAction() === "fix" && !isLoading()
+										? colors().selectionBackground
+										: undefined
+								}
+							>
+								<text
+									fg={
+										isLoading()
+											? colors().textMuted
+											: selectedAction() === "fix"
+												? colors().primary
+												: colors().textMuted
 									}
 								>
-									<text
-										fg={
-											isLoading()
-												? colors().textMuted
-												: selectedAction() === "retry"
-													? colors().primary
-													: colors().textMuted
-										}
-									>
-										{isRetrying() ? "Retrying..." : "retry"}
-									</text>
-								</box>
+									{isFixing() ? "Running..." : parsedError().fixCommand}
+								</text>
 							</box>
-						</BorderBox>
-						<FooterHints
-							hints={[
-								{ key: "enter", label: "run" },
-								{ key: "q", label: "quit" },
-							]}
-							boxed
-						/>
+						</Show>
+
+						<box
+							backgroundColor={
+								selectedAction() === "retry" && !isLoading()
+									? colors().selectionBackground
+									: undefined
+							}
+						>
+							<text
+								fg={
+									isLoading()
+										? colors().textMuted
+										: selectedAction() === "retry"
+											? colors().primary
+											: colors().textMuted
+								}
+							>
+								{isRetrying() ? "Retrying..." : "retry"}
+							</text>
+						</box>
 					</box>
+					<FooterHints
+						hints={[
+							{ key: "enter", label: "run" },
+							{ key: "q", label: "quit" },
+						]}
+					/>
 				</box>
-			</Show>
+			</box>
 		</box>
 	)
 }
