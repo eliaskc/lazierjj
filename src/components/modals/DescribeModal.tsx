@@ -73,23 +73,21 @@ export function DescribeModal(props: DescribeModalProps) {
 					Subject{" "}
 					<span style={{ fg: colors().textMuted }}>[{charCount()}]</span>
 				</text>
-				<box backgroundColor={colors().backgroundDialog} padding={1} height={3}>
-					<input
-						ref={(r) => {
-							subjectRef = r
-						}}
-						value={props.initialSubject}
-						onContentChange={() => {
-							if (subjectRef) setSubject(subjectRef.plainText)
-						}}
-						onSubmit={handleSave}
-						cursorColor={colors().primary}
-						textColor={colors().text}
-						focusedTextColor={colors().text}
-						focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
-						width="100%"
-					/>
-				</box>
+				<input
+					ref={(r) => {
+						subjectRef = r
+					}}
+					value={props.initialSubject}
+					onContentChange={() => {
+						if (subjectRef) setSubject(subjectRef.plainText)
+					}}
+					onSubmit={handleSave}
+					cursorColor={colors().primary}
+					textColor={colors().text}
+					focusedTextColor={colors().text}
+					focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
+					width="100%"
+				/>
 			</box>
 
 			<box flexDirection="column" flexGrow={1} gap={1}>
