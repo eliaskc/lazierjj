@@ -277,25 +277,27 @@ function DialogHints(props: { hints: DialogHint[] }) {
 
 	return (
 		<Show when={props.hints.length > 0}>
-			<text wrapMode="word">
-				<For each={props.hints}>
-					{(hint, index) => (
-						<>
-							<span style={{ fg: colors().primary }}>{hint.key}</span>{" "}
-							<span style={{ fg: colors().textMuted }}>{hint.label}</span>
-							<Show when={index() < props.hints.length - 1}>
-								<span
-									style={{
-										fg: separator() ? colors().textMuted : undefined,
-									}}
-								>
-									{hintGap()}
-								</span>
-							</Show>
-						</>
-					)}
-				</For>
-			</text>
+			<box width="100%" alignItems="center">
+				<text wrapMode="none">
+					<For each={props.hints}>
+						{(hint, index) => (
+							<>
+								<span style={{ fg: colors().primary }}>{hint.key}</span>{" "}
+								<span style={{ fg: colors().textMuted }}>{hint.label}</span>
+								<Show when={index() < props.hints.length - 1}>
+									<span
+										style={{
+											fg: separator() ? colors().textMuted : undefined,
+										}}
+									>
+										{hintGap()}
+									</span>
+								</Show>
+							</>
+						)}
+					</For>
+				</text>
+			</box>
 		</Show>
 	)
 }
