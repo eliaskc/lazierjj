@@ -65,7 +65,7 @@ export function DescribeModal(props: DescribeModalProps) {
 
 	return (
 		<box flexDirection="column" gap={1}>
-			<box position="relative">
+			<box flexDirection="row" width="100%">
 				<input
 					ref={(r) => {
 						subjectRef = r
@@ -80,9 +80,10 @@ export function DescribeModal(props: DescribeModalProps) {
 					textColor={colors().text}
 					focusedTextColor={colors().text}
 					focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
-					width="100%"
+					flexGrow={1}
+					flexShrink={1}
 				/>
-				<box position="absolute" right={0} top={0}>
+				<box width={5} flexShrink={0} paddingLeft={1}>
 					<text fg={colors().textMuted}>{charCount()}</text>
 				</box>
 			</box>
