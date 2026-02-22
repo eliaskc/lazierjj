@@ -28,6 +28,8 @@ export const opencodeTheme: Theme = {
 		orange: "#f5a742",
 		green: "#7fd88f",
 
+		titleBar: "#1e1e1e",
+
 		scrollbarTrack: "#1e1e1e",
 		scrollbarThumb: "#484848",
 

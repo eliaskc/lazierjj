@@ -73,12 +73,17 @@ export function CommandLogPanel() {
 		<box
 			flexDirection="column"
 			height={isFocused() ? 15 : 6}
-			paddingLeft={2}
+			paddingLeft={1}
 			overflow="hidden"
 			gap={0}
 			onMouseDown={handleMouseDown}
 		>
-			<box flexDirection="row" height={1} flexShrink={0}>
+			<box
+				flexDirection="row"
+				height={1}
+				flexShrink={0}
+				backgroundColor={isFocused() ? colors().titleBar : undefined}
+			>
 				<text fg={titleColor()}>4 Command log</text>
 			</box>
 			<box height={1} flexShrink={0} />

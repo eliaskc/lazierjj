@@ -75,9 +75,16 @@ export function Panel(props: PanelProps) {
 		const titleColor = () =>
 			props.focused ? colors().borderFocused : colors().textMuted
 
+		const titleBg = () => (props.focused ? colors().titleBar : undefined)
+
 		if (hasTabs()) {
 			return (
-				<box flexDirection="row" height={1} flexShrink={0}>
+				<box
+					flexDirection="row"
+					height={1}
+					flexShrink={0}
+					backgroundColor={titleBg()}
+				>
 					<text>
 						<span style={{ fg: titleColor() }}>{props.hotkey} </span>
 						<For each={props.tabs}>
@@ -107,7 +114,12 @@ export function Panel(props: PanelProps) {
 		}
 
 		return (
-			<box flexDirection="row" height={1} flexShrink={0}>
+			<box
+				flexDirection="row"
+				height={1}
+				flexShrink={0}
+				backgroundColor={titleBg()}
+			>
 				<text fg={titleColor()}>
 					{props.hotkey} {props.title}
 				</text>
@@ -128,7 +140,7 @@ export function Panel(props: PanelProps) {
 			flexGrow={1}
 			flexDirection="column"
 			height="100%"
-			paddingLeft={2}
+			paddingLeft={1}
 			overflow={props.overflow ?? "hidden"}
 			gap={0}
 			onMouseDown={handleMouseDown}

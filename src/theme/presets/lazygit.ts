@@ -28,6 +28,8 @@ export const lazygitTheme: Theme = {
 		orange: "#d19a66",
 		green: "#7FD962",
 
+		titleBar: "#282828",
+
 		scrollbarTrack: "#303030",
 		scrollbarThumb: "#606060",
 
