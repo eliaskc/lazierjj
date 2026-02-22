@@ -13,8 +13,17 @@ import { MainArea } from "./panels/MainArea"
 function VerticalDivider() {
 	const { colors } = useTheme()
 	return (
-		<box width={1} paddingTop={1} paddingBottom={1} overflow="hidden">
-			<text fg={colors().scrollbarThumb}>{"│\n".repeat(300)}</text>
+		<box
+			flexDirection="row"
+			paddingLeft={1}
+			paddingRight={1}
+			paddingTop={1}
+			paddingBottom={1}
+			overflow="hidden"
+		>
+			<box width={1} overflow="hidden">
+				<text fg={colors().scrollbarThumb}>{"│\n".repeat(300)}</text>
+			</box>
 		</box>
 	)
 }
@@ -22,8 +31,12 @@ function VerticalDivider() {
 function HorizontalDivider() {
 	const { colors } = useTheme()
 	return (
-		<box height={1} paddingLeft={2} paddingRight={1} overflow="hidden">
-			<text fg={colors().scrollbarThumb}>{"─".repeat(500)}</text>
+		<box flexDirection="column" overflow="hidden">
+			<box height={1} flexShrink={0} />
+			<box height={1} paddingLeft={1} paddingRight={1} overflow="hidden">
+				<text fg={colors().scrollbarThumb}>{"─".repeat(500)}</text>
+			</box>
+			<box height={1} flexShrink={0} />
 		</box>
 	)
 }
@@ -106,7 +119,7 @@ export function LayoutGrid() {
 			width="100%"
 			height="100%"
 			backgroundColor={colors().background}
-			padding={style().adaptToTerminal ? 0 : 1}
+			padding={1}
 			gap={0}
 		>
 			<Switch>

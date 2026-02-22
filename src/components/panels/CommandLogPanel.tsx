@@ -73,7 +73,6 @@ export function CommandLogPanel() {
 		<box
 			flexDirection="column"
 			height={isFocused() ? 15 : 6}
-			paddingLeft={1}
 			overflow="hidden"
 			gap={0}
 			onMouseDown={handleMouseDown}
