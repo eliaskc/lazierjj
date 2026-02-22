@@ -4,6 +4,10 @@ import { readConfig } from "../config"
 import { lazygitTheme } from "../theme/presets/lazygit"
 import { opencodeTheme } from "../theme/presets/opencode"
 import type { Theme, ThemeColors, ThemeStyle } from "../theme/types"
+import {
+	cacheTerminalBackground,
+	getCachedTerminalBackground,
+} from "../utils/state"
 import { createSimpleContext } from "./helper"
 
 const themes = {
@@ -41,24 +45,34 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
 	init: () => {
 		const renderer = useRenderer()
 		const [theme, setTheme] = createSignal<Theme>(themes[readConfig().ui.theme])
-		const [terminalBg, setTerminalBg] = createSignal<string | null>(null)
-		const [isDark, setIsDark] = createSignal(true)
+		const [terminalBg, setTerminalBg] = createSignal<string | null>(
+			getCachedTerminalBackground(),
+		)
+		const [hasDetectedTerminalBg, setHasDetectedTerminalBg] =
+			createSignal(false)
+
+		const isDark = (): boolean => {
+			const bg = terminalBg()
+			if (!bg) return true
+			const rgb = parseHexColor(bg)
+			if (!rgb) return true
+			return calculateLuminance(rgb.r, rgb.g, rgb.b) <= 0.5
+		}
 
 		createEffect(() => {
-			if (!theme().style.adaptToTerminal || terminalBg()) return
+			if (!theme().style.adaptToTerminal || hasDetectedTerminalBg()) return
 
 			void (async () => {
 				try {
 					const palette = await renderer.getPalette({ timeout: 1000 })
 					if (palette.defaultBackground) {
 						setTerminalBg(palette.defaultBackground)
-						const rgb = parseHexColor(palette.defaultBackground)
-						if (rgb) {
-							const luminance = calculateLuminance(rgb.r, rgb.g, rgb.b)
-							setIsDark(luminance <= 0.5)
-						}
+						cacheTerminalBackground(palette.defaultBackground)
 					}
-				} catch {}
+				} catch {
+				} finally {
+					setHasDetectedTerminalBg(true)
+				}
 			})()
 		})
 

@@ -15,6 +15,7 @@ export interface AppState {
 	lastUpdateCheck?: string
 	lastSeenVersion?: string
 	dismissedVersion?: string | null
+	terminalBackground?: string
 }
 
 const CONFIG_DIR = join(homedir(), ".config", "kajji")
@@ -143,4 +144,18 @@ export function formatRelativeTime(isoDate: string): string {
 	if (diffDays < 7) return `${diffDays}d ago`
 	if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`
 	return date.toLocaleDateString()
+}
+
+export function getCachedTerminalBackground(): string | null {
+	const background = readState().terminalBackground
+	return typeof background === "string" ? background : null
+}
+
+export function cacheTerminalBackground(background: string): void {
+	const state = readState()
+	if (state.terminalBackground === background) return
+	writeState({
+		...state,
+		terminalBackground: background,
+	})
 }
