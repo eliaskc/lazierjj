@@ -108,7 +108,9 @@ export function LayoutGrid() {
 			width="100%"
 			height="100%"
 			backgroundColor={colors().background}
-			padding={1}
+			paddingTop={0}
+			paddingBottom={0}
+			paddingX={1}
 			gap={0}
 		>
 			<Switch>
@@ -119,6 +121,7 @@ export function LayoutGrid() {
 					<DiffLayout />
 				</Match>
 			</Switch>
+			<box height={1} flexShrink={0} />
 			<StatusBar />
 		</box>
 	)
