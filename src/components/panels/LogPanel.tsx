@@ -976,7 +976,11 @@ export function LogPanel() {
 					),
 					{
 						id: "new-menu",
-						title: `New at ${commit.changeId.slice(0, 8)}`,
+						title: [
+							{ text: "New", style: "action" },
+							" at ",
+							{ text: commit.changeId.slice(0, 8), style: "target" },
+						],
 						hints: [
 							{ key: "a", label: "after" },
 							{ key: "b", label: "before" },
@@ -1042,7 +1046,12 @@ export function LogPanel() {
 				const result = await jjEdit(revId)
 				if (isImmutableError(result)) {
 					const confirmed = await dialog.confirm({
-						message: "Commit is immutable. Edit anyway?",
+						message: [
+							{ text: commit.changeId.slice(0, 8), style: "target" },
+							" is immutable. ",
+							{ text: "Edit", style: "action" },
+							" anyway?",
+						],
 					})
 					if (confirmed) {
 						await runOperation("Editing...", () =>
@@ -1094,7 +1103,12 @@ export function LogPanel() {
 									let ignoreImmutable = false
 									if (commit.immutable) {
 										const confirmed = await dialog.confirm({
-											message: "Commit is immutable. Squash anyway?",
+											message: [
+												{ text: commit.changeId.slice(0, 8), style: "target" },
+												" is immutable. ",
+												{ text: "Squash", style: "action" },
+												" anyway?",
+											],
 										})
 										if (!confirmed) return
 										ignoreImmutable = true
@@ -1123,7 +1137,13 @@ export function LogPanel() {
 									})
 									if (isImmutableError(result)) {
 										const confirmed = await dialog.confirm({
-											message: "Target is immutable. Squash anyway?",
+											message: [
+												"Target ",
+												{ text: target.slice(0, 8), style: "target" },
+												" is immutable. ",
+												{ text: "Squash", style: "action" },
+												" anyway?",
+											],
 										})
 										if (confirmed) {
 											await runOperation("Squashing...", () =>
@@ -1148,7 +1168,12 @@ export function LogPanel() {
 					),
 					{
 						id: "squash",
-						title: `Squash ${commit.changeId.slice(0, 8)} into`,
+						title: [
+							{ text: "Squash", style: "action" },
+							" ",
+							{ text: commit.changeId.slice(0, 8), style: "target" },
+							" into",
+						],
 						width: "80%",
 						maxWidth: 120,
 						hints: [
@@ -1186,7 +1211,13 @@ export function LogPanel() {
 								})
 								if (isImmutableError(result)) {
 									const confirmed = await dialog.confirm({
-										message: "Target is immutable. Rebase anyway?",
+										message: [
+											"Target ",
+											{ text: destination.slice(0, 8), style: "target" },
+											" is immutable. ",
+											{ text: "Rebase", style: "action" },
+											" anyway?",
+										],
 									})
 									if (confirmed) {
 										await runOperation("Rebasing...", () =>
@@ -1210,7 +1241,12 @@ export function LogPanel() {
 					),
 					{
 						id: "rebase",
-						title: `Rebase ${commit.changeId.slice(0, 8)} onto`,
+						title: [
+							{ text: "Rebase", style: "action" },
+							" ",
+							{ text: commit.changeId.slice(0, 8), style: "target" },
+							" onto",
+						],
 						width: "80%",
 						maxWidth: 120,
 						hints: [
@@ -1239,7 +1275,11 @@ export function LogPanel() {
 
 				if (commit.empty) {
 					await dialog.confirm({
-						message: "Cannot split an empty commit.",
+						message: [
+							"Cannot ",
+							{ text: "split", style: "action" },
+							" an empty commit.",
+						],
 					})
 					return
 				}
@@ -1248,7 +1288,12 @@ export function LogPanel() {
 				let ignoreImmutable = false
 				if (commit.immutable) {
 					const confirmed = await dialog.confirm({
-						message: "Commit is immutable. Split anyway?",
+						message: [
+							{ text: commit.changeId.slice(0, 8), style: "target" },
+							" is immutable. ",
+							{ text: "Split", style: "action" },
+							" anyway?",
+						],
 					})
 					if (!confirmed) return
 					ignoreImmutable = true
@@ -1278,7 +1323,12 @@ export function LogPanel() {
 				let ignoreImmutable = false
 				if (commit.immutable) {
 					const confirmed = await dialog.confirm({
-						message: "Commit is immutable. Describe anyway?",
+						message: [
+							{ text: commit.changeId.slice(0, 8), style: "target" },
+							" is immutable. ",
+							{ text: "Describe", style: "action" },
+							" anyway?",
+						],
 					})
 					if (!confirmed) return
 					ignoreImmutable = true
@@ -1301,7 +1351,11 @@ export function LogPanel() {
 					),
 					{
 						id: "describe",
-						title: `Describe ${commit.changeId.slice(0, 8)}`,
+						title: [
+							{ text: "Describe", style: "action" },
+							" ",
+							{ text: commit.changeId.slice(0, 8), style: "target" },
+						],
 						width: "60%",
 						maxWidth: 90,
 						hints: [
@@ -1357,7 +1411,12 @@ export function LogPanel() {
 				const result = await jjAbandon(revId)
 				if (isImmutableError(result)) {
 					const immutableConfirmed = await dialog.confirm({
-						message: "Commit is immutable. Abandon anyway?",
+						message: [
+							{ text: commit.changeId.slice(0, 8), style: "target" },
+							" is immutable. ",
+							{ text: "Abandon", style: "action" },
+							" anyway?",
+						],
 					})
 					if (immutableConfirmed) {
 						await runOperation("Abandoning...", () =>
@@ -1432,7 +1491,11 @@ export function LogPanel() {
 					),
 					{
 						id: "set-bookmark",
-						title: `Set bookmark on ${commit.changeId.slice(0, 8)}`,
+						title: [
+							{ text: "Set bookmark", style: "action" },
+							" on ",
+							{ text: commit.changeId.slice(0, 8), style: "target" },
+						],
 						width: "60%",
 						maxWidth: 90,
 						hints: [

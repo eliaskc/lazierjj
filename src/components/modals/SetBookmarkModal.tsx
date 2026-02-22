@@ -224,8 +224,8 @@ export function SetBookmarkModal(props: SetBookmarkModalProps) {
 	const LIST_HEIGHT = 10
 
 	return (
-		<box flexDirection="column">
-			<box>
+		<box flexDirection="column" gap={1}>
+			<box backgroundColor={colors().backgroundDialog} padding={1} height={3}>
 				<textarea
 					ref={(r) => {
 						inputRef = r
@@ -254,12 +254,6 @@ export function SetBookmarkModal(props: SetBookmarkModalProps) {
 					focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
 					flexGrow={1}
 				/>
-			</box>
-
-			<box height={1} overflow="hidden">
-				<text fg={colors().textMuted} wrapMode="none">
-					{"─".repeat(200)}
-				</text>
 			</box>
 
 			<Show

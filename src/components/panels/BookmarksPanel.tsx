@@ -620,7 +620,12 @@ export function BookmarksPanel() {
 				const result = await jjEdit(bookmark.name)
 				if (isImmutableError(result)) {
 					const confirmed = await dialog.confirm({
-						message: "Commit is immutable. Edit anyway?",
+						message: [
+							{ text: bookmark.name, style: "target" },
+							" is immutable. ",
+							{ text: "Edit", style: "action" },
+							" anyway?",
+						],
 					})
 					if (confirmed) {
 						await runOperation("Editing...", () =>
@@ -753,7 +758,11 @@ export function BookmarksPanel() {
 					),
 					{
 						id: "bookmark-rename",
-						title: `Rename "${bookmark.name}"`,
+						title: [
+							{ text: "Rename", style: "action" },
+							" ",
+							{ text: bookmark.name, style: "target" },
+						],
 						width: "60%",
 						maxWidth: 90,
 						hints: [{ key: "enter", label: "save" }],
@@ -815,7 +824,12 @@ export function BookmarksPanel() {
 					),
 					{
 						id: "bookmark-move",
-						title: `Move "${bookmark.name}" to`,
+						title: [
+							{ text: "Move", style: "action" },
+							" ",
+							{ text: bookmark.name, style: "target" },
+							" to",
+						],
 						width: "60%",
 						maxWidth: 90,
 						hints: [{ key: "enter", label: "confirm" }],

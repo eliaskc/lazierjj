@@ -16,7 +16,7 @@ interface DescribeModalProps {
 
 export function DescribeModal(props: DescribeModalProps) {
 	const dialog = useDialog()
-	const { colors, style } = useTheme()
+	const { colors } = useTheme()
 
 	const [subject, setSubject] = createSignal(props.initialSubject)
 	const [body, setBody] = createSignal(props.initialBody)
@@ -63,59 +63,58 @@ export function DescribeModal(props: DescribeModalProps) {
 
 	const charCount = () => subject().length
 
-	const sectionBorderColor = (field: "subject" | "body") =>
-		focusedField() === field ? colors().borderFocused : colors().border
+	const labelColor = (field: "subject" | "body") =>
+		focusedField() === field ? colors().text : colors().textMuted
 
 	return (
-		<box flexDirection="column" gap={0}>
-			<box
-				flexDirection="column"
-				border
-				borderStyle={style().panel.borderStyle}
-				borderColor={sectionBorderColor("subject")}
-				height={3}
-			>
-				<input
-					ref={(r) => {
-						subjectRef = r
-					}}
-					value={props.initialSubject}
-					onContentChange={() => {
-						if (subjectRef) setSubject(subjectRef.plainText)
-					}}
-					onSubmit={handleSave}
-					cursorColor={colors().primary}
-					textColor={colors().text}
-					focusedTextColor={colors().text}
-					focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
-					width="100%"
-				/>
+		<box flexDirection="column" gap={1}>
+			<box flexDirection="column" gap={1}>
+				<text fg={labelColor("subject")}>
+					Subject{" "}
+					<span style={{ fg: colors().textMuted }}>[{charCount()}]</span>
+				</text>
+				<box backgroundColor={colors().backgroundDialog} padding={1} height={3}>
+					<input
+						ref={(r) => {
+							subjectRef = r
+						}}
+						value={props.initialSubject}
+						onContentChange={() => {
+							if (subjectRef) setSubject(subjectRef.plainText)
+						}}
+						onSubmit={handleSave}
+						cursorColor={colors().primary}
+						textColor={colors().text}
+						focusedTextColor={colors().text}
+						focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
+						width="100%"
+					/>
+				</box>
 			</box>
 
-			<box
-				flexDirection="column"
-				border
-				borderStyle={style().panel.borderStyle}
-				borderColor={sectionBorderColor("body")}
-				height={10}
-			>
-				<textarea
-					ref={(r) => {
-						bodyRef = r
-					}}
-					initialValue={props.initialBody}
-					onContentChange={() => {
-						if (bodyRef) setBody(bodyRef.plainText)
-					}}
-					cursorColor={colors().primary}
-					textColor={colors().text}
-					focusedTextColor={colors().text}
-					focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
-					flexGrow={1}
-				/>
+			<box flexDirection="column" flexGrow={1} gap={1}>
+				<text fg={labelColor("body")}>Body</text>
+				<box
+					backgroundColor={colors().backgroundDialog}
+					padding={1}
+					height={10}
+				>
+					<textarea
+						ref={(r) => {
+							bodyRef = r
+						}}
+						initialValue={props.initialBody}
+						onContentChange={() => {
+							if (bodyRef) setBody(bodyRef.plainText)
+						}}
+						cursorColor={colors().primary}
+						textColor={colors().text}
+						focusedTextColor={colors().text}
+						focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
+						flexGrow={1}
+					/>
+				</box>
 			</box>
-
-			<text fg={colors().textMuted}>{`${charCount()} chars`}</text>
 		</box>
 	)
 }

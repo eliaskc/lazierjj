@@ -25,58 +25,58 @@ interface DialogState {
 	render: () => JSX.Element
 	onClose?: () => void
 	hints?: DialogHint[]
-	title?: string
+	title?: string | StyledSegment[]
 	width?: Dimension
 	maxWidth?: number
 }
 
-export type ConfirmSegment =
+export type StyledSegment =
 	| string
 	| { text: string; style?: "action" | "target" | "muted" }
 
 interface ConfirmOptions {
-	message: string | ConfirmSegment[]
+	message: string | StyledSegment[]
 }
 
-function ConfirmDialogContent(props: {
-	message: string | ConfirmSegment[]
-	onResolve: (confirmed: boolean) => void
+function StyledText(props: {
+	content: string | StyledSegment[]
+	bold?: boolean
 }) {
 	const { colors } = useTheme()
 
-	useKeyboard((evt) => {
-		if (evt.name === "y" || evt.name === "return") {
-			evt.preventDefault()
-			evt.stopPropagation()
-			props.onResolve(true)
-		} else if (evt.name === "n" || evt.name === "escape") {
-			evt.preventDefault()
-			evt.stopPropagation()
-			props.onResolve(false)
-		}
-	})
-
-	if (typeof props.message === "string") {
+	if (typeof props.content === "string") {
 		return (
-			<text fg={colors().text} attributes={TextAttributes.BOLD}>
-				{props.message}
+			<text
+				fg={colors().text}
+				attributes={props.bold ? TextAttributes.BOLD : undefined}
+			>
+				{props.content}
 			</text>
 		)
 	}
 
 	return (
 		<text>
-			<For each={props.message}>
+			<For each={props.content}>
 				{(segment) => {
 					if (typeof segment === "string") {
-						return <span style={{ fg: colors().text }}>{segment}</span>
+						return (
+							<span
+								style={{
+									fg: colors().text,
+									attributes: props.bold ? TextAttributes.BOLD : undefined,
+								}}
+							>
+								{segment}
+							</span>
+						)
 					}
 					switch (segment.style) {
 						case "action":
 							return (
 								<span
 									style={{
-										fg: colors().text,
+										fg: colors().warning,
 										attributes: TextAttributes.BOLD,
 									}}
 								>
@@ -99,12 +99,40 @@ function ConfirmDialogContent(props: {
 								<span style={{ fg: colors().textMuted }}>{segment.text}</span>
 							)
 						default:
-							return <span style={{ fg: colors().text }}>{segment.text}</span>
+							return (
+								<span
+									style={{
+										fg: colors().text,
+										attributes: props.bold ? TextAttributes.BOLD : undefined,
+									}}
+								>
+									{segment.text}
+								</span>
+							)
 					}
 				}}
 			</For>
 		</text>
 	)
+}
+
+function ConfirmDialogContent(props: {
+	message: string | StyledSegment[]
+	onResolve: (confirmed: boolean) => void
+}) {
+	useKeyboard((evt) => {
+		if (evt.name === "y" || evt.name === "return") {
+			evt.preventDefault()
+			evt.stopPropagation()
+			props.onResolve(true)
+		} else if (evt.name === "n" || evt.name === "escape") {
+			evt.preventDefault()
+			evt.stopPropagation()
+			props.onResolve(false)
+		}
+	})
+
+	return <StyledText content={props.message} bold />
 }
 
 export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
@@ -133,7 +161,7 @@ export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
 					id?: string
 					onClose?: () => void
 					hints?: DialogHint[]
-					title?: string
+					title?: string | StyledSegment[]
 					width?: Dimension
 					maxWidth?: number
 				},
@@ -158,7 +186,7 @@ export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
 				options?: {
 					onClose?: () => void
 					hints?: DialogHint[]
-					title?: string
+					title?: string | StyledSegment[]
 					width?: Dimension
 					maxWidth?: number
 				},
@@ -308,7 +336,7 @@ function DialogBackdrop(props: { onClose: () => void; children: JSX.Element }) {
 				flexDirection="column"
 				width={dialog.width() ?? "50%"}
 				maxWidth={dialog.maxWidth()}
-				backgroundColor={colors().backgroundDialog}
+				backgroundColor={colors().background}
 				paddingLeft={2}
 				paddingRight={2}
 				paddingTop={1}
@@ -316,9 +344,9 @@ function DialogBackdrop(props: { onClose: () => void; children: JSX.Element }) {
 				gap={1}
 			>
 				<Show when={dialog.title()}>
-					<text fg={colors().text} attributes={TextAttributes.BOLD}>
-						{dialog.title()}
-					</text>
+					{(title: () => string | StyledSegment[]) => (
+						<StyledText content={title()} bold />
+					)}
 				</Show>
 				{props.children}
 				<DialogHints hints={dialog.hints()} />

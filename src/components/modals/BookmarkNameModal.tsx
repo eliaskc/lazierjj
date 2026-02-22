@@ -23,7 +23,7 @@ interface BookmarkNameModalProps {
 
 export function BookmarkNameModal(props: BookmarkNameModalProps) {
 	const dialog = useDialog()
-	const { colors, style } = useTheme()
+	const { colors } = useTheme()
 
 	const hasRevisionPicker = () => (props.commits?.length ?? 0) > 0
 
@@ -106,42 +106,39 @@ export function BookmarkNameModal(props: BookmarkNameModalProps) {
 
 	const pickerHeight = () => props.height ?? 10
 
-	const sectionBorderColor = (field: "name" | "picker") =>
+	const labelColor = (field: "name" | "picker") =>
 		focusedField() === field || (!hasRevisionPicker() && field === "name")
-			? colors().borderFocused
-			: colors().border
+			? colors().text
+			: colors().textMuted
 
 	return (
-		<box flexDirection="column" gap={0}>
-			<box
-				flexDirection="column"
-				border
-				borderStyle={style().panel.borderStyle}
-				borderColor={sectionBorderColor("name")}
-				height={3}
-			>
-				<textarea
-					ref={(r) => {
-						inputRef = r
-					}}
-					initialValue={props.initialValue ?? ""}
-					placeholder={generatedName()}
-					onContentChange={() => {
-						if (inputRef) {
-							setName(inputRef.plainText)
-							setError(null)
-						}
-					}}
-					onSubmit={handleSave}
-					keyBindings={SINGLE_LINE_KEYBINDINGS}
-					wrapMode="none"
-					scrollMargin={0}
-					cursorColor={colors().primary}
-					textColor={colors().text}
-					focusedTextColor={colors().text}
-					focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
-					flexGrow={1}
-				/>
+		<box flexDirection="column" gap={1}>
+			<box flexDirection="column" gap={1}>
+				<text fg={labelColor("name")}>Name</text>
+				<box backgroundColor={colors().backgroundDialog} padding={1} height={3}>
+					<textarea
+						ref={(r) => {
+							inputRef = r
+						}}
+						initialValue={props.initialValue ?? ""}
+						placeholder={generatedName()}
+						onContentChange={() => {
+							if (inputRef) {
+								setName(inputRef.plainText)
+								setError(null)
+							}
+						}}
+						onSubmit={handleSave}
+						keyBindings={SINGLE_LINE_KEYBINDINGS}
+						wrapMode="none"
+						scrollMargin={0}
+						cursorColor={colors().primary}
+						textColor={colors().text}
+						focusedTextColor={colors().text}
+						focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
+						flexGrow={1}
+					/>
+				</box>
 			</box>
 
 			<Show when={error()}>
@@ -149,20 +146,21 @@ export function BookmarkNameModal(props: BookmarkNameModalProps) {
 			</Show>
 
 			<Show when={hasRevisionPicker()}>
-				<box
-					flexDirection="column"
-					border
-					borderStyle={style().panel.borderStyle}
-					borderColor={sectionBorderColor("picker")}
-					height={pickerHeight()}
-				>
-					<RevisionPicker
-						commits={props.commits ?? []}
-						defaultRevision={props.defaultRevision}
-						focused={focusedField() === "picker"}
-						onSelect={handleRevisionSelect}
-						height={pickerHeight() - 2}
-					/>
+				<box flexDirection="column" gap={1}>
+					<text fg={labelColor("picker")}>Revision</text>
+					<box
+						backgroundColor={colors().backgroundDialog}
+						padding={1}
+						height={pickerHeight() + 2}
+					>
+						<RevisionPicker
+							commits={props.commits ?? []}
+							defaultRevision={props.defaultRevision}
+							focused={focusedField() === "picker"}
+							onSelect={handleRevisionSelect}
+							height={pickerHeight()}
+						/>
+					</box>
 				</box>
 			</Show>
 		</box>
