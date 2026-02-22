@@ -31,7 +31,7 @@ import {
 import { getRevisionId } from "../../commander/types"
 import { useCommand } from "../../context/command"
 import { useCommandLog } from "../../context/commandlog"
-import { useDialog } from "../../context/dialog"
+import { DIALOG_SIZE, useDialog } from "../../context/dialog"
 import { useDimmer } from "../../context/dimmer"
 import { useFocus } from "../../context/focus"
 import { useKeybind } from "../../context/keybind"
@@ -126,7 +126,7 @@ export function BookmarksPanel() {
 
 		if (needsPush) {
 			const confirmed = await dialog.confirm({
-				maxWidth: 64,
+				...DIALOG_SIZE.confirmWide,
 				message: [
 					"Bookmark ",
 					{ text: bookmark.name, style: "target" },
@@ -621,7 +621,7 @@ export function BookmarksPanel() {
 				const result = await jjEdit(bookmark.name)
 				if (isImmutableError(result)) {
 					const confirmed = await dialog.confirm({
-						maxWidth: 44,
+						...DIALOG_SIZE.confirm,
 						message: [
 							{ text: bookmark.name, style: "target" },
 							" is immutable. ",
@@ -678,7 +678,6 @@ export function BookmarksPanel() {
 				dialog.open(
 					() => (
 						<BookmarkNameModal
-							title="Create Bookmark"
 							commits={commits()}
 							defaultRevision={
 								workingCopy ? getRevisionId(workingCopy) : undefined
@@ -693,8 +692,7 @@ export function BookmarksPanel() {
 					{
 						id: "bookmark-create",
 						title: "Create Bookmark",
-						width: "60%",
-						maxWidth: 90,
+						...DIALOG_SIZE.form,
 						hints: [
 							{ key: "tab", label: "switch field" },
 							{ key: "enter", label: "save" },
@@ -717,7 +715,7 @@ export function BookmarksPanel() {
 				const currentIndex = selectedBookmarkIndex()
 				const totalBookmarks = localBookmarks().length
 				const confirmed = await dialog.confirm({
-					maxWidth: 42,
+					...DIALOG_SIZE.confirm,
 					message: [
 						{ text: "Delete", style: "action" },
 						" bookmark ",
@@ -750,7 +748,6 @@ export function BookmarksPanel() {
 				dialog.open(
 					() => (
 						<BookmarkNameModal
-							title="Rename Bookmark"
 							initialValue={bookmark.name}
 							onSave={(newName) => {
 								runOperation("Renaming bookmark...", () =>
@@ -766,8 +763,7 @@ export function BookmarksPanel() {
 							" ",
 							{ text: bookmark.name, style: "target" },
 						],
-						width: "60%",
-						maxWidth: 90,
+						...DIALOG_SIZE.form,
 						hints: [{ key: "enter", label: "save" }],
 					},
 				)
@@ -786,7 +782,7 @@ export function BookmarksPanel() {
 				const bookmark = selectedBookmark()
 				if (!bookmark) return
 				const confirmed = await dialog.confirm({
-					maxWidth: 46,
+					...DIALOG_SIZE.confirm,
 					message: [
 						{ text: "Forget", style: "action" },
 						" bookmark ",
@@ -834,8 +830,7 @@ export function BookmarksPanel() {
 							{ text: bookmark.name, style: "target" },
 							" to",
 						],
-						width: "60%",
-						maxWidth: 90,
+						...DIALOG_SIZE.form,
 						hints: [{ key: "enter", label: "confirm" }],
 					},
 				)

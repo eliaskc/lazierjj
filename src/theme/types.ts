@@ -28,9 +28,6 @@ export interface ThemeColors {
 	orange: string
 	green: string
 
-	backgroundDialog: string
-
-	titleBar: string
 	titleBarFocused: string
 	titleTextFocused: string
 	titleTextMuted: string

@@ -8,8 +8,6 @@ export const lazygitTheme: Theme = {
 		background: "#0a0a0a",
 		backgroundSecondary: "#141414",
 		backgroundElement: "#1e1e1e",
-		backgroundDialog: "#1a1a2e",
-
 		text: "#bfbdb6",
 		textMuted: "#808080",
 
@@ -28,7 +26,6 @@ export const lazygitTheme: Theme = {
 		orange: "#d19a66",
 		green: "#7FD962",
 
-		titleBar: "#282828",
 		titleBarFocused: "#7FD962",
 		titleTextFocused: "#0a0a0a",
 		titleTextMuted: "#2a5a20",

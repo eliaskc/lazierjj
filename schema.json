@@ -18,7 +18,7 @@
 					"default": "lazygit",
 					"description": "Color theme",
 					"type": "string",
-					"enum": ["lazygit", "opencode", "frost"]
+					"enum": ["lazygit", "opencode"]
 				},
 				"showFileTree": {
 					"default": true,

@@ -12,7 +12,6 @@ const SINGLE_LINE_KEYBINDINGS = [
 ]
 
 interface BookmarkNameModalProps {
-	title: string
 	commits?: Commit[]
 	defaultRevision?: string
 	initialValue?: string

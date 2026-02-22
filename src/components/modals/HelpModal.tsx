@@ -5,6 +5,16 @@ import {
 } from "@opentui/core"
 import { useKeyboard } from "@opentui/solid"
 
+const HELP_COLUMN_WIDTH = 32
+const HELP_SCROLLBAR_GUTTER = 2
+
+export function helpContentWidth(columns: number) {
+	const colGap = columns === 3 ? 4 : 2
+	return (
+		columns * HELP_COLUMN_WIDTH + (columns - 1) * colGap + HELP_SCROLLBAR_GUTTER
+	)
+}
+
 const SINGLE_LINE_KEYBINDINGS = [
 	{ name: "return", action: "submit" as const },
 	{ name: "enter", action: "submit" as const },
@@ -381,13 +391,8 @@ export function HelpModal() {
 
 	const isMatched = (cmd: CommandOption) => matchedIds().has(cmd.id)
 	const isSelected = (cmd: CommandOption) => selectedCommand()?.id === cmd.id
-	const columnWidth = 32
 	const columnGap = () => (columnCount() === 3 ? 4 : 2)
-	const scrollbarGutter = 2
-	const modalWidth = () =>
-		columnCount() * columnWidth +
-		(columnCount() - 1) * columnGap() +
-		scrollbarGutter
+	const modalWidth = () => helpContentWidth(columnCount())
 
 	return (
 		<box flexDirection="column" width={modalWidth()} height="80%">
@@ -425,7 +430,7 @@ export function HelpModal() {
 				<box
 					flexDirection="row"
 					gap={columnGap()}
-					paddingRight={scrollbarGutter}
+					paddingRight={HELP_SCROLLBAR_GUTTER}
 				>
 					<For each={filteredColumns()}>
 						{(column) => (

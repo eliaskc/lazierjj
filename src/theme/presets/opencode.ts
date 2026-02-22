@@ -8,8 +8,6 @@ export const opencodeTheme: Theme = {
 		background: "#0a0a0a",
 		backgroundSecondary: "#141414",
 		backgroundElement: "#1e1e1e",
-		backgroundDialog: "#1a1a2e",
-
 		text: "#eeeeee",
 		textMuted: "#808080",
 
@@ -28,7 +26,6 @@ export const opencodeTheme: Theme = {
 		orange: "#f5a742",
 		green: "#7fd88f",
 
-		titleBar: "#1e1e1e",
 		titleBarFocused: "#fab283",
 		titleTextFocused: "#0a0a0a",
 		titleTextMuted: "#6b4a30",

@@ -4,7 +4,7 @@ const SCHEMA_URL = "https://kajji.sh/schema.json"
 
 export const UiSchema = z.object({
 	theme: z
-		.enum(["lazygit", "opencode", "frost"])
+		.enum(["lazygit", "opencode"])
 		.default("lazygit")
 		.describe("Color theme"),
 	showFileTree: z

@@ -20,6 +20,20 @@ export interface DialogHint {
 
 type Dimension = number | "auto" | `${number}%`
 
+export interface DialogSize {
+	width?: Dimension
+	maxWidth?: number
+}
+
+export const DIALOG_SIZE = {
+	confirm: { maxWidth: 48 } satisfies DialogSize,
+	confirmWide: { maxWidth: 64 } satisfies DialogSize,
+	confirmExtraWide: { maxWidth: 80 } satisfies DialogSize,
+	form: { width: "60%" as Dimension, maxWidth: 90 } satisfies DialogSize,
+	describe: { width: "80%" as Dimension, maxWidth: 64 } satisfies DialogSize,
+	picker: { width: "90%" as Dimension, maxWidth: 100 } satisfies DialogSize,
+} as const
+
 interface DialogState {
 	id?: string
 	render: () => JSX.Element
@@ -306,7 +320,7 @@ function DialogHints(props: { hints: DialogHint[] }) {
 	)
 }
 
-function DialogBackdrop(props: { onClose: () => void; children: JSX.Element }) {
+function DialogBackdrop(props: { children: JSX.Element }) {
 	const renderer = useRenderer()
 	const { colors, style } = useTheme()
 	const dialog = useDialog()
@@ -369,9 +383,7 @@ export function DialogContainer(props: ParentProps) {
 		<box flexGrow={1} width="100%" height="100%">
 			{props.children}
 			<Show when={dialog.isOpen()}>
-				<DialogBackdrop onClose={dialog.close}>
-					{dialog.current()?.render()}
-				</DialogBackdrop>
+				<DialogBackdrop>{dialog.current()?.render()}</DialogBackdrop>
 			</Show>
 		</box>
 	)
