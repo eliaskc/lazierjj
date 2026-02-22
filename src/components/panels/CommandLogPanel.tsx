@@ -67,7 +67,8 @@ export function CommandLogPanel() {
 	])
 
 	const titleColor = () =>
-		isFocused() ? colors().borderFocused : colors().textMuted
+		isFocused() ? colors().titleTextFocused : colors().textMuted
+	const titleBg = () => (isFocused() ? colors().titleBarFocused : undefined)
 
 	return (
 		<box
@@ -81,7 +82,7 @@ export function CommandLogPanel() {
 				flexDirection="row"
 				height={1}
 				flexShrink={0}
-				backgroundColor={isFocused() ? colors().titleBar : undefined}
+				backgroundColor={titleBg()}
 			>
 				<text fg={titleColor()}>4 Command log</text>
 			</box>

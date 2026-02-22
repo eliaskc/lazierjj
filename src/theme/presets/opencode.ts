@@ -16,8 +16,8 @@ export const opencodeTheme: Theme = {
 		border: "#808080",
 		borderFocused: "#eeeeee",
 
-		selectionBackground: "#1e1e1e",
-		selectionText: "#fab283",
+		selectionBackground: "#0A1D4D",
+		selectionText: "#ffffff",
 
 		success: "#12c905",
 		warning: "#fcd53a",
@@ -29,6 +29,8 @@ export const opencodeTheme: Theme = {
 		green: "#7fd88f",
 
 		titleBar: "#1e1e1e",
+		titleBarFocused: "#fab283",
+		titleTextFocused: "#0a0a0a",
 
 		scrollbarTrack: "#1e1e1e",
 		scrollbarThumb: "#484848",

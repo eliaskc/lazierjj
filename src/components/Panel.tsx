@@ -72,10 +72,9 @@ export function Panel(props: PanelProps) {
 		typeof content === "function" ? content() : content
 
 	const renderTitle = () => {
+		const titleBg = () => (props.focused ? colors().titleBarFocused : undefined)
 		const titleColor = () =>
-			props.focused ? colors().borderFocused : colors().textMuted
-
-		const titleBg = () => (props.focused ? colors().titleBar : undefined)
+			props.focused ? colors().titleTextFocused : colors().textMuted
 
 		if (hasTabs()) {
 			return (

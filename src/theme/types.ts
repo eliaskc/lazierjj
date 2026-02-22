@@ -31,6 +31,8 @@ export interface ThemeColors {
 	backgroundDialog: string
 
 	titleBar: string
+	titleBarFocused: string
+	titleTextFocused: string
 
 	scrollbarTrack: string
 	scrollbarThumb: string

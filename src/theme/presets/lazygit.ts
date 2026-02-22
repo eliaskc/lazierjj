@@ -29,6 +29,8 @@ export const lazygitTheme: Theme = {
 		green: "#7FD962",
 
 		titleBar: "#282828",
+		titleBarFocused: "#7FD962",
+		titleTextFocused: "#0a0a0a",
 
 		scrollbarTrack: "#303030",
 		scrollbarThumb: "#606060",

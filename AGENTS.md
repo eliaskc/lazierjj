@@ -81,7 +81,7 @@ This project uses Solid.js, NOT React. Key differences:
 - **Components**: `src/components/` - TUI components (panels, modals)
 - **Context**: `src/context/` - SolidJS context providers (state management)
 - **Keybind**: `src/keybind/` - Keybind registry and parser
-- **Theme**: `src/theme/` - Theme definitions and presets (lazygit, opencode)
+- **Theme**: `src/theme/` - Theme definitions and presets (lazygit, opencode, frost)
 - **Utils**: `src/utils/` - Shared utilities (file tree, double-click detection)
 - **Docs**: `docs/` - specs, design notes, OpenTUI reference
 

@@ -1,6 +1,7 @@
 import { useRenderer } from "@opentui/solid"
 import { type Accessor, createEffect, createSignal } from "solid-js"
 import { readConfig } from "../config"
+import { frostTheme } from "../theme/presets/frost"
 import { lazygitTheme } from "../theme/presets/lazygit"
 import { opencodeTheme } from "../theme/presets/opencode"
 import type { Theme, ThemeColors, ThemeStyle } from "../theme/types"
@@ -9,6 +10,7 @@ import { createSimpleContext } from "./helper"
 const themes = {
 	lazygit: lazygitTheme,
 	opencode: opencodeTheme,
+	frost: frostTheme,
 }
 
 type ThemeName = keyof typeof themes

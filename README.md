@@ -122,7 +122,7 @@ Kajji reads JSONC config from `~/.config/kajji/config.json` (comments and traili
 {
   "$schema": "https://kajji.sh/schema.json",
   "ui": {
-    "theme": "lazygit",       // "lazygit" | "opencode"
+    "theme": "lazygit",       // "lazygit" | "opencode" | "frost"
     "showFileTree": true
   },
   "diff": {
