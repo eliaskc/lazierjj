@@ -384,13 +384,7 @@ export function HelpModal() {
 
 	return (
 		<box flexDirection="column" flexGrow={1} height="100%">
-			<box
-				flexDirection="row"
-				marginBottom={1}
-				backgroundColor={colors().backgroundDialog}
-				padding={1}
-				height={3}
-			>
+			<box marginBottom={1}>
 				<textarea
 					ref={(r) => {
 						searchInputRef = r
@@ -407,6 +401,7 @@ export function HelpModal() {
 					wrapMode="none"
 					scrollMargin={0}
 					placeholder="Search"
+					placeholderColor={colors().textMuted}
 					flexGrow={1}
 					cursorColor={colors().primary}
 					textColor={colors().textMuted}

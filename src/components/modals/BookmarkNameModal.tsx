@@ -106,62 +106,44 @@ export function BookmarkNameModal(props: BookmarkNameModalProps) {
 
 	const pickerHeight = () => props.height ?? 10
 
-	const labelColor = (field: "name" | "picker") =>
-		focusedField() === field || (!hasRevisionPicker() && field === "name")
-			? colors().text
-			: colors().textMuted
-
 	return (
 		<box flexDirection="column" gap={1}>
-			<box flexDirection="column" gap={1}>
-				<text fg={labelColor("name")}>Name</text>
-				<box backgroundColor={colors().backgroundDialog} padding={1} height={3}>
-					<textarea
-						ref={(r) => {
-							inputRef = r
-						}}
-						initialValue={props.initialValue ?? ""}
-						placeholder={generatedName()}
-						onContentChange={() => {
-							if (inputRef) {
-								setName(inputRef.plainText)
-								setError(null)
-							}
-						}}
-						onSubmit={handleSave}
-						keyBindings={SINGLE_LINE_KEYBINDINGS}
-						wrapMode="none"
-						scrollMargin={0}
-						cursorColor={colors().primary}
-						textColor={colors().text}
-						focusedTextColor={colors().text}
-						focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
-						flexGrow={1}
-					/>
-				</box>
-			</box>
+			<textarea
+				ref={(r) => {
+					inputRef = r
+				}}
+				initialValue={props.initialValue ?? ""}
+				placeholder={generatedName() || "Name"}
+				placeholderColor={colors().textMuted}
+				onContentChange={() => {
+					if (inputRef) {
+						setName(inputRef.plainText)
+						setError(null)
+					}
+				}}
+				onSubmit={handleSave}
+				keyBindings={SINGLE_LINE_KEYBINDINGS}
+				wrapMode="none"
+				scrollMargin={0}
+				cursorColor={colors().primary}
+				textColor={colors().text}
+				focusedTextColor={colors().text}
+				focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
+				flexGrow={1}
+			/>
 
 			<Show when={error()}>
 				<text fg={colors().error}>{error()}</text>
 			</Show>
 
 			<Show when={hasRevisionPicker()}>
-				<box flexDirection="column" gap={1}>
-					<text fg={labelColor("picker")}>Revision</text>
-					<box
-						backgroundColor={colors().backgroundDialog}
-						padding={1}
-						height={pickerHeight() + 2}
-					>
-						<RevisionPicker
-							commits={props.commits ?? []}
-							defaultRevision={props.defaultRevision}
-							focused={focusedField() === "picker"}
-							onSelect={handleRevisionSelect}
-							height={pickerHeight()}
-						/>
-					</box>
-				</box>
+				<RevisionPicker
+					commits={props.commits ?? []}
+					defaultRevision={props.defaultRevision}
+					focused={focusedField() === "picker"}
+					onSelect={handleRevisionSelect}
+					height={pickerHeight()}
+				/>
 			</Show>
 		</box>
 	)

@@ -225,36 +225,35 @@ export function SetBookmarkModal(props: SetBookmarkModalProps) {
 
 	return (
 		<box flexDirection="column" gap={1}>
-			<box backgroundColor={colors().backgroundDialog} padding={1} height={3}>
-				<textarea
-					ref={(r) => {
-						inputRef = r
-						queueMicrotask(() => {
-							r.requestRender?.()
-							r.focus()
-						})
-					}}
-					initialValue=""
-					placeholder={placeholder()}
-					onContentChange={() => {
-						if (inputRef) {
-							setQuery(inputRef.plainText)
-							setError(null)
-							const nextIndex = firstSelectableIndex()
-							setSelectedIndex(nextIndex >= 0 ? nextIndex : 0)
-						}
-					}}
-					onSubmit={handleSubmit}
-					keyBindings={SINGLE_LINE_KEYBINDINGS}
-					wrapMode="none"
-					scrollMargin={0}
-					cursorColor={colors().primary}
-					textColor={colors().text}
-					focusedTextColor={colors().text}
-					focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
-					flexGrow={1}
-				/>
-			</box>
+			<textarea
+				ref={(r) => {
+					inputRef = r
+					queueMicrotask(() => {
+						r.requestRender?.()
+						r.focus()
+					})
+				}}
+				initialValue=""
+				placeholder={placeholder()}
+				placeholderColor={colors().textMuted}
+				onContentChange={() => {
+					if (inputRef) {
+						setQuery(inputRef.plainText)
+						setError(null)
+						const nextIndex = firstSelectableIndex()
+						setSelectedIndex(nextIndex >= 0 ? nextIndex : 0)
+					}
+				}}
+				onSubmit={handleSubmit}
+				keyBindings={SINGLE_LINE_KEYBINDINGS}
+				wrapMode="none"
+				scrollMargin={0}
+				cursorColor={colors().primary}
+				textColor={colors().text}
+				focusedTextColor={colors().text}
+				focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
+				flexGrow={1}
+			/>
 
 			<Show
 				when={!showPlaceholderText()}
