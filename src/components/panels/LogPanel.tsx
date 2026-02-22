@@ -493,6 +493,7 @@ export function LogPanel() {
 		if (needsPush) {
 			if (options?.confirmPush !== false) {
 				const confirmed = await dialog.confirm({
+					maxWidth: 64,
 					message: [
 						"Bookmark ",
 						{ text: bookmark.name, style: "target" },
@@ -1046,6 +1047,7 @@ export function LogPanel() {
 				const result = await jjEdit(revId)
 				if (isImmutableError(result)) {
 					const confirmed = await dialog.confirm({
+						maxWidth: 44,
 						message: [
 							{ text: commit.changeId.slice(0, 8), style: "target" },
 							" is immutable. ",
@@ -1103,6 +1105,7 @@ export function LogPanel() {
 									let ignoreImmutable = false
 									if (commit.immutable) {
 										const confirmed = await dialog.confirm({
+											maxWidth: 44,
 											message: [
 												{ text: commit.changeId.slice(0, 8), style: "target" },
 												" is immutable. ",
@@ -1137,6 +1140,7 @@ export function LogPanel() {
 									})
 									if (isImmutableError(result)) {
 										const confirmed = await dialog.confirm({
+											maxWidth: 48,
 											message: [
 												"Target ",
 												{ text: target.slice(0, 8), style: "target" },
@@ -1174,8 +1178,8 @@ export function LogPanel() {
 							{ text: commit.changeId.slice(0, 8), style: "target" },
 							" into",
 						],
-						width: "80%",
-						maxWidth: 120,
+						width: "90%",
+						maxWidth: 100,
 						hints: [
 							{ key: "u", label: "use dest msg" },
 							{ key: "K", label: "keep emptied" },
@@ -1211,6 +1215,7 @@ export function LogPanel() {
 								})
 								if (isImmutableError(result)) {
 									const confirmed = await dialog.confirm({
+										maxWidth: 48,
 										message: [
 											"Target ",
 											{ text: destination.slice(0, 8), style: "target" },
@@ -1247,8 +1252,8 @@ export function LogPanel() {
 							{ text: commit.changeId.slice(0, 8), style: "target" },
 							" onto",
 						],
-						width: "80%",
-						maxWidth: 120,
+						width: "90%",
+						maxWidth: 100,
 						hints: [
 							{ key: "s", label: "descendants" },
 							{ key: "b", label: "branch" },
@@ -1275,6 +1280,7 @@ export function LogPanel() {
 
 				if (commit.empty) {
 					await dialog.confirm({
+						maxWidth: 44,
 						message: [
 							"Cannot ",
 							{ text: "split", style: "action" },
@@ -1288,6 +1294,7 @@ export function LogPanel() {
 				let ignoreImmutable = false
 				if (commit.immutable) {
 					const confirmed = await dialog.confirm({
+						maxWidth: 44,
 						message: [
 							{ text: commit.changeId.slice(0, 8), style: "target" },
 							" is immutable. ",
@@ -1323,6 +1330,7 @@ export function LogPanel() {
 				let ignoreImmutable = false
 				if (commit.immutable) {
 					const confirmed = await dialog.confirm({
+						maxWidth: 44,
 						message: [
 							{ text: commit.changeId.slice(0, 8), style: "target" },
 							" is immutable. ",
@@ -1356,8 +1364,8 @@ export function LogPanel() {
 							" ",
 							{ text: commit.changeId.slice(0, 8), style: "target" },
 						],
-						width: "60%",
-						maxWidth: 90,
+						width: "80%",
+						maxWidth: 64,
 						hints: [
 							{ key: "tab", label: "switch field" },
 							{ key: "enter", label: "save" },
@@ -1399,6 +1407,7 @@ export function LogPanel() {
 				const commit = selectedCommit()
 				if (!commit) return
 				const confirmed = await dialog.confirm({
+					maxWidth: 42,
 					message: [
 						{ text: "Abandon", style: "action" },
 						" change ",
@@ -1411,6 +1420,7 @@ export function LogPanel() {
 				const result = await jjAbandon(revId)
 				if (isImmutableError(result)) {
 					const immutableConfirmed = await dialog.confirm({
+						maxWidth: 44,
 						message: [
 							{ text: commit.changeId.slice(0, 8), style: "target" },
 							" is immutable. ",
@@ -1628,6 +1638,7 @@ export function LogPanel() {
 				const node = file.node
 				const pathType = node.isDirectory ? "folder" : "file"
 				const confirmed = await dialog.confirm({
+					maxWidth: 80,
 					message: [
 						{ text: "Restore", style: "action" },
 						` ${pathType} `,

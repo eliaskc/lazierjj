@@ -36,6 +36,8 @@ export type StyledSegment =
 
 interface ConfirmOptions {
 	message: string | StyledSegment[]
+	width?: Dimension
+	maxWidth?: number
 }
 
 function StyledText(props: {
@@ -224,6 +226,8 @@ export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
 						),
 						{
 							id: "confirm-dialog",
+							width: options.width,
+							maxWidth: options.maxWidth,
 							hints: [
 								{ key: "y", label: "confirm" },
 								{ key: "n", label: "cancel" },

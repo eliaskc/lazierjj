@@ -126,6 +126,7 @@ export function BookmarksPanel() {
 
 		if (needsPush) {
 			const confirmed = await dialog.confirm({
+				maxWidth: 64,
 				message: [
 					"Bookmark ",
 					{ text: bookmark.name, style: "target" },
@@ -620,6 +621,7 @@ export function BookmarksPanel() {
 				const result = await jjEdit(bookmark.name)
 				if (isImmutableError(result)) {
 					const confirmed = await dialog.confirm({
+						maxWidth: 44,
 						message: [
 							{ text: bookmark.name, style: "target" },
 							" is immutable. ",
@@ -715,6 +717,7 @@ export function BookmarksPanel() {
 				const currentIndex = selectedBookmarkIndex()
 				const totalBookmarks = localBookmarks().length
 				const confirmed = await dialog.confirm({
+					maxWidth: 42,
 					message: [
 						{ text: "Delete", style: "action" },
 						" bookmark ",
@@ -783,6 +786,7 @@ export function BookmarksPanel() {
 				const bookmark = selectedBookmark()
 				if (!bookmark) return
 				const confirmed = await dialog.confirm({
+					maxWidth: 46,
 					message: [
 						{ text: "Forget", style: "action" },
 						" bookmark ",
