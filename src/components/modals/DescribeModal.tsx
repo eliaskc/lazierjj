@@ -63,21 +63,15 @@ export function DescribeModal(props: DescribeModalProps) {
 
 	const charCount = () => subject().length
 
-	const labelColor = (field: "subject" | "body") =>
-		focusedField() === field ? colors().text : colors().textMuted
-
 	return (
 		<box flexDirection="column" gap={1}>
-			<box flexDirection="column" gap={1}>
-				<text fg={labelColor("subject")}>
-					Subject{" "}
-					<span style={{ fg: colors().textMuted }}>[{charCount()}]</span>
-				</text>
+			<box position="relative">
 				<input
 					ref={(r) => {
 						subjectRef = r
 					}}
 					value={props.initialSubject}
+					placeholder="Subject"
 					onContentChange={() => {
 						if (subjectRef) setSubject(subjectRef.plainText)
 					}}
@@ -88,31 +82,27 @@ export function DescribeModal(props: DescribeModalProps) {
 					focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
 					width="100%"
 				/>
-			</box>
-
-			<box flexDirection="column" flexGrow={1} gap={1}>
-				<text fg={labelColor("body")}>Body</text>
-				<box
-					backgroundColor={colors().backgroundDialog}
-					padding={1}
-					height={10}
-				>
-					<textarea
-						ref={(r) => {
-							bodyRef = r
-						}}
-						initialValue={props.initialBody}
-						onContentChange={() => {
-							if (bodyRef) setBody(bodyRef.plainText)
-						}}
-						cursorColor={colors().primary}
-						textColor={colors().text}
-						focusedTextColor={colors().text}
-						focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
-						flexGrow={1}
-					/>
+				<box position="absolute" right={0} top={0}>
+					<text fg={colors().textMuted}>{charCount()}</text>
 				</box>
 			</box>
+
+			<textarea
+				ref={(r) => {
+					bodyRef = r
+				}}
+				initialValue={props.initialBody}
+				placeholder="Body"
+				onContentChange={() => {
+					if (bodyRef) setBody(bodyRef.plainText)
+				}}
+				cursorColor={colors().primary}
+				textColor={colors().text}
+				focusedTextColor={colors().text}
+				focusedBackgroundColor={RGBA.fromInts(0, 0, 0, 0)}
+				flexGrow={1}
+				height={8}
+			/>
 		</box>
 	)
 }
