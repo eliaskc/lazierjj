@@ -98,23 +98,25 @@ export function CommandLogPanel() {
 					},
 				}}
 			>
-				<Show
-					when={commandLog.entries().length > 0}
-					fallback={
-						<text fg={colors().textMuted}>No commands executed yet</text>
-					}
-				>
-					<For each={commandLog.entries()}>
-						{(entry) => (
-							<box flexDirection="column">
-								<text fg={colors().textMuted}>$ {entry.command}</text>
-								<text fg={entry.success ? colors().success : colors().error}>
-									{entry.output}
-								</text>
-							</box>
-						)}
-					</For>
-				</Show>
+				<box flexDirection="column" paddingRight={1}>
+					<Show
+						when={commandLog.entries().length > 0}
+						fallback={
+							<text fg={colors().textMuted}>No commands executed yet</text>
+						}
+					>
+						<For each={commandLog.entries()}>
+							{(entry) => (
+								<box flexDirection="column">
+									<text fg={colors().textMuted}>$ {entry.command}</text>
+									<text fg={entry.success ? colors().success : colors().error}>
+										{entry.output}
+									</text>
+								</box>
+							)}
+						</For>
+					</Show>
+				</box>
 			</scrollbox>
 		</box>
 	)
