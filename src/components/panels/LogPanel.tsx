@@ -1195,10 +1195,10 @@ export function LogPanel() {
 						],
 						...DIALOG_SIZE.picker,
 						hints: [
-							{ key: "u", label: "use dest msg" },
-							{ key: "K", label: "keep emptied" },
-							{ key: "i", label: "interactive" },
-							{ key: "enter", label: "squash" },
+							{ key: "u", label: "--use-destination-message" },
+							{ key: "K", label: "--keep-emptied" },
+							{ key: "i", label: "--interactive" },
+							{ key: "enter", label: "run" },
 						],
 					},
 				)
@@ -1268,12 +1268,12 @@ export function LogPanel() {
 						],
 						...DIALOG_SIZE.picker,
 						hints: [
-							{ key: "s", label: "descendants" },
-							{ key: "b", label: "branch" },
-							{ key: "e", label: "skip emptied" },
-							{ key: "A", label: "insert after" },
-							{ key: "B", label: "insert before" },
-							{ key: "enter", label: "rebase" },
+							{ key: "s", label: "--source" },
+							{ key: "b", label: "--branch" },
+							{ key: "e", label: "--skip-emptied" },
+							{ key: "A", label: "--insert-after" },
+							{ key: "B", label: "--insert-before" },
+							{ key: "enter", label: "run" },
 						],
 					},
 				)
