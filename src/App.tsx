@@ -70,7 +70,7 @@ function AppContent() {
 	const commandLog = useCommandLog()
 	const globalLoading = useLoading()
 	const layout = useLayout()
-	const { colors, style, setTheme } = useTheme()
+	const { setTheme } = useTheme()
 	const [whatsNewChanges, setWhatsNewChanges] = createSignal<
 		VersionBlock[] | null
 	>(null)
@@ -137,7 +137,6 @@ function AppContent() {
 	}
 
 	onMount(() => {
-		setTheme(readConfig().ui.theme)
 		const unsubscribeConfig = onConfigChange((config) => {
 			setTheme(config.ui.theme)
 		})
