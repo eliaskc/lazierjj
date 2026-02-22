@@ -13,16 +13,9 @@ import { MainArea } from "./panels/MainArea"
 function VerticalDivider() {
 	const { colors } = useTheme()
 	return (
-		<box
-			flexDirection="row"
-			paddingLeft={1}
-			paddingRight={1}
-			paddingTop={1}
-			paddingBottom={1}
-			overflow="hidden"
-		>
+		<box flexDirection="row" paddingLeft={1} paddingRight={1} overflow="hidden">
 			<box width={1} overflow="hidden">
-				<text fg={colors().scrollbarThumb}>{"│\n".repeat(300)}</text>
+				<text fg={colors().backgroundElement}>{"│\n".repeat(300)}</text>
 			</box>
 		</box>
 	)
@@ -31,12 +24,8 @@ function VerticalDivider() {
 function HorizontalDivider() {
 	const { colors } = useTheme()
 	return (
-		<box flexDirection="column" overflow="hidden">
-			<box height={1} flexShrink={0} />
-			<box height={1} paddingLeft={1} paddingRight={1} overflow="hidden">
-				<text fg={colors().scrollbarThumb}>{"─".repeat(500)}</text>
-			</box>
-			<box height={1} flexShrink={0} />
+		<box height={1} overflow="hidden">
+			<text fg={colors().backgroundElement}>{"─".repeat(500)}</text>
 		</box>
 	)
 }
