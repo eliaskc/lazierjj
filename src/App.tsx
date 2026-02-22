@@ -270,12 +270,11 @@ function AppContent() {
 			context: "global",
 			type: "action",
 			onSelect: () => {
-				const cols = layout.helpModalColumns()
 				const dialogPadding = 4
-				const width = helpContentWidth(cols) + dialogPadding
 				dialog.toggle("help", () => <HelpModal />, {
 					title: "Commands",
-					width,
+					width: () =>
+						helpContentWidth(layout.helpModalColumns()) + dialogPadding,
 					hints: [{ key: "enter", label: "execute" }],
 				})
 			},

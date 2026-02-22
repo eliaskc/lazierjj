@@ -34,13 +34,15 @@ export const DIALOG_SIZE = {
 	picker: { width: "90%" as Dimension, maxWidth: 100 } satisfies DialogSize,
 } as const
 
+type DimensionOrAccessor = Dimension | (() => Dimension)
+
 interface DialogState {
 	id?: string
 	render: () => JSX.Element
 	onClose?: () => void
 	hints?: DialogHint[]
 	title?: string | StyledSegment[]
-	width?: Dimension
+	width?: DimensionOrAccessor
 	maxWidth?: number
 }
 
@@ -178,7 +180,7 @@ export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
 					onClose?: () => void
 					hints?: DialogHint[]
 					title?: string | StyledSegment[]
-					width?: Dimension
+					width?: DimensionOrAccessor
 					maxWidth?: number
 				},
 			) => {
@@ -203,7 +205,7 @@ export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
 					onClose?: () => void
 					hints?: DialogHint[]
 					title?: string | StyledSegment[]
-					width?: Dimension
+					width?: DimensionOrAccessor
 					maxWidth?: number
 				},
 			) => {
@@ -257,12 +259,17 @@ export const { use: useDialog, provider: DialogProvider } = createSimpleContext(
 				})
 			}
 
+			const resolveWidth = (
+				w: DimensionOrAccessor | undefined,
+			): Dimension | undefined => (typeof w === "function" ? w() : w)
+
 			return {
 				isOpen: () => stack().length > 0,
 				current: () => stack().at(-1),
 				hints: () => stack().at(-1)?.hints ?? [],
 				title: () => stack().at(-1)?.title,
 				width: () => stack().at(-1)?.width,
+				resolvedWidth: () => resolveWidth(stack().at(-1)?.width) ?? "50%",
 				maxWidth: () => stack().at(-1)?.maxWidth,
 				setHints: (hints: DialogHint[]) => {
 					setStack((s) => {
@@ -355,7 +362,7 @@ function DialogBackdrop(props: { children: JSX.Element }) {
 		>
 			<box
 				flexDirection="column"
-				width={dialog.width() ?? "50%"}
+				width={dialog.resolvedWidth()}
 				maxWidth={dialog.maxWidth()}
 				backgroundColor={colors().background}
 				paddingLeft={2}
