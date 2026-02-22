@@ -1214,8 +1214,8 @@ export function LogPanel() {
 									const confirmed = await dialog.confirm({
 										...DIALOG_SIZE.confirm,
 										message: [
-											"Target ",
-											{ text: destination.slice(0, 8), style: "target" },
+											"Source ",
+											{ text: commit.changeId.slice(0, 8), style: "target" },
 											" is immutable. ",
 											{ text: "Rebase", style: "action" },
 											" anyway?",
