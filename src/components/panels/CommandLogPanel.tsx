@@ -85,7 +85,6 @@ export function CommandLogPanel() {
 			>
 				<text fg={titleColor()}>4 Command log</text>
 			</box>
-			<box height={1} flexShrink={0} />
 			<scrollbox
 				ref={scrollRef}
 				flexGrow={1}

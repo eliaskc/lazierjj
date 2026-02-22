@@ -145,7 +145,6 @@ export function Panel(props: PanelProps) {
 			onMouseDown={handleMouseDown}
 		>
 			{renderTitle()}
-			<box height={1} flexShrink={0} />
 			{props.children}
 		</box>
 	)
