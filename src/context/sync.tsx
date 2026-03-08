@@ -332,6 +332,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		let pollTimer: ReturnType<typeof setTimeout> | null = null
 		let isChecking = false
 		let isFocused = true
+		let disposed = false
 
 		const POLL_INTERVAL_FOCUSED = 2000
 		const POLL_INTERVAL_UNFOCUSED = 30000
@@ -405,21 +406,27 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		renderer.on("focus", handleFocus)
 		renderer.on("blur", handleBlur)
 
-		fetchRefreshState()
-			.then((state) => {
+		void (async () => {
+			try {
+				const state = await fetchRefreshState()
+				if (disposed) return
 				lastOpLogId = state.operationId
 				lastWorkingCopyCommitId = state.workingCopyCommitId
-			})
-			.catch((e) => {
+			} catch (e) {
+				if (disposed) return
 				// Propagate critical errors (like stale working copy)
 				if (e instanceof Error) {
 					setError(e.message)
 				}
-			})
-
-		schedulePoll()
+			} finally {
+				if (!disposed) {
+					schedulePoll()
+				}
+			}
+		})()
 
 		onCleanup(() => {
+			disposed = true
 			renderer.off("focus", handleFocus)
 			renderer.off("blur", handleBlur)
 			if (pollTimer) {
