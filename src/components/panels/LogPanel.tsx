@@ -895,6 +895,8 @@ export function LogPanel() {
 		} finally {
 			if (shouldSuspend) renderer.resume?.()
 		}
+
+		await refresh()
 	}
 
 	command.register(() => [
