@@ -70,6 +70,8 @@ export function BookmarksPanel() {
 		setActiveBookmarkFilter,
 		setPreviousRevsetFilter,
 		loadLog,
+		loadBookmarks,
+		loadRemoteBookmarks,
 	} = useSync()
 	const focus = useFocus()
 	const command = useCommand()
@@ -79,16 +81,22 @@ export function BookmarksPanel() {
 	const dialog = useDialog()
 	const globalLoading = useLoading()
 	const { colors } = useTheme()
-	const { refresh } = useSync()
 
 	const runOperation = async (
 		text: string,
 		op: () => Promise<OperationResult>,
+		options?: { refreshBookmarks?: boolean; refreshRemoteBookmarks?: boolean },
 	) => {
 		const result = await globalLoading.run(text, op)
 		commandLog.addEntry(result)
 		if (result.success) {
-			refresh()
+			await loadLog()
+			if (options?.refreshBookmarks) {
+				await loadBookmarks()
+			}
+			if (options?.refreshRemoteBookmarks) {
+				void loadRemoteBookmarks().catch(() => {})
+			}
 		}
 	}
 
@@ -141,7 +149,9 @@ export function BookmarksPanel() {
 			)
 			commandLog.addEntry(pushResult)
 			if (!pushResult.success) return
-			await refresh()
+			await loadLog()
+			await loadBookmarks()
+			void loadRemoteBookmarks().catch(() => {})
 		}
 
 		const prResult = await globalLoading.run("Opening...", () =>
@@ -637,7 +647,7 @@ export function BookmarksPanel() {
 				} else {
 					commandLog.addEntry(result)
 					if (result.success) {
-						refresh()
+						await loadLog()
 					}
 				}
 			},
@@ -683,8 +693,10 @@ export function BookmarksPanel() {
 								workingCopy ? getRevisionId(workingCopy) : undefined
 							}
 							onSave={(name, revision) => {
-								runOperation("Creating bookmark...", () =>
-									jjBookmarkCreate(name, { revision }),
+								runOperation(
+									"Creating bookmark...",
+									() => jjBookmarkCreate(name, { revision }),
+									{ refreshBookmarks: true },
 								)
 							}}
 						/>
@@ -724,8 +736,10 @@ export function BookmarksPanel() {
 					],
 				})
 				if (confirmed) {
-					await runOperation("Deleting bookmark...", () =>
-						jjBookmarkDelete(bookmark.name),
+					await runOperation(
+						"Deleting bookmark...",
+						() => jjBookmarkDelete(bookmark.name),
+						{ refreshBookmarks: true },
 					)
 					if (currentIndex >= totalBookmarks - 1 && currentIndex > 0) {
 						setSelectedBookmarkIndex(currentIndex - 1)
@@ -750,8 +764,10 @@ export function BookmarksPanel() {
 						<BookmarkNameModal
 							initialValue={bookmark.name}
 							onSave={(newName) => {
-								runOperation("Renaming bookmark...", () =>
-									jjBookmarkRename(bookmark.name, newName),
+								runOperation(
+									"Renaming bookmark...",
+									() => jjBookmarkRename(bookmark.name, newName),
+									{ refreshBookmarks: true },
 								)
 							}}
 						/>
@@ -792,8 +808,10 @@ export function BookmarksPanel() {
 					],
 				})
 				if (confirmed) {
-					await runOperation("Forgetting bookmark...", () =>
-						jjBookmarkForget(bookmark.name),
+					await runOperation(
+						"Forgetting bookmark...",
+						() => jjBookmarkForget(bookmark.name),
+						{ refreshBookmarks: true },
 					)
 				}
 			},
@@ -816,8 +834,10 @@ export function BookmarksPanel() {
 							commits={commits()}
 							defaultRevision={bookmark.changeId}
 							onSelect={(revision) => {
-								runOperation("Moving bookmark...", () =>
-									jjBookmarkSet(bookmark.name, revision),
+								runOperation(
+									"Moving bookmark...",
+									() => jjBookmarkSet(bookmark.name, revision),
+									{ refreshBookmarks: true },
 								)
 							}}
 						/>

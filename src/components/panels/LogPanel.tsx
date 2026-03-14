@@ -164,7 +164,6 @@ export function LogPanel() {
 		exitFilesView,
 		viewMode,
 		fileTree,
-		refresh,
 		flatFiles,
 		selectedFileIndex,
 		setSelectedFileIndex,
@@ -378,12 +377,18 @@ export function LogPanel() {
 	const runOperation = async (
 		text: string,
 		op: () => Promise<OperationResult>,
+		options?: { refreshBookmarks?: boolean },
 	) => {
 		const result = await globalLoading.run(text, op)
 		commandLog.addEntry(result)
 		if (result.success) {
-			refresh()
-			loadOpLog()
+			await loadLog()
+			if (options?.refreshBookmarks) {
+				void loadBookmarks().catch(() => {})
+			}
+			if (activeTab() === "oplog") {
+				void loadOpLog()
+			}
 		}
 	}
 
@@ -397,8 +402,11 @@ export function LogPanel() {
 		)
 		commandLog.addEntry(result)
 		if (result.success) {
-			refresh()
-			loadOpLog()
+			await loadLog()
+			void loadBookmarks().catch(() => {})
+			if (activeTab() === "oplog") {
+				void loadOpLog()
+			}
 		}
 		return result
 	}
@@ -442,7 +450,7 @@ export function LogPanel() {
 		commandLog.addEntry(pushResult)
 		if (!pushResult.success) return
 
-		await refresh()
+		await loadLog()
 		await loadBookmarks()
 
 		const prResult = await globalLoading.run("Opening...", () =>
@@ -524,7 +532,8 @@ export function LogPanel() {
 			)
 			commandLog.addEntry(pushResult)
 			if (!pushResult.success) return
-			await refresh()
+			await loadLog()
+			void loadBookmarks().catch(() => {})
 		}
 
 		const prResult = await globalLoading.run("Opening...", () =>
@@ -558,7 +567,7 @@ export function LogPanel() {
 				)
 				commandLog.addEntry(pushResult)
 				if (!pushResult.success) return
-				await refresh()
+				await loadLog()
 				await loadBookmarks()
 				targetBookmark =
 					findBookmarkForChange(commit.changeId, { localOnly: true }) ??
@@ -1043,8 +1052,10 @@ export function LogPanel() {
 					stdout: "",
 					stderr: result.error ?? "",
 				})
-				refresh()
-				loadOpLog()
+				void loadLog()
+				if (activeTab() === "oplog") {
+					void loadOpLog()
+				}
 			},
 		},
 		{
@@ -1078,8 +1089,10 @@ export function LogPanel() {
 				} else {
 					commandLog.addEntry(result)
 					if (result.success) {
-						refresh()
-						loadOpLog()
+						await loadLog()
+						if (activeTab() === "oplog") {
+							void loadOpLog()
+						}
 					}
 				}
 			},
@@ -1143,8 +1156,10 @@ export function LogPanel() {
 										})
 									} finally {
 										renderer.resume?.()
-										refresh()
-										loadOpLog()
+										void loadLog()
+										if (activeTab() === "oplog") {
+											void loadOpLog()
+										}
 									}
 								} else {
 									// Non-interactive squash
@@ -1177,8 +1192,10 @@ export function LogPanel() {
 									} else {
 										commandLog.addEntry(result)
 										if (result.success) {
-											refresh()
-											loadOpLog()
+											await loadLog()
+											if (activeTab() === "oplog") {
+												void loadOpLog()
+											}
 										}
 									}
 								}
@@ -1251,8 +1268,10 @@ export function LogPanel() {
 								} else {
 									commandLog.addEntry(result)
 									if (result.success) {
-										refresh()
-										loadOpLog()
+										await loadLog()
+										if (activeTab() === "oplog") {
+											void loadOpLog()
+										}
 									}
 								}
 							}}
@@ -1324,8 +1343,10 @@ export function LogPanel() {
 					await jjSplitInteractive(getRevisionId(commit), { ignoreImmutable })
 				} finally {
 					renderer.resume?.()
-					refresh()
-					loadOpLog()
+					void loadLog()
+					if (activeTab() === "oplog") {
+						void loadOpLog()
+					}
 				}
 			},
 		},
@@ -1448,8 +1469,10 @@ export function LogPanel() {
 				} else {
 					commandLog.addEntry(result)
 					if (result.success) {
-						refresh()
-						loadOpLog()
+						await loadLog()
+						if (activeTab() === "oplog") {
+							void loadOpLog()
+						}
 					}
 				}
 			},
@@ -1507,8 +1530,10 @@ export function LogPanel() {
 								return result
 							}}
 							onCreate={(name) => {
-								runOperation("Creating bookmark...", () =>
-									jjBookmarkCreate(name, { revision: revId }),
+								runOperation(
+									"Creating bookmark...",
+									() => jjBookmarkCreate(name, { revision: revId }),
+									{ refreshBookmarks: true },
 								)
 							}}
 						/>

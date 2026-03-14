@@ -14,7 +14,8 @@ import {
 	onMount,
 } from "solid-js"
 
-import { fetchDiff } from "../../commander/diff"
+import { fetchDiffCancellable } from "../../commander/diff"
+import { isCommandCancelledError } from "../../commander/executor"
 import type { DiffStats } from "../../commander/operations"
 import { type Commit, getRevisionId } from "../../commander/types"
 import { onConfigChange, readConfig } from "../../config"
@@ -25,7 +26,7 @@ import { type CommitDetails, useSync } from "../../context/sync"
 import { useTheme } from "../../context/theme"
 import {
 	type FlattenedFile,
-	fetchParsedDiff,
+	fetchParsedDiffCancellable,
 	flattenDiff,
 	getLineNumWidth,
 	getMaxLineNumber,
@@ -563,6 +564,8 @@ export function MainArea() {
 		}
 	}
 
+	const DIFF_FETCH_DEBOUNCE_MS = 60
+
 	// Track current fetch to prevent stale updates
 	let currentFetchKey: string | null = null
 
@@ -572,6 +575,8 @@ export function MainArea() {
 		const vMode = viewMode()
 		const showJjFormatter = useJjFormatter()
 		if (!commit) return
+
+		let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
 		let paths: string[] | undefined
 
@@ -591,33 +596,83 @@ export function MainArea() {
 
 		setParsedDiffLoading(true)
 		setParsedDiffError(null)
+		let cancelRequest: (() => void) | null = null
 
-		const fetchStart = performance.now()
-		const fetcher = showJjFormatter
-			? fetchDiff(getRevisionId(commit), {
+		debounceTimer = setTimeout(() => {
+			const fetchStart = performance.now()
+
+			if (showJjFormatter) {
+				const request = fetchDiffCancellable(getRevisionId(commit), {
 					paths,
 					columns: Math.max(1, viewportWidth()),
 				})
-			: fetchParsedDiff(getRevisionId(commit), { paths })
+				cancelRequest = request.cancel
 
-		fetcher
-			.then((result) => {
-				if (currentFetchKey !== fetchKey) return
+				request.promise
+					.then((renderedDiff) => {
+						if (currentFetchKey !== fetchKey) return
 
-				const fetchMs = performance.now() - fetchStart
+						const fetchMs = performance.now() - fetchStart
+						profileLog("diff-fetch-complete", {
+							fetchMs: Math.round(fetchMs),
+							flattenMs: 0,
+							files: 0,
+							lines: renderedDiff.split("\n").length,
+						})
 
-				if (showJjFormatter) {
-					const renderedDiff = result as string
+						const renderStart = performance.now()
+						setParsedFiles([])
+						setRawDiffOutput(renderedDiff)
+						setParsedDiffLoading(false)
+						const signalMs = performance.now() - renderStart
+
+						queueMicrotask(() => {
+							const totalRenderMs = performance.now() - renderStart
+							profileLog("diff-render-complete", {
+								signalMs: Math.round(signalMs * 100) / 100,
+								totalRenderMs: Math.round(totalRenderMs * 100) / 100,
+							})
+						})
+					})
+					.catch((err: Error) => {
+						if (isCommandCancelledError(err)) return
+						if (currentFetchKey === fetchKey) {
+							setParsedDiffError(err.message)
+							setParsedDiffLoading(false)
+						}
+					})
+				return
+			}
+
+			const request = fetchParsedDiffCancellable(getRevisionId(commit), {
+				paths,
+			})
+			cancelRequest = request.cancel
+
+			request.promise
+				.then((parsedDiff) => {
+					if (currentFetchKey !== fetchKey) return
+
+					const fetchMs = performance.now() - fetchStart
+					const flattenStart = performance.now()
+					const flattened = flattenDiff(parsedDiff)
+					const flattenMs = performance.now() - flattenStart
+
+					const lineCount = flattened.reduce(
+						(sum, f) => sum + f.hunks.reduce((s, h) => s + h.lines.length, 0),
+						0,
+					)
+
 					profileLog("diff-fetch-complete", {
 						fetchMs: Math.round(fetchMs),
-						flattenMs: 0,
-						files: 0,
-						lines: renderedDiff.split("\n").length,
+						flattenMs: Math.round(flattenMs * 100) / 100,
+						files: flattened.length,
+						lines: lineCount,
 					})
 
 					const renderStart = performance.now()
-					setParsedFiles([])
-					setRawDiffOutput(renderedDiff)
+					setRawDiffOutput("")
+					setParsedFiles(flattened)
 					setParsedDiffLoading(false)
 					const signalMs = performance.now() - renderStart
 
@@ -628,46 +683,22 @@ export function MainArea() {
 							totalRenderMs: Math.round(totalRenderMs * 100) / 100,
 						})
 					})
-					return
-				}
-
-				const parsedDiff = result as Parameters<typeof flattenDiff>[0]
-				const flattenStart = performance.now()
-				const flattened = flattenDiff(parsedDiff)
-				const flattenMs = performance.now() - flattenStart
-
-				const lineCount = flattened.reduce(
-					(sum, f) => sum + f.hunks.reduce((s, h) => s + h.lines.length, 0),
-					0,
-				)
-
-				profileLog("diff-fetch-complete", {
-					fetchMs: Math.round(fetchMs),
-					flattenMs: Math.round(flattenMs * 100) / 100,
-					files: flattened.length,
-					lines: lineCount,
 				})
-
-				const renderStart = performance.now()
-				setRawDiffOutput("")
-				setParsedFiles(flattened)
-				setParsedDiffLoading(false)
-				const signalMs = performance.now() - renderStart
-
-				queueMicrotask(() => {
-					const totalRenderMs = performance.now() - renderStart
-					profileLog("diff-render-complete", {
-						signalMs: Math.round(signalMs * 100) / 100,
-						totalRenderMs: Math.round(totalRenderMs * 100) / 100,
-					})
+				.catch((err: Error) => {
+					if (isCommandCancelledError(err)) return
+					if (currentFetchKey === fetchKey) {
+						setParsedDiffError(err.message)
+						setParsedDiffLoading(false)
+					}
 				})
-			})
-			.catch((err) => {
-				if (currentFetchKey === fetchKey) {
-					setParsedDiffError(err.message)
-					setParsedDiffLoading(false)
-				}
-			})
+		}, DIFF_FETCH_DEBOUNCE_MS)
+
+		onCleanup(() => {
+			if (debounceTimer) {
+				clearTimeout(debounceTimer)
+			}
+			cancelRequest?.()
+		})
 	})
 
 	createEffect(() => {

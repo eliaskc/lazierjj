@@ -1,6 +1,6 @@
 import { toFilesetArgs } from "../utils/jj-fileset"
 import { profile } from "../utils/profiler"
-import { execute, executeStreaming } from "./executor"
+import { execute, executeCancellable, executeStreaming } from "./executor"
 
 export interface FetchDiffOptions {
 	cwd?: string
@@ -34,6 +34,42 @@ export async function fetchDiff(
 
 	endTotal()
 	return result.stdout
+}
+
+export function fetchDiffCancellable(
+	changeId: string,
+	options: FetchDiffOptions = {},
+): { promise: Promise<string>; cancel: () => void } {
+	const endTotal = profile(`fetchDiffCancellable(${changeId.slice(0, 8)})`)
+
+	const env: Record<string, string> = {}
+
+	if (options.columns) {
+		env.COLUMNS = String(options.columns)
+	}
+
+	const args = ["diff", "-r", changeId, "--color", "always"]
+
+	if (options.paths && options.paths.length > 0) {
+		args.push(...toFilesetArgs(options.paths))
+	}
+
+	const request = executeCancellable(args, { cwd: options.cwd, env })
+
+	return {
+		promise: request.promise
+			.then((result) => {
+				if (!result.success) {
+					throw new Error(`jj diff failed: ${result.stderr}`)
+				}
+
+				return result.stdout
+			})
+			.finally(() => {
+				endTotal()
+			}),
+		cancel: request.cancel,
+	}
 }
 
 export interface StreamDiffCallbacks {

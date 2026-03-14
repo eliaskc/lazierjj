@@ -6,7 +6,7 @@ import {
 	type ParsedPatch,
 	parsePatchFiles,
 } from "@pierre/diffs"
-import { execute } from "../commander/executor"
+import { execute, executeCancellable } from "../commander/executor"
 import { findBinaryFiles } from "../utils/diff-binary"
 import { toFilesetArgs } from "../utils/jj-fileset"
 import { type FileId, type HunkId, fileId, hunkId } from "./identifiers"
@@ -50,6 +50,30 @@ export async function fetchParsedDiff(
 	}
 
 	return parseDiffString(result.stdout)
+}
+
+export function fetchParsedDiffCancellable(
+	revision: string,
+	options: ParseDiffOptions = {},
+): { promise: Promise<DiffFile[]>; cancel: () => void } {
+	const args = ["diff", "-r", revision, "--git"]
+
+	if (options.paths && options.paths.length > 0) {
+		args.push(...toFilesetArgs(options.paths))
+	}
+
+	const request = executeCancellable(args, { cwd: options.cwd })
+
+	return {
+		promise: request.promise.then((result) => {
+			if (!result.success) {
+				throw new Error(`jj diff failed: ${result.stderr}`)
+			}
+
+			return parseDiffString(result.stdout)
+		}),
+		cancel: request.cancel,
+	}
 }
 
 /**

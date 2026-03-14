@@ -14,14 +14,19 @@ export interface ExecuteOptions {
 	timeout?: number
 }
 
-export async function execute(
-	args: string[],
-	options: ExecuteOptions = {},
-): Promise<ExecuteResult> {
-	const endTotal = profile(`execute [jj ${args[0]}]`)
-	const endSpawn = profile("  spawn")
+export class CommandCancelledError extends Error {
+	constructor() {
+		super("Command cancelled")
+		this.name = "CommandCancelledError"
+	}
+}
 
-	const proc = Bun.spawn(["jj", ...args], {
+export function isCommandCancelledError(error: unknown): boolean {
+	return error instanceof CommandCancelledError
+}
+
+function spawnJj(args: string[], options: ExecuteOptions = {}) {
+	return Bun.spawn(["jj", ...args], {
 		cwd: options.cwd || getRepoPath(),
 		env: {
 			...process.env,
@@ -35,6 +40,16 @@ export async function execute(
 		stdout: "pipe",
 		stderr: "pipe",
 	})
+}
+
+export async function execute(
+	args: string[],
+	options: ExecuteOptions = {},
+): Promise<ExecuteResult> {
+	const endTotal = profile(`execute [jj ${args[0]}]`)
+	const endSpawn = profile("  spawn")
+
+	const proc = spawnJj(args, options)
 	endSpawn()
 
 	const endRead = profile("  read stdout/stderr")
@@ -58,6 +73,52 @@ export async function execute(
 	}
 }
 
+export function executeCancellable(
+	args: string[],
+	options: ExecuteOptions = {},
+): { promise: Promise<ExecuteResult>; cancel: () => void } {
+	const endTotal = profile(`executeCancellable [jj ${args[0]}]`)
+	const proc = spawnJj(args, options)
+	let cancelled = false
+
+	const promise = (async (): Promise<ExecuteResult> => {
+		try {
+			const [stdout, stderr] = await Promise.all([
+				new Response(proc.stdout).text(),
+				new Response(proc.stderr).text(),
+			])
+			const exitCode = await proc.exited
+
+			if (cancelled) {
+				throw new CommandCancelledError()
+			}
+
+			return {
+				stdout,
+				stderr,
+				exitCode,
+				success: exitCode === 0,
+			}
+		} catch (error) {
+			if (cancelled) {
+				throw new CommandCancelledError()
+			}
+			throw error instanceof Error ? error : new Error(String(error))
+		} finally {
+			endTotal()
+		}
+	})()
+
+	return {
+		promise,
+		cancel: () => {
+			if (cancelled) return
+			cancelled = true
+			proc.kill()
+		},
+	}
+}
+
 export async function executeWithColor(
 	args: string[],
 	options: ExecuteOptions = {},
@@ -78,19 +139,7 @@ export function executeStreaming(
 ): { cancel: () => void } {
 	const endTotal = profile(`executeStreaming [jj ${args[0]}]`)
 
-	const proc = Bun.spawn(["jj", ...args], {
-		cwd: options.cwd || getRepoPath(),
-		env: {
-			...process.env,
-			JJ_EDITOR: "true",
-			EDITOR: "true",
-			VISUAL: "true",
-			...options.env,
-		},
-		stdin: "ignore",
-		stdout: "pipe",
-		stderr: "pipe",
-	})
+	const proc = spawnJj(args, options)
 
 	let cancelled = false
 	let stdout = ""

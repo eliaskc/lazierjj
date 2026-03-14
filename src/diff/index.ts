@@ -14,6 +14,7 @@ export {
 // Parser and utilities
 export {
 	fetchParsedDiff,
+	fetchParsedDiffCancellable,
 	flattenDiff,
 	flattenFile,
 	flattenHunk,

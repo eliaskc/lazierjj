@@ -1,5 +1,5 @@
 import { getRepoPath } from "../repo"
-import { type ExecuteResult, execute } from "./executor"
+import { type ExecuteResult, execute, executeCancellable } from "./executor"
 
 export interface OperationResult extends ExecuteResult {
 	command: string
@@ -701,5 +701,47 @@ export async function jjCommitDetails(
 	return {
 		subject,
 		body,
+	}
+}
+
+export function jjCommitDetailsCancellable(revision: string): {
+	promise: Promise<CommitDetailsResult>
+	cancel: () => void
+} {
+	const styledSubjectTemplate = `if(empty, label("empty", "(empty) "), "") ++ if(description.first_line(), description.first_line(), label("description placeholder", "(no description set)"))`
+
+	const request = executeCancellable([
+		"log",
+		"-r",
+		revision,
+		"--no-graph",
+		"--color",
+		"always",
+		"-T",
+		`${styledSubjectTemplate} ++ "${DETAILS_SEPARATOR}" ++ description`,
+	])
+
+	return {
+		promise: request.promise.then((result) => {
+			if (!result.success) {
+				return {
+					subject: "",
+					body: "",
+				}
+			}
+
+			const parts = result.stdout.split(DETAILS_SEPARATOR)
+			const subject = (parts[0] ?? "").trim()
+			const fullDescription = (parts[1] ?? "").trim()
+
+			const descLines = fullDescription.split("\n")
+			const body = descLines.slice(1).join("\n").trim()
+
+			return {
+				subject,
+				body,
+			}
+		}),
+		cancel: request.cancel,
 	}
 }

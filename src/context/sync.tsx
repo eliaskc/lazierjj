@@ -14,6 +14,7 @@ import {
 	fetchBookmarks,
 	fetchBookmarksStream,
 } from "../commander/bookmarks"
+import { isCommandCancelledError } from "../commander/executor"
 import { getRepoPath } from "../repo"
 import { addRecentRepo } from "../utils/state"
 import { getVisibleBookmarks } from "./sync-bookmarks"
@@ -23,7 +24,7 @@ import { streamLogPage } from "../commander/log"
 import {
 	fetchOpLogId,
 	jjAbandon,
-	jjCommitDetails,
+	jjCommitDetailsCancellable,
 	jjDescribe,
 	jjEdit,
 	jjNew,
@@ -300,7 +301,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		setRefreshCounter((c) => c + 1)
 
 		try {
-			await Promise.all([loadLog(), loadBookmarks(), loadRemoteBookmarks()])
+			await loadLog()
 			const currentOpLogId = await fetchOpLogId()
 			if (currentOpLogId) {
 				lastOpLogId = currentOpLogId
@@ -313,6 +314,11 @@ export function SyncProvider(props: { children: JSX.Element }) {
 					setFiles(result)
 					setFileTree(buildFileTree(result))
 				}
+			}
+
+			if (focus.panel() === "refs") {
+				void loadBookmarks().catch(() => {})
+				void loadRemoteBookmarks().catch(() => {})
 			}
 		} finally {
 			isRefreshing = false
@@ -424,12 +430,15 @@ export function SyncProvider(props: { children: JSX.Element }) {
 			focus.setActiveContext(mode === "files" ? "log.files" : "log.revisions")
 		} else if (currentPanel === "refs") {
 			focus.setActiveContext("refs.bookmarks")
+			void loadBookmarks().catch(() => {})
+			void loadRemoteBookmarks().catch(() => {})
 		}
 	})
 
 	const activeCommit = () => selectedCommit()
 
 	let currentDetailsCacheKey: string | null = null
+	const COMMIT_DETAILS_DEBOUNCE_MS = 60
 	createEffect(() => {
 		const commit = activeCommit()
 
@@ -444,18 +453,40 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		currentDetailsCacheKey = cacheKey
 
 		const revId = getRevisionId(commit)
+		let debounceTimer: ReturnType<typeof setTimeout> | null = null
+		let cancelRequest: (() => void) | null = null
 
 		profileMsg(`--- select commit: ${commit.changeId.slice(0, 8)}`)
-		const endDetails = profile(`commitDetails(${commit.changeId.slice(0, 8)})`)
-		jjCommitDetails(revId).then((details) => {
-			endDetails()
-			if (currentDetailsCacheKey === cacheKey) {
-				setCommitDetails({
-					changeId: commit.changeId,
-					subject: details.subject,
-					body: details.body,
+		debounceTimer = setTimeout(() => {
+			const endDetails = profile(
+				`commitDetails(${commit.changeId.slice(0, 8)})`,
+			)
+			const request = jjCommitDetailsCancellable(revId)
+			cancelRequest = request.cancel
+
+			request.promise
+				.then((details) => {
+					if (currentDetailsCacheKey === cacheKey) {
+						setCommitDetails({
+							changeId: commit.changeId,
+							subject: details.subject,
+							body: details.body,
+						})
+					}
 				})
+				.catch((error: Error) => {
+					if (isCommandCancelledError(error)) return
+				})
+				.finally(() => {
+					endDetails()
+				})
+		}, COMMIT_DETAILS_DEBOUNCE_MS)
+
+		onCleanup(() => {
+			if (debounceTimer) {
+				clearTimeout(debounceTimer)
 			}
+			cancelRequest?.()
 		})
 	})
 
