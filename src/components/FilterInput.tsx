@@ -1,5 +1,6 @@
 import { RGBA, type TextareaRenderable } from "@opentui/core"
 import { Show } from "solid-js"
+import { useCommandInputGuard } from "../context/command"
 import { useTheme } from "../context/theme"
 
 export interface FilterInputProps {
@@ -12,6 +13,7 @@ export interface FilterInputProps {
 
 export function FilterInput(props: FilterInputProps) {
 	const { colors } = useTheme()
+	useCommandInputGuard()
 
 	let inputRef: TextareaRenderable | undefined
 

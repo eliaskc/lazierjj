@@ -11,6 +11,7 @@ import {
 	isBookmarkBackwardsError,
 } from "../../commander/bookmarks"
 import type { OperationResult } from "../../commander/operations"
+import { useCommandInputGuard } from "../../context/command"
 import { DIALOG_SIZE, useDialog } from "../../context/dialog"
 import { useTheme } from "../../context/theme"
 import { FUZZY_THRESHOLD, scrollIntoView } from "../../utils/scroll"
@@ -39,6 +40,7 @@ type ListItem =
 export function SetBookmarkModal(props: SetBookmarkModalProps) {
 	const dialog = useDialog()
 	const { colors, style } = useTheme()
+	useCommandInputGuard()
 
 	const [query, setQuery] = createSignal("")
 	const [selectedIndex, setSelectedIndex] = createSignal(0)

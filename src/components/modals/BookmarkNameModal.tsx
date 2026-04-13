@@ -2,6 +2,7 @@ import { RGBA, type TextareaRenderable } from "@opentui/core"
 import { useKeyboard } from "@opentui/solid"
 import { Show, createSignal, onMount } from "solid-js"
 import { type Commit, getRevisionId } from "../../commander/types"
+import { useCommandInputGuard } from "../../context/command"
 import { useDialog } from "../../context/dialog"
 import { useTheme } from "../../context/theme"
 import { RevisionPicker } from "../RevisionPicker"
@@ -23,6 +24,7 @@ interface BookmarkNameModalProps {
 export function BookmarkNameModal(props: BookmarkNameModalProps) {
 	const dialog = useDialog()
 	const { colors } = useTheme()
+	useCommandInputGuard()
 
 	const hasRevisionPicker = () => (props.commits?.length ?? 0) > 0
 

@@ -1,5 +1,11 @@
 import { useKeyboard } from "@opentui/solid"
-import { type Accessor, createMemo, createSignal, onCleanup } from "solid-js"
+import {
+	type Accessor,
+	createMemo,
+	createSignal,
+	onCleanup,
+	onMount,
+} from "solid-js"
 import type { KeybindConfigKey } from "../keybind"
 import { useDialog } from "./dialog"
 import { useFocus } from "./focus"
@@ -37,6 +43,7 @@ export const { use: useCommand, provider: CommandProvider } =
 				Accessor<CommandOption[]>[]
 			>([])
 			const [inputMode, setInputMode] = createSignal(false)
+			const [focusedInputCount, setFocusedInputCount] = createSignal(0)
 			const keybind = useKeybind()
 			const focus = useFocus()
 			const dialog = useDialog()
@@ -45,9 +52,11 @@ export const { use: useCommand, provider: CommandProvider } =
 				return registrations().flatMap((r) => r())
 			})
 
+			const isBlockingCommands = () => inputMode() || focusedInputCount() > 0
+
 			useKeyboard((evt) => {
 				const dialogOpen = dialog.isOpen()
-				const isInputMode = inputMode()
+				const isInputMode = isBlockingCommands()
 				const activeCtx = focus.activeContext()
 				const activePanel = focus.panel()
 
@@ -60,7 +69,7 @@ export const { use: useCommand, provider: CommandProvider } =
 						continue
 					}
 
-					// Block all commands when in input mode (e.g., filtering)
+					// Block all commands when in input mode (e.g., filtering/text entry)
 					if (isInputMode) {
 						continue
 					}
@@ -111,7 +120,29 @@ export const { use: useCommand, provider: CommandProvider } =
 
 				// Input mode blocks all commands (for inline filtering, etc.)
 				setInputMode,
-				isInputMode: inputMode,
+				isInputMode: isBlockingCommands,
+				registerFocusedInput: () => {
+					setFocusedInputCount((count) => count + 1)
+					let released = false
+					return () => {
+						if (released) return
+						released = true
+						setFocusedInputCount((count) => Math.max(0, count - 1))
+					}
+				},
 			}
 		},
 	})
+
+export function useCommandInputGuard() {
+	const command = useCommand()
+	let releaseFocus: (() => void) | undefined
+
+	onMount(() => {
+		releaseFocus = command.registerFocusedInput()
+	})
+
+	onCleanup(() => {
+		releaseFocus?.()
+	})
+}

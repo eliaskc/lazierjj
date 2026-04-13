@@ -32,6 +32,7 @@ import {
 	type CommandOption,
 	type Context,
 	useCommand,
+	useCommandInputGuard,
 } from "../../context/command"
 import { useDialog } from "../../context/dialog"
 import { useFocus } from "../../context/focus"
@@ -118,6 +119,7 @@ function contextMatches(
 
 export function HelpModal() {
 	const command = useCommand()
+	useCommandInputGuard()
 	const keybind = useKeybind()
 	const dialog = useDialog()
 	const focus = useFocus()

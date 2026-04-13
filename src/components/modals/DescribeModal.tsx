@@ -5,6 +5,7 @@ import {
 } from "@opentui/core"
 import { useKeyboard } from "@opentui/solid"
 import { createSignal, onMount } from "solid-js"
+import { useCommandInputGuard } from "../../context/command"
 import { useDialog } from "../../context/dialog"
 import { useTheme } from "../../context/theme"
 
@@ -17,6 +18,7 @@ interface DescribeModalProps {
 export function DescribeModal(props: DescribeModalProps) {
 	const dialog = useDialog()
 	const { colors } = useTheme()
+	useCommandInputGuard()
 
 	const [subject, setSubject] = createSignal(props.initialSubject)
 	const [body, setBody] = createSignal(props.initialBody)
