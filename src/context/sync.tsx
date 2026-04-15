@@ -21,7 +21,7 @@ import { getVisibleBookmarks } from "./sync-bookmarks"
 import { fetchFiles } from "../commander/files"
 import { streamLogPage } from "../commander/log"
 import {
-	fetchOpLogId,
+	fetchRefreshState,
 	jjAbandon,
 	jjCommitDetails,
 	jjDescribe,
@@ -273,6 +273,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	})
 
 	let lastOpLogId: string | null = null
+	let lastWorkingCopyCommitId: string | null = null
 	let isRefreshing = false
 	let refreshQueued = false
 	let bookmarksStreamHandle: ReturnType<typeof fetchBookmarksStream> | null =
@@ -301,9 +302,12 @@ export function SyncProvider(props: { children: JSX.Element }) {
 
 		try {
 			await Promise.all([loadLog(), loadBookmarks(), loadRemoteBookmarks()])
-			const currentOpLogId = await fetchOpLogId()
-			if (currentOpLogId) {
-				lastOpLogId = currentOpLogId
+			const refreshState = await fetchRefreshState()
+			if (refreshState.operationId) {
+				lastOpLogId = refreshState.operationId
+			}
+			if (refreshState.workingCopyCommitId) {
+				lastWorkingCopyCommitId = refreshState.workingCopyCommitId
 			}
 
 			if (viewMode() === "files") {
@@ -328,6 +332,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		let pollTimer: ReturnType<typeof setTimeout> | null = null
 		let isChecking = false
 		let isFocused = true
+		let disposed = false
 
 		const POLL_INTERVAL_FOCUSED = 2000
 		const POLL_INTERVAL_UNFOCUSED = 30000
@@ -338,14 +343,25 @@ export function SyncProvider(props: { children: JSX.Element }) {
 			isChecking = true
 
 			try {
-				const currentId = await fetchOpLogId()
-				if (!currentId) return
+				const refreshState = await fetchRefreshState()
+				if (!refreshState.operationId && !refreshState.workingCopyCommitId) {
+					return
+				}
 
-				if (lastOpLogId !== null && currentId !== lastOpLogId) {
-					lastOpLogId = currentId
+				const opChanged =
+					lastOpLogId !== null && refreshState.operationId !== lastOpLogId
+				const workingCopyChanged =
+					lastWorkingCopyCommitId !== null &&
+					refreshState.workingCopyCommitId !== lastWorkingCopyCommitId
+
+				if (opChanged || workingCopyChanged) {
+					lastOpLogId = refreshState.operationId || lastOpLogId
+					lastWorkingCopyCommitId =
+						refreshState.workingCopyCommitId || lastWorkingCopyCommitId
 					await doFullRefresh()
 				} else {
-					lastOpLogId = currentId
+					lastOpLogId = refreshState.operationId
+					lastWorkingCopyCommitId = refreshState.workingCopyCommitId
 				}
 			} catch (e) {
 				// Propagate critical errors (like stale working copy)
@@ -390,20 +406,27 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		renderer.on("focus", handleFocus)
 		renderer.on("blur", handleBlur)
 
-		fetchOpLogId()
-			.then((id) => {
-				lastOpLogId = id
-			})
-			.catch((e) => {
+		void (async () => {
+			try {
+				const state = await fetchRefreshState()
+				if (disposed) return
+				lastOpLogId = state.operationId
+				lastWorkingCopyCommitId = state.workingCopyCommitId
+			} catch (e) {
+				if (disposed) return
 				// Propagate critical errors (like stale working copy)
 				if (e instanceof Error) {
 					setError(e.message)
 				}
-			})
-
-		schedulePoll()
+			} finally {
+				if (!disposed) {
+					schedulePoll()
+				}
+			}
+		})()
 
 		onCleanup(() => {
+			disposed = true
 			renderer.off("focus", handleFocus)
 			renderer.off("blur", handleBlur)
 			if (pollTimer) {
