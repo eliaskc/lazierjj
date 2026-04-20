@@ -62,13 +62,12 @@ export function FileTreeList(props: FileTreeListProps) {
 					if (props.focusContext) {
 						focus.setActiveContext(props.focusContext)
 					}
-					if (isBinary()) return
 					props.setSelectedIndex(index())
 					handleDoubleClick()
 				}
 
 				const showSelection = () =>
-					!isBinary() && isSelected() && (props.isFocused?.() ?? true)
+					isSelected() && (props.isFocused?.() ?? true)
 
 				return (
 					<box

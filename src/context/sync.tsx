@@ -225,42 +225,11 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		return showTree() ? flattenTree(tree, collapsedPaths()) : flattenFlat(tree)
 	})
 
-	const selectedFile = () => {
-		const file = flatFiles()[selectedFileIndex()]
-		return file?.node.isBinary ? undefined : file
-	}
-
-	const isSelectableFile = (file: FlatFileNode | undefined) =>
-		Boolean(file) && !file?.node.isBinary
-
-	const findFirstSelectableIndex = (files: FlatFileNode[]) => {
-		for (let i = 0; i < files.length; i += 1) {
-			if (isSelectableFile(files[i])) return i
-		}
-		return 0
-	}
-
-	const findLastSelectableIndex = (files: FlatFileNode[]) => {
-		for (let i = files.length - 1; i >= 0; i -= 1) {
-			if (isSelectableFile(files[i])) return i
-		}
-		return Math.max(0, files.length - 1)
-	}
-
-	const findSelectableIndex = (
-		startIndex: number,
-		direction: 1 | -1,
-		files: FlatFileNode[],
-	) => {
-		for (let i = startIndex; i >= 0 && i < files.length; i += direction) {
-			if (isSelectableFile(files[i])) return i
-		}
-		return null
-	}
+	const selectedFile = () => flatFiles()[selectedFileIndex()]
 
 	const setSelectedFileIndex = (index: number) => {
 		const files = flatFiles()
-		if (!isSelectableFile(files[index])) return
+		if (index < 0 || index >= files.length) return
 		setSelectedFileIndexInternal(index)
 	}
 
@@ -268,8 +237,8 @@ export function SyncProvider(props: { children: JSX.Element }) {
 		const files = flatFiles()
 		if (files.length === 0) return
 		const current = selectedFileIndex()
-		if (isSelectableFile(files[current])) return
-		setSelectedFileIndexInternal(findFirstSelectableIndex(files))
+		if (current >= 0 && current < files.length) return
+		setSelectedFileIndexInternal(0)
 	})
 
 	let lastOpLogId: string | null = null
@@ -501,27 +470,24 @@ export function SyncProvider(props: { children: JSX.Element }) {
 	const selectedCommit = () => commits()[selectedIndex()]
 
 	const selectPrevFile = () => {
-		const files = flatFiles()
-		const nextIndex = findSelectableIndex(selectedFileIndex() - 1, -1, files)
-		if (nextIndex !== null) setSelectedFileIndexInternal(nextIndex)
+		setSelectedFileIndexInternal((i) => Math.max(0, i - 1))
 	}
 
 	const selectNextFile = () => {
 		const files = flatFiles()
-		const nextIndex = findSelectableIndex(selectedFileIndex() + 1, 1, files)
-		if (nextIndex !== null) setSelectedFileIndexInternal(nextIndex)
+		setSelectedFileIndexInternal((i) => Math.min(files.length - 1, i + 1))
 	}
 
 	const selectFirstFile = () => {
 		const files = flatFiles()
 		if (files.length === 0) return
-		setSelectedFileIndexInternal(findFirstSelectableIndex(files))
+		setSelectedFileIndexInternal(0)
 	}
 
 	const selectLastFile = () => {
 		const files = flatFiles()
 		if (files.length === 0) return
-		setSelectedFileIndexInternal(findLastSelectableIndex(files))
+		setSelectedFileIndexInternal(files.length - 1)
 	}
 
 	const localBookmarks = () => bookmarks().filter((b) => b.isLocal)
@@ -849,8 +815,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
 			setFiles(result)
 			const tree = buildFileTree(result)
 			setFileTree(tree)
-			const flatList = flattenTree(tree, new Set())
-			setSelectedFileIndexInternal(findFirstSelectableIndex(flatList))
+			setSelectedFileIndexInternal(0)
 			setCollapsedPaths(new Set<string>())
 			setViewMode("files")
 			focus.setActiveContext("log.files")

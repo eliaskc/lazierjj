@@ -34,6 +34,8 @@ import { getRepoPath } from "../../repo"
 import { getFilePaths } from "../../utils/file-tree"
 import { truncatePathMiddle } from "../../utils/path-truncate"
 import { AnsiText } from "../AnsiText"
+import { BinaryGroupFooter } from "../BinaryGroupFooter"
+import { BinaryPlaceholder } from "../BinaryPlaceholder"
 import { Panel } from "../Panel"
 import { VirtualizedSplitView, VirtualizedUnifiedView } from "../diff"
 
@@ -370,6 +372,20 @@ export function MainArea() {
 	const [activeFileIndex, setActiveFileIndex] = createSignal(0)
 	const [activeHunkIndex, setActiveHunkIndex] = createSignal(0)
 
+	const selectedFileIsBinary = createMemo(() => {
+		if (viewMode() !== "files") return false
+		const file = selectedFile()
+		return Boolean(file && !file.node.isDirectory && file.node.isBinary)
+	})
+
+	const textFiles = createMemo(() => parsedFiles().filter((f) => !f.isBinary))
+
+	const binaryPaths = createMemo(() =>
+		parsedFiles()
+			.filter((f) => f.isBinary)
+			.map((f) => f.name),
+	)
+
 	const repoInfo = createMemo(() => {
 		activeCommit()
 		const repoPath = getRepoPath()
@@ -387,13 +403,13 @@ export function MainArea() {
 
 	// Derived state
 	const activeFileId = createMemo(() => {
-		const files = parsedFiles()
+		const files = textFiles()
 		const idx = activeFileIndex()
 		return files[idx]?.fileId ?? null
 	})
 
 	const activeHunkId = createMemo(() => {
-		const files = parsedFiles()
+		const files = textFiles()
 		const fileIdx = activeFileIndex()
 		const hunkIdx = activeHunkIndex()
 		const file = files[fileIdx]
@@ -525,7 +541,7 @@ export function MainArea() {
 
 	// Navigation functions
 	const navigateFile = (direction: 1 | -1) => {
-		const files = parsedFiles()
+		const files = textFiles()
 		if (files.length === 0) return
 		const newIdx = Math.max(
 			0,
@@ -537,7 +553,7 @@ export function MainArea() {
 	}
 
 	const navigateHunk = (direction: 1 | -1) => {
-		const files = parsedFiles()
+		const files = textFiles()
 		const fileIdx = activeFileIndex()
 		const file = files[fileIdx]
 		if (!file) return
@@ -583,6 +599,17 @@ export function MainArea() {
 					? getFilePaths(file.node)
 					: [file.node.path]
 			}
+		}
+
+		if (selectedFileIsBinary()) {
+			const fetchKey = `${commit.changeId}:${commit.commitId}:${paths?.join(",") ?? "all"}:binary`
+			if (fetchKey === currentFetchKey) return
+			currentFetchKey = fetchKey
+			setParsedFiles([])
+			setRawDiffOutput("")
+			setParsedDiffLoading(false)
+			setParsedDiffError(null)
+			return
 		}
 
 		const fetchKey = `${commit.changeId}:${commit.commitId}:${paths?.join(",") ?? "all"}:${showJjFormatter ? "jj" : "custom"}`
@@ -968,7 +995,14 @@ export function MainArea() {
 							<text fg={colors().error}>Error: {parsedDiffError()}</text>
 						</Show>
 						<Show when={!parsedDiffError()}>
-							<Show when={useJjFormatter()}>
+							<Show when={selectedFileIsBinary()}>
+								<BinaryPlaceholder
+									width={Math.max(1, viewportWidth())}
+									height={Math.max(1, viewportHeight() - headerHeight())}
+									path={selectedFile()?.node.path}
+								/>
+							</Show>
+							<Show when={!selectedFileIsBinary() && useJjFormatter()}>
 								<AnsiText
 									content={rawDiffOutput()}
 									wrapMode="none"
@@ -976,11 +1010,19 @@ export function MainArea() {
 									cropWidth={Math.max(1, viewportWidth())}
 								/>
 							</Show>
-							<Show when={!useJjFormatter() && parsedFiles().length > 0}>
+							<Show
+								when={
+									!selectedFileIsBinary() &&
+									!useJjFormatter() &&
+									parsedFiles().length > 0
+								}
+							>
 								<box flexDirection="column">
-									<Show when={viewStyle() === "unified"}>
+									<Show
+										when={viewStyle() === "unified" && textFiles().length > 0}
+									>
 										<VirtualizedUnifiedView
-											files={parsedFiles()}
+											files={textFiles()}
 											activeFileId={null}
 											currentHunkId={activeHunkId()}
 											scrollTop={adjustedScrollTop()}
@@ -990,9 +1032,11 @@ export function MainArea() {
 											scrollLeft={scrollLeft()}
 										/>
 									</Show>
-									<Show when={viewStyle() === "split"}>
+									<Show
+										when={viewStyle() === "split" && textFiles().length > 0}
+									>
 										<VirtualizedSplitView
-											files={parsedFiles()}
+											files={textFiles()}
 											activeFileId={null}
 											currentHunkId={activeHunkId()}
 											scrollTop={adjustedScrollTop()}
@@ -1000,6 +1044,12 @@ export function MainArea() {
 											viewportWidth={viewportWidth()}
 											wrapEnabled={wrapEnabled()}
 											scrollLeft={scrollLeft()}
+										/>
+									</Show>
+									<Show when={binaryPaths().length > 0}>
+										<BinaryGroupFooter
+											width={Math.max(1, viewportWidth())}
+											paths={binaryPaths()}
 										/>
 									</Show>
 								</box>
