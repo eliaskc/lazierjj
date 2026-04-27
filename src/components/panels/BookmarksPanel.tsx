@@ -19,6 +19,7 @@ import {
 	jjBookmarkRename,
 	jjBookmarkSet,
 } from "../../commander/bookmarks"
+import { withCommandObserver } from "../../commander/executor"
 import { ghBrowseCommit, ghPrCreateWeb } from "../../commander/github"
 import {
 	type OperationResult,
@@ -83,9 +84,14 @@ export function BookmarksPanel() {
 
 	const runOperation = async (
 		text: string,
-		op: () => Promise<OperationResult>,
+		op: (options?: {
+			observer: ReturnType<typeof commandLog.observer>
+		}) => Promise<OperationResult>,
 	) => {
-		const result = await globalLoading.run(text, op)
+		const observer = commandLog.observer()
+		const result = await globalLoading.run(text, () =>
+			withCommandObserver(observer, () => op({ observer })),
+		)
 		commandLog.addEntry(result)
 		if (result.success) {
 			refresh()
@@ -594,7 +600,7 @@ export function BookmarksPanel() {
 					})
 					return
 				}
-				runOperation("Creating...", () => jjNew(bookmark.name))
+				runOperation("Creating...", (options) => jjNew(bookmark.name, options))
 			},
 		},
 		{
@@ -619,8 +625,8 @@ export function BookmarksPanel() {
 					})
 					return
 				}
-				runOperation("Creating...", () =>
-					jjNew(bookmark.name, { verify: false }),
+				runOperation("Creating...", (options) =>
+					jjNew(bookmark.name, { ...options, verify: false }),
 				)
 			},
 		},

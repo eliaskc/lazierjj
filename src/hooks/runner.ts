@@ -2,11 +2,13 @@ import { existsSync, realpathSync } from "node:fs"
 import { homedir } from "node:os"
 import { isAbsolute, resolve } from "node:path"
 import type { ExecuteResult } from "../commander/executor"
+import type { CommandObserver } from "../commander/observer"
 import { readConfig } from "../config"
 import { getRepoPath } from "../repo"
 
 export interface HookRunOptions {
 	verify?: boolean
+	observer?: CommandObserver
 }
 
 export class HookError extends Error {
@@ -48,7 +50,10 @@ export async function runPreHooks(
 	operationId: string,
 	options: HookRunOptions = {},
 ): Promise<ExecuteResult[]> {
-	if (options.verify === false) return []
+	if (options.verify === false) {
+		options.observer?.skip(`pre-hooks for ${operationId} skipped (--no-verify)`)
+		return []
+	}
 
 	const hook = readConfig().hooks[operationId]
 	if (!hook || hook.pre.length === 0) return []
@@ -64,6 +69,8 @@ export async function runPreHooks(
 		const command = commandText(hookCommand)
 		const env = typeof hookCommand === "string" ? undefined : hookCommand.env
 
+		const logId = options.observer?.start(command, { kind: "hook" })
+
 		const proc = Bun.spawn(["sh", "-lc", command], {
 			cwd: getRepoPath(),
 			env: {
@@ -75,10 +82,42 @@ export async function runPreHooks(
 			stderr: "pipe",
 		})
 
-		const [stdout, stderr] = await Promise.all([
-			new Response(proc.stdout).text(),
-			new Response(proc.stderr).text(),
-		])
+		let stdout = ""
+		let stderr = ""
+		if (options.observer && logId) {
+			const readStream = async (
+				stream: ReadableStream<Uint8Array>,
+				append: (chunk: string) => void,
+			) => {
+				const reader = stream.getReader()
+				const decoder = new TextDecoder()
+				while (true) {
+					const { done, value } = await reader.read()
+					if (done) break
+					const chunk = decoder.decode(value, { stream: true })
+					append(chunk)
+					options.observer?.append(logId, chunk)
+				}
+				const tail = decoder.decode()
+				if (tail) {
+					append(tail)
+					options.observer?.append(logId, tail)
+				}
+			}
+			await Promise.all([
+				readStream(proc.stdout, (chunk) => {
+					stdout += chunk
+				}),
+				readStream(proc.stderr, (chunk) => {
+					stderr += chunk
+				}),
+			])
+		} else {
+			;[stdout, stderr] = await Promise.all([
+				new Response(proc.stdout).text(),
+				new Response(proc.stderr).text(),
+			])
+		}
 		const exitCode = await proc.exited
 		const result = {
 			stdout,
@@ -87,6 +126,7 @@ export async function runPreHooks(
 			success: exitCode === 0,
 		}
 		results.push(result)
+		if (logId) options.observer?.finish(logId, result)
 
 		if (!result.success) {
 			throw new HookError(

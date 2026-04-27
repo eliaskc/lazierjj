@@ -1,5 +1,5 @@
 import type { ScrollBoxRenderable } from "@opentui/core"
-import { For, Show, createSignal } from "solid-js"
+import { For, Show, createMemo, createSignal, onCleanup } from "solid-js"
 import { useCommand } from "../../context/command"
 import { useCommandLog } from "../../context/commandlog"
 import { useFocus } from "../../context/focus"
@@ -16,6 +16,32 @@ export function CommandLogPanel() {
 	const [scrollTop, setScrollTop] = createSignal(0)
 
 	const isFocused = () => focus.isPanel("commandlog")
+	const [spinnerIndex, setSpinnerIndex] = createSignal(0)
+	const spinnerTimer = setInterval(() => {
+		if (commandLog.entries().some((entry) => entry.status === "running")) {
+			setSpinnerIndex((index) => index + 1)
+		}
+	}, 160)
+	onCleanup(() => clearInterval(spinnerTimer))
+	const spinnerFrame = createMemo(
+		() => ["|", "/", "-", "\\"][spinnerIndex() % 4] ?? "|",
+	)
+
+	const entryPrefix = (
+		entry: ReturnType<typeof commandLog.entries>[number],
+	) => {
+		if (entry.status === "running") return spinnerFrame()
+		if (entry.status === "failure") return "x"
+		if (entry.status === "skipped" || entry.status === "info") return "-"
+		return " "
+	}
+
+	const entryColor = (entry: ReturnType<typeof commandLog.entries>[number]) => {
+		if (entry.status === "failure") return colors().error
+		if (entry.status === "skipped" || entry.status === "info")
+			return colors().textMuted
+		return colors().textMuted
+	}
 
 	command.register(() => [
 		{
@@ -64,7 +90,7 @@ export function CommandLogPanel() {
 	])
 
 	return (
-		<box height={isFocused() ? 15 : 6} overflow="hidden">
+		<box height={isFocused() ? 24 : 10} overflow="hidden">
 			<Panel
 				title="Command log"
 				hotkey="4"
@@ -94,12 +120,18 @@ export function CommandLogPanel() {
 							<For each={commandLog.entries()}>
 								{(entry) => (
 									<box flexDirection="column">
-										<text fg={colors().textMuted}>$ {entry.command}</text>
-										<text
-											fg={entry.success ? colors().success : colors().error}
-										>
-											{entry.output}
+										<text fg={entryColor(entry)}>
+											{entry.command
+												? `${entryPrefix(entry)} $ ${entry.command}${
+														entry.status === "failure"
+															? `  [exit ${entry.exitCode ?? 1}]`
+															: ""
+													}`
+												: `${entryPrefix(entry)} ${entry.message ?? ""}`}
 										</text>
+										<Show when={entry.output.length > 0}>
+											<text fg={colors().text}>{entry.output}</text>
+										</Show>
 									</box>
 								)}
 							</For>

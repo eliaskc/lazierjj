@@ -7,6 +7,7 @@ import {
 	onCleanup,
 	onMount,
 } from "solid-js"
+import { withCommandObserver } from "./commander/executor"
 import {
 	fetchOpLog,
 	jjGitFetch,
@@ -196,7 +197,10 @@ function AppContent() {
 		text: string,
 		options?: Parameters<typeof jjGitFetch>[0],
 	) => {
-		const result = await globalLoading.run(text, () => jjGitFetch(options))
+		const observer = commandLog.observer()
+		const result = await globalLoading.run(text, () =>
+			withCommandObserver(observer, () => jjGitFetch({ ...options, observer })),
+		)
 		commandLog.addEntry(result)
 		if (result.success) {
 			refresh()
@@ -207,7 +211,10 @@ function AppContent() {
 		text: string,
 		options?: Parameters<typeof jjGitPush>[0],
 	) => {
-		const result = await globalLoading.run(text, () => jjGitPush(options))
+		const observer = commandLog.observer()
+		const result = await globalLoading.run(text, () =>
+			withCommandObserver(observer, () => jjGitPush({ ...options, observer })),
+		)
 		commandLog.addEntry(result)
 		if (result.success) {
 			refresh()

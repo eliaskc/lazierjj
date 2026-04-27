@@ -1,6 +1,7 @@
 import { HookError, runPreHooks } from "../hooks/runner"
 import { getRepoPath } from "../repo"
 import { type ExecuteResult, execute } from "./executor"
+import type { OperationRunOptions } from "./observer"
 
 export interface OperationResult extends ExecuteResult {
 	command: string
@@ -89,10 +90,9 @@ export function parseOpLog(lines: string[]): OpLogEntry[] {
 	return operations
 }
 
-export interface VerifyOptions {
+export interface VerifyOptions extends OperationRunOptions {
 	verify?: boolean
 }
-
 async function runJjNewWithHooks(
 	args: string[],
 	options?: VerifyOptions,
@@ -101,6 +101,7 @@ async function runJjNewWithHooks(
 		await runPreHooks("jj.new", options)
 	} catch (error) {
 		if (error instanceof HookError) {
+			options?.observer?.skip("jj new skipped because pre-hook failed")
 			return {
 				...error.result,
 				command: `hook jj.new: ${error.command}`,
@@ -109,7 +110,10 @@ async function runJjNewWithHooks(
 		throw error
 	}
 
-	const result = await execute(args)
+	const result = await execute(args, {
+		observer: options?.observer,
+		command: `jj ${args.join(" ")}`,
+	})
 	return {
 		...result,
 		command: `jj ${args.join(" ")}`,
@@ -521,7 +525,7 @@ export interface GitFetchOptions {
 }
 
 export async function jjGitFetch(
-	options?: GitFetchOptions,
+	options?: GitFetchOptions & OperationRunOptions,
 ): Promise<OperationResult> {
 	const args = ["git", "fetch"]
 	if (options?.branches?.length) {
@@ -540,7 +544,10 @@ export async function jjGitFetch(
 	if (options?.allRemotes) {
 		args.push("--all-remotes")
 	}
-	const result = await execute(args)
+	const result = await execute(args, {
+		observer: options?.observer,
+		command: `jj ${args.join(" ")}`,
+	})
 	return {
 		...result,
 		command: `jj ${args.join(" ")}`,
@@ -561,7 +568,7 @@ export interface GitPushOptions {
 }
 
 export async function jjGitPush(
-	options?: GitPushOptions,
+	options?: GitPushOptions & OperationRunOptions,
 ): Promise<OperationResult> {
 	const args = ["git", "push"]
 	if (options?.remote) {
@@ -600,7 +607,10 @@ export async function jjGitPush(
 	if (options?.dryRun) {
 		args.push("--dry-run")
 	}
-	const result = await execute(args)
+	const result = await execute(args, {
+		observer: options?.observer,
+		command: `jj ${args.join(" ")}`,
+	})
 	return {
 		...result,
 		command: `jj ${args.join(" ")}`,

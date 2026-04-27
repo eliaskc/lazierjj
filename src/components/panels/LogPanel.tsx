@@ -22,6 +22,7 @@ import {
 	jjBookmarkCreate,
 	jjBookmarkSet,
 } from "../../commander/bookmarks"
+import { withCommandObserver } from "../../commander/executor"
 import { ghBrowseCommit, ghPrCreateWeb } from "../../commander/github"
 import {
 	type OpLogEntry,
@@ -377,9 +378,14 @@ export function LogPanel() {
 
 	const runOperation = async (
 		text: string,
-		op: () => Promise<OperationResult>,
+		op: (options?: {
+			observer: ReturnType<typeof commandLog.observer>
+		}) => Promise<OperationResult>,
 	) => {
-		const result = await globalLoading.run(text, op)
+		const observer = commandLog.observer()
+		const result = await globalLoading.run(text, () =>
+			withCommandObserver(observer, () => op({ observer })),
+		)
 		commandLog.addEntry(result)
 		if (result.success) {
 			refresh()
@@ -960,7 +966,9 @@ export function LogPanel() {
 			onSelect: () => {
 				const commit = selectedCommit()
 				if (commit)
-					runOperation("Creating...", () => jjNew(getRevisionId(commit)))
+					runOperation("Creating...", (options) =>
+						jjNew(getRevisionId(commit), options),
+					)
 			},
 		},
 		{
@@ -974,8 +982,8 @@ export function LogPanel() {
 			onSelect: () => {
 				const commit = selectedCommit()
 				if (commit)
-					runOperation("Creating...", () =>
-						jjNew(getRevisionId(commit), { verify: false }),
+					runOperation("Creating...", (options) =>
+						jjNew(getRevisionId(commit), { ...options, verify: false }),
 					)
 			},
 		},
@@ -994,16 +1002,18 @@ export function LogPanel() {
 					() => (
 						<NewChangeModal
 							onNew={() =>
-								runOperation("Creating...", () => jjNew(getRevisionId(commit)))
+								runOperation("Creating...", (options) =>
+									jjNew(getRevisionId(commit), options),
+								)
 							}
 							onNewAfter={() =>
-								runOperation("Creating...", () =>
-									jjNewAfter(getRevisionId(commit)),
+								runOperation("Creating...", (options) =>
+									jjNewAfter(getRevisionId(commit), options),
 								)
 							}
 							onNewBefore={() =>
-								runOperation("Creating...", () =>
-									jjNewBefore(getRevisionId(commit)),
+								runOperation("Creating...", (options) =>
+									jjNewBefore(getRevisionId(commit), options),
 								)
 							}
 						/>
