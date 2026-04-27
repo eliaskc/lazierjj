@@ -1,3 +1,4 @@
+import { HookError, runPreHooks } from "../hooks/runner"
 import { getRepoPath } from "../repo"
 import { type ExecuteResult, execute } from "./executor"
 
@@ -88,8 +89,26 @@ export function parseOpLog(lines: string[]): OpLogEntry[] {
 	return operations
 }
 
-export async function jjNew(revision: string): Promise<OperationResult> {
-	const args = ["new", revision]
+export interface VerifyOptions {
+	verify?: boolean
+}
+
+async function runJjNewWithHooks(
+	args: string[],
+	options?: VerifyOptions,
+): Promise<OperationResult> {
+	try {
+		await runPreHooks("jj.new", options)
+	} catch (error) {
+		if (error instanceof HookError) {
+			return {
+				...error.result,
+				command: `hook jj.new: ${error.command}`,
+			}
+		}
+		throw error
+	}
+
 	const result = await execute(args)
 	return {
 		...result,
@@ -97,22 +116,25 @@ export async function jjNew(revision: string): Promise<OperationResult> {
 	}
 }
 
-export async function jjNewBefore(revision: string): Promise<OperationResult> {
-	const args = ["new", "-B", revision]
-	const result = await execute(args)
-	return {
-		...result,
-		command: `jj ${args.join(" ")}`,
-	}
+export async function jjNew(
+	revision: string,
+	options?: VerifyOptions,
+): Promise<OperationResult> {
+	return runJjNewWithHooks(["new", revision], options)
 }
 
-export async function jjNewAfter(revision: string): Promise<OperationResult> {
-	const args = ["new", "-A", revision]
-	const result = await execute(args)
-	return {
-		...result,
-		command: `jj ${args.join(" ")}`,
-	}
+export async function jjNewBefore(
+	revision: string,
+	options?: VerifyOptions,
+): Promise<OperationResult> {
+	return runJjNewWithHooks(["new", "-B", revision], options)
+}
+
+export async function jjNewAfter(
+	revision: string,
+	options?: VerifyOptions,
+): Promise<OperationResult> {
+	return runJjNewWithHooks(["new", "-A", revision], options)
 }
 
 export async function jjDuplicate(revision: string): Promise<OperationResult> {

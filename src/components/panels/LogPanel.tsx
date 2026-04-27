@@ -964,6 +964,22 @@ export function LogPanel() {
 			},
 		},
 		{
+			id: "log.revisions.new_no_verify",
+			title: "new without hooks",
+			keybind: "jj_new_no_verify",
+			context: "log.revisions",
+			type: "action",
+			panel: "log",
+			visibility: "help-only",
+			onSelect: () => {
+				const commit = selectedCommit()
+				if (commit)
+					runOperation("Creating...", () =>
+						jjNew(getRevisionId(commit), { verify: false }),
+					)
+			},
+		},
+		{
 			id: "log.revisions.new_menu",
 			title: "new menu",
 			keybind: "jj_new_options",

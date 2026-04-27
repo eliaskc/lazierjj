@@ -10,6 +10,7 @@ describe("ConfigSchema", () => {
 		expect(config.diff.useJjFormatter).toBe(false)
 		expect(config.ui.showFileTree).toBe(true)
 		expect(config.whatsNewDisabled).toBe(false)
+		expect(config.hooks).toEqual({})
 	})
 
 	test("partial config merges with defaults", () => {
@@ -69,5 +70,24 @@ describe("ConfigSchema", () => {
 			diff: { autoSwitchWidth: 0 },
 		})
 		expect(config.diff.autoSwitchWidth).toBe(0)
+	})
+
+	test("hooks can be configured for jj.new", () => {
+		const config = ConfigSchema.parse({
+			hooks: {
+				"jj.new": {
+					onlyIn: "~/sleepcycle/apnea/ios",
+					pre: [
+						"swiftlint lint . --config .swiftlint.yml --fix",
+						{
+							command:
+								"swift format --configuration .swift-format --recursive . -i",
+						},
+					],
+				},
+			},
+		})
+
+		expect(config.hooks["jj.new"]?.pre).toHaveLength(2)
 	})
 })

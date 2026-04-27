@@ -35,6 +35,34 @@ export const DiffSchema = z.object({
 		.describe("Use jj's ui.diff-formatter output in the diff view"),
 })
 
+export const HookCommandSchema = z
+	.union([
+		z.string(),
+		z.object({
+			command: z.string().min(1).describe("Shell command to run"),
+			env: z
+				.record(z.string(), z.string())
+				.optional()
+				.describe("Environment variables for this command"),
+		}),
+	])
+	.describe("Hook command")
+
+export const HookSchema = z
+	.object({
+		onlyIn: z
+			.string()
+			.optional()
+			.describe(
+				"Only run this hook when the current repository is under this path",
+			),
+		pre: z
+			.array(HookCommandSchema)
+			.default([])
+			.describe("Commands to run before the hooked operation"),
+	})
+	.describe("Command hook")
+
 export const ConfigSchema = z
 	.object({
 		$schema: z
@@ -54,6 +82,11 @@ export const ConfigSchema = z
 				useJjFormatter: false,
 			})
 			.describe("Diff display settings"),
+
+		hooks: z
+			.record(z.string(), HookSchema)
+			.default({})
+			.describe("Hooks keyed by operation id, for example jj.new"),
 
 		whatsNewDisabled: z
 			.boolean()

@@ -62,6 +62,14 @@
 				}
 			}
 		},
+		"hooks": {
+			"default": {},
+			"description": "Hooks keyed by operation id, for example jj.new",
+			"type": "object",
+			"propertyNames": {
+				"type": "string"
+			}
+		},
 		"whatsNewDisabled": {
 			"default": false,
 			"description": "Disable the what's new screen on updates",

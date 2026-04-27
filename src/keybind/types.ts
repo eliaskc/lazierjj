@@ -25,6 +25,7 @@ export type KeybindConfigKey =
 	| "prev_tab"
 	| "next_tab"
 	| "jj_new"
+	| "jj_new_no_verify"
 	| "jj_new_options"
 	| "jj_edit"
 	| "jj_describe"
@@ -88,6 +89,7 @@ export const DEFAULT_KEYBINDS: KeybindConfig = {
 	prev_tab: "[,h,left",
 	next_tab: "],l,right",
 	jj_new: "n",
+	jj_new_no_verify: "ctrl+n",
 	jj_new_options: "N",
 	jj_edit: "e",
 	jj_describe: "d",
