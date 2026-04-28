@@ -1,8 +1,8 @@
+import { TextAttributes } from "@opentui/core"
 import { useKeyboard } from "@opentui/solid"
 import { For } from "solid-js"
 import { useTheme } from "../context/theme"
 import type { VersionBlock } from "../utils/changelog"
-import { BorderBox } from "./BorderBox"
 import { FooterHints } from "./FooterHints"
 import { WaveBackground } from "./WaveBackground"
 
@@ -13,7 +13,7 @@ interface WhatsNewScreenProps {
 }
 
 export function WhatsNewScreen(props: WhatsNewScreenProps) {
-	const { colors, style } = useTheme()
+	const { colors } = useTheme()
 
 	useKeyboard((evt) => {
 		if (["return", "enter", "escape", "q"].includes(evt.name ?? "")) {
@@ -42,38 +42,38 @@ export function WhatsNewScreen(props: WhatsNewScreenProps) {
 				justifyContent="center"
 				alignItems="center"
 			>
-				<box flexDirection="column" alignItems="center" gap={1}>
-					<BorderBox
-						border
-						borderStyle={style().panel.borderStyle}
-						borderColor={colors().borderFocused}
-						backgroundColor={colors().background}
-						width="80%"
-						maxWidth={80}
-						topLeft={<text fg={colors().borderFocused}>What's New</text>}
-					>
-						<scrollbox maxHeight={20} padding={1}>
-							<For each={props.changes}>
-								{(block) => (
-									<box flexDirection="column">
-										<text fg={colors().primary}>v{block.version}</text>
-										<For each={block.entries}>
-											{(entry) => (
-												<text fg={colors().text}> - {entry.text}</text>
-											)}
-										</For>
-										<box height={1} />
-									</box>
-								)}
-							</For>
-						</scrollbox>
-					</BorderBox>
+				<box
+					flexDirection="column"
+					backgroundColor={colors().background}
+					width="80%"
+					maxWidth={80}
+					paddingLeft={2}
+					paddingRight={2}
+					paddingTop={1}
+					paddingBottom={1}
+					gap={1}
+				>
+					<text fg={colors().text} attributes={TextAttributes.BOLD}>
+						What's New
+					</text>
+					<scrollbox maxHeight={20}>
+						<For each={props.changes}>
+							{(block) => (
+								<box flexDirection="column">
+									<text fg={colors().primary}>v{block.version}</text>
+									<For each={block.entries}>
+										{(entry) => <text fg={colors().text}> - {entry.text}</text>}
+									</For>
+									<box height={1} />
+								</box>
+							)}
+						</For>
+					</scrollbox>
 					<FooterHints
 						hints={[
 							{ key: "d", label: "don't show again" },
 							{ key: "enter", label: "dismiss" },
 						]}
-						boxed
 					/>
 				</box>
 			</box>
