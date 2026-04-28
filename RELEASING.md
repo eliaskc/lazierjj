@@ -88,5 +88,16 @@ This requires you to have all four target platforms buildable locally, which is 
 - **Agent picked the wrong bump.** Either re-run the workflow with `bump` set explicitly, or just edit `package.json` and `CHANGELOG.md` on the PR branch.
 - **Agent edited unexpected files.** The workflow auto-reverts anything outside `package.json` / `CHANGELOG.md` and warns. If something useful was discarded, edit it back into the PR manually.
 - **Tag pushed but `publish` didn't run.** Check the `build` matrix — `publish` needs all four platforms green. If a runner is having a bad day, re-run failed jobs.
+- **Recovering a stuck release (tag exists on origin but no build/publish run).** This happens if `tag-on-merge` succeeded but the chained `build` job didn't kick off (e.g., older workflow versions relied on the `push: tags` trigger, which doesn't fire for tags pushed via `GITHUB_TOKEN`). Recovery from your machine — your push uses your credentials, so it counts as a user event:
+  ```bash
+  VERSION=$(jq -r .version package.json)   # on main, after the merge
+  TAG="v$VERSION"
+  git push --delete origin "$TAG"
+  git tag -d "$TAG" 2>/dev/null || true
+  git fetch origin
+  git tag -a "$TAG" -m "Release $TAG" origin/main
+  git push origin "$TAG"
+  ```
+  The re-push triggers the `push: tags` escape-hatch path.
 - **Wrapper `kajji` package failed to publish but platform packages succeeded.** `publish.ts` deliberately skips the wrapper if any platform publish failed (so users never get a broken `npm i kajji`). Fix the platform package(s) and re-run.
 - **Need to re-publish the same version.** npm doesn't allow it. Bump to the next patch and ship again.
