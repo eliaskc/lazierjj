@@ -234,18 +234,21 @@ function AppContent() {
 		const options = [
 			{
 				key: "a",
+				mutedPrefix: "jj git fetch ",
 				label: "--all-remotes",
 				onSelect: () =>
 					void runGitFetch("Fetching all...", { allRemotes: true }),
 			},
 			{
 				key: "t",
+				mutedPrefix: "jj git fetch ",
 				label: "--tracked",
 				onSelect: () =>
 					void runGitFetch("Fetching tracked...", { tracked: true }),
 			},
 			{
 				key: "p",
+				mutedPrefix: "jj git fetch ",
 				label: "--branch glob:push-*",
 				onSelect: () =>
 					void runGitFetch("Fetching stack branches...", {
@@ -257,6 +260,7 @@ function AppContent() {
 		if (commit && commit.bookmarks.length > 0) {
 			options.unshift({
 				key: "b",
+				mutedPrefix: "jj git fetch ",
 				label: formatNamedList(commit.bookmarks, "--branch"),
 				onSelect: () =>
 					void runGitFetch("Fetching selected branches...", {
@@ -279,23 +283,27 @@ function AppContent() {
 		const options = [
 			{
 				key: "a",
+				mutedPrefix: "jj git push ",
 				label: "--all",
 				onSelect: () => void runGitPush("Pushing all...", { all: true }),
 			},
 			{
 				key: "t",
+				mutedPrefix: "jj git push ",
 				label: "--tracked",
 				onSelect: () =>
 					void runGitPush("Pushing tracked...", { tracked: true }),
 			},
 			{
 				key: "d",
+				mutedPrefix: "jj git push ",
 				label: "--deleted",
 				onSelect: () =>
 					void runGitPush("Pushing deleted...", { deleted: true }),
 			},
 			{
 				key: "n",
+				mutedPrefix: "jj git push ",
 				label: "--dry-run",
 				onSelect: () => void runGitPush("Dry run push...", { dryRun: true }),
 			},
@@ -305,6 +313,7 @@ function AppContent() {
 			if (commit.bookmarks.length > 0) {
 				options.unshift({
 					key: "b",
+					mutedPrefix: "jj git push ",
 					label: formatNamedList(commit.bookmarks, "--bookmark"),
 					onSelect: () =>
 						void runGitPush("Pushing selected bookmarks...", {
@@ -314,6 +323,7 @@ function AppContent() {
 			} else {
 				options.unshift({
 					key: "c",
+					mutedPrefix: "jj git push ",
 					label: `--change ${getRevisionId(commit).slice(0, 8)}`,
 					onSelect: () =>
 						void runGitPush("Pushing selected change...", {

@@ -989,7 +989,8 @@ export function LogPanel() {
 							options={[
 								{
 									key: "n",
-									label: "new",
+									mutedPrefix: "jj new",
+									label: "",
 									detail: "run hooks",
 									onSelect: () =>
 										runOperation("Creating...", (options) =>
@@ -998,7 +999,8 @@ export function LogPanel() {
 								},
 								{
 									key: "v",
-									label: "new --no-verify",
+									mutedPrefix: "jj new",
+									label: " --no-verify",
 									detail: "skip hooks",
 									onSelect: () =>
 										runOperation("Creating...", (options) =>
@@ -1007,7 +1009,8 @@ export function LogPanel() {
 								},
 								{
 									key: "a",
-									label: "new --after",
+									mutedPrefix: "jj new",
+									label: " --after",
 									onSelect: () =>
 										runOperation("Creating...", (options) =>
 											jjNewAfter(revision, options),
@@ -1015,7 +1018,8 @@ export function LogPanel() {
 								},
 								{
 									key: "b",
-									label: "new --before",
+									mutedPrefix: "jj new",
+									label: " --before",
 									onSelect: () =>
 										runOperation("Creating...", (options) =>
 											jjNewBefore(revision, options),

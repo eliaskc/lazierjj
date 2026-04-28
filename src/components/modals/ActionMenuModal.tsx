@@ -6,6 +6,7 @@ import { useTheme } from "../../context/theme"
 export interface ActionMenuOption {
 	key: string
 	label: string
+	mutedPrefix?: string
 	detail?: string
 	onSelect: () => void
 }
@@ -98,17 +99,23 @@ export function ActionMenuModal(props: ActionMenuModalProps) {
 						onMouseDown={() => setSelectedIndex(index())}
 					>
 						<text wrapMode="none" flexGrow={1}>
-							<span style={{ fg: colors().text }}>{option.label}</span>
-							{option.detail ? (
+							{option.mutedPrefix ? (
 								<span style={{ fg: colors().textMuted }}>
-									{"  "}
-									{option.detail}
+									{option.mutedPrefix}
 								</span>
 							) : null}
+							<span style={{ fg: colors().text }}>{option.label}</span>
 						</text>
-						<text wrapMode="none" fg={colors().primary}>
-							{option.key}
-						</text>
+						<box flexDirection="row" gap={1}>
+							{option.detail ? (
+								<text wrapMode="none" fg={colors().textMuted}>
+									{option.detail}
+								</text>
+							) : null}
+							<text wrapMode="none" fg={colors().primary}>
+								{option.key}
+							</text>
+						</box>
 					</box>
 				)}
 			</For>
